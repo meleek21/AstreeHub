@@ -24,32 +24,78 @@ namespace ASTREE_PFE.Controllers
             _departmentService = departmentService;
         }
 
+        // Update the GetAllEmployees method
         [HttpGet]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetAllEmployees()
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
-            return Ok(employees);
+            var employeeDtos = employees.Select(e => new EmployeeResponseDto
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                DateOfBirth = e.DateOfBirth,
+                Role = e.Role,
+                Status = e.Status,
+                Email = e.Email,
+                PasswordHash = e.PasswordHash,
+                DepartmentId = e.DepartmentId,
+                PhoneNumber = e.PhoneNumber
+            }).ToList();
+            
+            return employeeDtos;
         }
-
+        
+        // Update the GetEmployee method
         [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<Employee>> GetEmployee(string id)
+        public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
                 return NotFound();
             }
-            return Ok(employee);
+            
+            var employeeDto = new EmployeeResponseDto
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                DateOfBirth = employee.DateOfBirth,
+                Role = employee.Role,
+                Status = employee.Status,
+                Email = employee.Email,
+                PasswordHash = employee.PasswordHash,
+                DepartmentId = employee.DepartmentId,
+                PhoneNumber = employee.PhoneNumber
+            };
+            
+            return employeeDto;
         }
-
+        
+        // Update the GetEmployeesByDepartment method
         [HttpGet("department/{departmentId}")]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployeesByDepartment(int departmentId)
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(int departmentId)
         {
             var employees = await _employeeService.GetEmployeesByDepartmentAsync(departmentId);
-            return Ok(employees);
+            var employeeDtos = employees.Select(e => new EmployeeResponseDto
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                DateOfBirth = e.DateOfBirth,
+                Role = e.Role,
+                Status = e.Status,
+                Email = e.Email,
+                PasswordHash = e.PasswordHash,
+                DepartmentId = e.DepartmentId,
+                PhoneNumber = e.PhoneNumber
+            }).ToList();
+            
+            return employeeDtos;
         }
 
         [HttpPost]

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -26,36 +27,84 @@ namespace ASTREE_PFE.Controllers
 
         [HttpGet]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<IEnumerable<Department>>> GetAllDepartments()
+        public async Task<ActionResult<IEnumerable<DepartmentResponseDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
-            return Ok(departments);
+            var departmentDtos = departments.Select(d => new DepartmentResponseDto
+            {
+                Id = d.Id,
+                Name = d.Name,
+                Description = d.Description,
+                DirectorId = d.DirectorId
+                // Remove CreatedDate and UpdatedDate references
+            }).ToList();
+            
+            return departmentDtos;
         }
 
         [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<Department>> GetDepartment(int id)
+        public async Task<ActionResult<DepartmentResponseDto>> GetDepartment(int id)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
             if (department == null)
             {
                 return NotFound();
             }
-            return Ok(department);
+            
+            // Get employees in this department
+            var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
+            
+            var departmentDto = new DepartmentResponseDto
+            {
+                Id = department.Id,
+                Name = department.Name,
+                Description = department.Description,
+                DirectorId = department.DirectorId,
+                Employees = employees.Select(e => new EmployeeResponseDto
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    DateOfBirth = e.DateOfBirth,
+                    Role = e.Role,
+                    Status = e.Status,
+                    Email = e.Email,
+                    PasswordHash = e.PasswordHash,
+                    DepartmentId = e.DepartmentId,
+                    PhoneNumber = e.PhoneNumber
+                }).ToList()
+            };
+            
+            return departmentDto;
         }
 
         [HttpGet("{id}/employees")]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
-        public async Task<ActionResult<IEnumerable<Employee>>> GetEmployeesInDepartment(int id)
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesInDepartment(int id)
         {
             var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
-            return Ok(employees);
+            var employeeDtos = employees.Select(e => new EmployeeResponseDto
+            {
+                Id = e.Id,
+                FirstName = e.FirstName,
+                LastName = e.LastName,
+                DateOfBirth = e.DateOfBirth,
+                Role = e.Role,
+                Status = e.Status,
+                Email = e.Email,
+                PasswordHash = e.PasswordHash,
+                DepartmentId = e.DepartmentId,
+                PhoneNumber = e.PhoneNumber
+            }).ToList();
+            
+            return employeeDtos;
         }
 
         // For the CreateDepartment method
         [HttpPost]
         [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
-        public async Task<ActionResult<Department>> CreateDepartment([FromBody] DepartmentCreateDto departmentDto)
+        public async Task<ActionResult<DepartmentResponseDto>> CreateDepartment([FromBody] DepartmentCreateDto departmentDto)
         {
             if (!ModelState.IsValid)
             {
@@ -80,9 +129,19 @@ namespace ASTREE_PFE.Controllers
             }
         
             var createdDepartment = await _departmentService.CreateDepartmentAsync(department);
-            return CreatedAtAction(nameof(GetDepartment), new { id = createdDepartment.Id }, createdDepartment);
+            
+            var responseDto = new DepartmentResponseDto
+            {
+                Id = createdDepartment.Id,
+                Name = createdDepartment.Name,
+                Description = createdDepartment.Description,
+                DirectorId = createdDepartment.DirectorId
+                // Remove CreatedDate and UpdatedDate references
+            };
+            
+            return CreatedAtAction(nameof(GetDepartment), new { id = responseDto.Id }, responseDto);
         }
-        
+
         // For the UpdateDepartment method
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
@@ -131,13 +190,13 @@ namespace ASTREE_PFE.Controllers
             {
                 return NotFound();
             }
-
+        
             var result = await _departmentService.DeleteDepartmentAsync(id);
             if (!result)
             {
                 return BadRequest("Failed to delete department. Make sure it has no employees assigned to it.");
             }
-
+        
             return NoContent();
         }
 
@@ -150,22 +209,21 @@ namespace ASTREE_PFE.Controllers
             {
                 return NotFound();
             }
-
+        
             // Update the employee's role to DIRECTOR
             var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(directorDto.EmployeeId, "DIRECTOR");
             if (!roleUpdateResult)
             {
                 return BadRequest("Failed to update employee role to DIRECTOR");
             }
-
+        
             var assignResult = await _departmentService.AssignDirectorAsync(id, directorDto.EmployeeId);
             if (!assignResult)
             {
                 return BadRequest("Failed to assign director to department");
             }
-
+        
             return NoContent();
         }
     }
-
 }
