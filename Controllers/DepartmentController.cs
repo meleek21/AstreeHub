@@ -16,10 +16,12 @@ namespace ASTREE_PFE.Controllers
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService _departmentService;
+        private readonly IEmployeeService _employeeService; // Add employee service
 
-        public DepartmentController(IDepartmentService departmentService)
+        public DepartmentController(IDepartmentService departmentService, IEmployeeService employeeService)
         {
             _departmentService = departmentService;
+            _employeeService = employeeService; // Initialize employee service
         }
 
         [HttpGet]
@@ -50,6 +52,7 @@ namespace ASTREE_PFE.Controllers
             return Ok(employees);
         }
 
+        // For the CreateDepartment method
         [HttpPost]
         [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
         public async Task<ActionResult<Department>> CreateDepartment([FromBody] DepartmentCreateDto departmentDto)
@@ -58,18 +61,29 @@ namespace ASTREE_PFE.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+        
             var department = new Department
             {
                 Name = departmentDto.Name,
                 Description = departmentDto.Description,
                 DirectorId = departmentDto.DirectorId
             };
-
+        
+            // Update employee role to DIRECTOR if specified
+            if (!string.IsNullOrEmpty(departmentDto.DirectorId))
+            {
+                var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
+                if (!roleUpdateResult)
+                {
+                    return BadRequest("Failed to update employee role to DIRECTOR");
+                }
+            }
+        
             var createdDepartment = await _departmentService.CreateDepartmentAsync(department);
             return CreatedAtAction(nameof(GetDepartment), new { id = createdDepartment.Id }, createdDepartment);
         }
-
+        
+        // For the UpdateDepartment method
         [HttpPut("{id}")]
         [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
         public async Task<ActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpdateDto departmentDto)
@@ -78,23 +92,33 @@ namespace ASTREE_PFE.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+        
             var existingDepartment = await _departmentService.GetDepartmentByIdAsync(id);
             if (existingDepartment == null)
             {
                 return NotFound();
             }
-
+        
+            // If director is being changed, update the new employee's role
+            if (!string.IsNullOrEmpty(departmentDto.DirectorId) && existingDepartment.DirectorId != departmentDto.DirectorId)
+            {
+                var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
+                if (!roleUpdateResult)
+                {
+                    return BadRequest("Failed to update employee role to DIRECTOR");
+                }
+            }
+        
             existingDepartment.Name = departmentDto.Name;
             existingDepartment.Description = departmentDto.Description;
             existingDepartment.DirectorId = departmentDto.DirectorId;
-
-            var result = await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
-            if (!result)
+        
+            var updateResult = await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
+            if (!updateResult)
             {
                 return BadRequest("Failed to update department");
             }
-
+        
             return NoContent();
         }
 
@@ -127,8 +151,15 @@ namespace ASTREE_PFE.Controllers
                 return NotFound();
             }
 
-            var result = await _departmentService.AssignDirectorAsync(id, directorDto.EmployeeId);
-            if (!result)
+            // Update the employee's role to DIRECTOR
+            var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(directorDto.EmployeeId, "DIRECTOR");
+            if (!roleUpdateResult)
+            {
+                return BadRequest("Failed to update employee role to DIRECTOR");
+            }
+
+            var assignResult = await _departmentService.AssignDirectorAsync(id, directorDto.EmployeeId);
+            if (!assignResult)
             {
                 return BadRequest("Failed to assign director to department");
             }

@@ -54,5 +54,23 @@ namespace ASTREE_PFE.Services
         {
             return await _employeeRepository.AssignToDepartmentAsync(employeeId, departmentId);
         }
+        
+        public async Task<bool> UpdateEmployeeRoleAsync(string employeeId, string roleName)
+        {
+            var employee = await _employeeRepository.GetByIdAsync(employeeId);
+            if (employee == null)
+            {
+                return false;
+            }
+            
+            // Convert string role name to RoleType enum
+            if (Enum.TryParse<RoleType>(roleName, out var roleType))
+            {
+                employee.Role = roleType;
+                return await _employeeRepository.UpdateAsync(employeeId, employee);
+            }
+            
+            return false;
+        }
     }
 }
