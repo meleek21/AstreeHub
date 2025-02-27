@@ -1,5 +1,6 @@
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services;
+using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ASTREE_PFE.Controllers
@@ -8,9 +9,9 @@ namespace ASTREE_PFE.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly AuthService _authService;
+        private readonly IAuthService _authService;
 
-        public AuthController(AuthService authService)
+        public AuthController(IAuthService authService)
         {
             _authService = authService;
         }

@@ -6,29 +6,33 @@ namespace ASTREE_PFE.Data
 {
     public class ApplicationDbContext : IdentityDbContext<Employee>
     {
-        public DbSet<Department> Departments { get; set; }
-
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
         }
 
+        public DbSet<Department> Departments { get; set; }
+        // Add this line if it's not already there
+        public DbSet<Employee> Employees { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-
-            // Configure relationships
-            builder.Entity<Employee>()
-        .HasOne(e => e.Department)
-        .WithMany(d => d.Members)
-        .HasForeignKey(e => e.DepartmentId);
-
+            
+            // Configure Department-Employee relationship
             builder.Entity<Department>()
                 .HasOne(d => d.Director)
-                .WithMany()
+                .WithMany()  // Remove the .Members reference
                 .HasForeignKey(d => d.DirectorId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.SetNull);
+                
+            // Configure Employee-Department relationship
+            // In the OnModelCreating method:
+            builder.Entity<Employee>()
+                .HasOne(e => e.Department)
+                .WithMany(d => d.Employees)  // Use the Employees navigation property
+                .HasForeignKey(e => e.DepartmentId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
-
 }

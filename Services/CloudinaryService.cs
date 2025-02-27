@@ -1,6 +1,7 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
+using ASTREE_PFE.Services.Interfaces;
 using System;
 using System.IO;
 using System.Linq;
@@ -8,13 +9,6 @@ using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services
 {
-    public interface ICloudinaryService
-    {
-        Task<string?> UploadImageAsync(IFormFile file);
-        Task<string?> UploadFileAsync(IFormFile file);
-        Task DeleteFileAsync(string publicId);
-    }
-
     public class CloudinaryService : ICloudinaryService
     {
         private readonly Cloudinary _cloudinary;

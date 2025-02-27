@@ -3,13 +3,6 @@ using MongoDB.Driver;
 
 namespace ASTREE_PFE.Repositories
 {
-    public interface INotificationRepository : IMongoRepository<Notification>
-    {
-        Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(string recipientId);
-        Task MarkAsReadAsync(string id);
-        Task MarkAllAsReadAsync(string recipientId);
-    }
-
     public class NotificationRepository : MongoRepository<Notification>, INotificationRepository
     {
         public NotificationRepository(IMongoDatabase database) 

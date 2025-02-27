@@ -1,21 +1,11 @@
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
+using ASTREE_PFE.Services.Interfaces;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services
 {
-    public interface ICommentService
-    {
-        Task<IEnumerable<Comment>> GetAllCommentsAsync();
-        Task<Comment> GetCommentByIdAsync(string id);
-        Task<IEnumerable<Comment>> GetCommentsByPostAsync(int postId);
-        Task<IEnumerable<Comment>> GetCommentsByAuthorAsync(string authorId);
-        Task<Comment> CreateCommentAsync(Comment comment);
-        Task UpdateCommentAsync(string id, Comment comment);
-        Task DeleteCommentAsync(string id);
-        Task AddReplyAsync(string commentId, Comment reply);
-        Task UpdateReactionsAsync(string commentId, Dictionary<ReactionType, int> reactions);
-    }
-
     public class CommentService : ICommentService
     {
         private readonly ICommentRepository _commentRepository;
