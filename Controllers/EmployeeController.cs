@@ -16,10 +16,12 @@ namespace ASTREE_PFE.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
+        private readonly IDepartmentService _departmentService;
 
-        public EmployeeController(IEmployeeService employeeService)
+        public EmployeeController(IEmployeeService employeeService, IDepartmentService departmentService)
         {
             _employeeService = employeeService;
+            _departmentService = departmentService;
         }
 
         [HttpGet]
@@ -121,6 +123,13 @@ namespace ASTREE_PFE.Controllers
             if (employee == null)
             {
                 return NotFound();
+            }
+
+            // Check if employee is a director of any department
+            if (employee.Role == RoleType.DIRECTOR)
+            {
+                // Find departments where this employee is the director and set DirectorId to null
+                await _departmentService.RemoveDirectorFromDepartmentsAsync(id);
             }
 
             var result = await _employeeService.DeleteEmployeeAsync(id);

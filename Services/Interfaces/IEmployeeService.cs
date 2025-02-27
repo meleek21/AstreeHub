@@ -11,6 +11,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<IEnumerable<Employee>> GetEmployeesByDepartmentAsync(int departmentId);
         Task<bool> CreateEmployeeAsync(Employee employee, string password);
         Task<bool> UpdateEmployeeAsync(string id, Employee employee);
+        Task<bool> UpdateEmployeeRoleAsync(string employeeId, string roleName);
         Task<bool> DeleteEmployeeAsync(string id);
         Task<bool> ChangeEmployeeStatusAsync(string id, UserStatus status);
         Task<bool> AssignEmployeeToDepartmentAsync(string employeeId, int departmentId);

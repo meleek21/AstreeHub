@@ -49,5 +49,25 @@ namespace ASTREE_PFE.Services
         {
             return await _departmentRepository.AssignDirectorAsync(departmentId, employeeId);
         }
+        public async Task<bool> RemoveDirectorFromDepartmentsAsync(string employeeId)
+        {
+            // Get all departments where this employee is the director
+            var departments = await _departmentRepository.GetAllAsync();
+            var affectedDepartments = departments.Where(d => d.DirectorId == employeeId).ToList();
+            
+            if (!affectedDepartments.Any())
+            {
+                return true; // No departments to update
+            }
+            
+            // Update each department to remove the director
+            foreach (var department in affectedDepartments)
+            {
+                department.DirectorId = null;
+                await _departmentRepository.UpdateAsync(department.Id, department);
+            }
+            
+            return true;
+        }
     }
 }

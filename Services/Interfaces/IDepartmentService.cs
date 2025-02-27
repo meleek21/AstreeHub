@@ -13,5 +13,6 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> DeleteDepartmentAsync(int id);
         Task<IEnumerable<Employee>> GetEmployeesInDepartmentAsync(int departmentId);
         Task<bool> AssignDirectorAsync(int departmentId, string employeeId);
+        Task<bool> RemoveDirectorFromDepartmentsAsync(string employeeId);
     }
 }
