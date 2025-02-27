@@ -2,7 +2,8 @@ using ASTREE_PFE.Data;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Services;
-using ASTREE_PFE.Hubs;
+using ASTREE_PFE.Services.Interfaces;
+// Remove the Hubs reference until we create it
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,6 +46,8 @@ builder.Services.AddScoped<IMongoRepository<Notification>>(sp =>
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 
 // Add DbContext with SQL Server
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -87,7 +90,7 @@ builder.Services.AddIdentity<Employee, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Register AuthService
-builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container
 builder.Services.AddControllers()
@@ -104,6 +107,8 @@ builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -121,8 +126,21 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Create roles
 using (var scope = app.Services.CreateScope())
 {
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var roles = new[] { "ADMIN", "USER", "EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" }; // Added SUPER_ADMIN
+    
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+
+    // Seed initial data
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Employee>>();
 
@@ -173,6 +191,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationHub>("/hubs/notification");
+// Comment out the hub mapping until we create the hub
+// app.MapHub<NotificationHub>("/hubs/notification");
 
 app.Run();

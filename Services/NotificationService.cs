@@ -1,19 +1,13 @@
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Hubs;
+using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services
 {
-    public interface INotificationService
-    {
-        Task<IEnumerable<Notification>> GetAllNotificationsAsync();
-        Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(string recipientId);
-        Task<Notification> CreateNotificationAsync(Notification notification);
-        Task MarkAsReadAsync(string id);
-        Task MarkAllAsReadAsync(string recipientId);
-    }
-
     public class NotificationService : INotificationService
     {
         private readonly INotificationRepository _notificationRepository;

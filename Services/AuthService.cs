@@ -6,23 +6,29 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using ASTREE_PFE.Data;
+using Microsoft.EntityFrameworkCore;
+using ASTREE_PFE.Services.Interfaces;
 
 namespace ASTREE_PFE.Services
 {
-    public class AuthService
+    public class AuthService : IAuthService
     {
         private readonly UserManager<Employee> _userManager;
         private readonly SignInManager<Employee> _signInManager;
         private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _dbContext;
 
         public AuthService(
             UserManager<Employee> userManager,
             SignInManager<Employee> signInManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            ApplicationDbContext dbContext)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _configuration = configuration;
+            _dbContext = dbContext;
         }
 
         public async Task<(bool success, string message, string? token)> LoginAsync(LoginDTO model)
@@ -45,6 +51,16 @@ namespace ASTREE_PFE.Services
 
         public async Task<(bool success, string message)> RegisterAsync(RegisterDTO model)
         {
+            // Validate DepartmentId if provided
+            if (model.DepartmentId.HasValue)
+            {
+                bool departmentExists = await _dbContext.Departments.AnyAsync(d => d.Id == model.DepartmentId.Value);
+                if (!departmentExists)
+                {
+                    return (false, $"Department with ID {model.DepartmentId.Value} does not exist");
+                }
+            }
+
             var user = new Employee
             {
                 UserName = model.Email,
@@ -53,11 +69,17 @@ namespace ASTREE_PFE.Services
                 LastName = model.LastName,
                 Role = model.Role,
                 Status = Models.UserStatus.Active,
-                DepartmentId = model.DepartmentId,
+                DepartmentId = null,  // Set to null initially
                 IsFirstLogin = true,
                 CreatedDate = DateTime.UtcNow,
                 DateOfBirth = model.DateOfBirth
             };
+            
+            // Only set DepartmentId if it has a value and we've already validated it exists
+            if (model.DepartmentId.HasValue)
+            {
+                user.DepartmentId = model.DepartmentId.Value;
+            }
 
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)

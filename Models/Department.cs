@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace ASTREE_PFE.Models
 {
@@ -14,12 +15,13 @@ namespace ASTREE_PFE.Models
 
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]
         public string? Description { get; set; }
-
-        [ForeignKey(nameof(Director))]
-        public string? DirectorId { get; set; }  // Made nullable
-
-        public virtual List<Employee> Members { get; set; } = new();
-
-        public virtual Employee? Director { get; set; }  // Made nullable
+        
+        public string? DirectorId { get; set; }
+        
+        // Navigation property for Director
+        public virtual Employee? Director { get; set; }
+        
+        // Navigation property for Employees in this department
+        public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
     }
 }
