@@ -1,0 +1,213 @@
+/* Auth Container */
+.auth-container {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  max-width: 800px;
+  width: 80%;
+  text-align: center;
+  margin: 2rem auto;
+  font-family: 'Nunito', sans-serif;
+  max-height: 95vh; /* Limit height to 90% of the viewport */
+  overflow-y: auto; /* Enable vertical scrolling */
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 206, 209, 0.2);
+}
+
+/* Select Dropdown */
+.select-dropdown {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+  font-size: 16px;
+  color: var(--primary-color);
+  transition: border-color 0.3s ease-in-out;
+}
+
+.select-dropdown:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.select-dropdown:hover {
+  background-color: #579de496;
+}
+
+/* Password Input */
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color var(--transition-speed) ease;
+}
+
+.toggle-password:hover {
+  color: var(--accent);
+}
+
+/* Password Requirements */
+.password-requirements {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.password-requirements ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.password-requirements li {
+  margin: 0.25rem 0;
+}
+
+.password-requirements .valid {
+  color: green;
+}
+
+.password-requirements .invalid {
+  color: red;
+}
+
+/* Signup Button */
+.signup-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: 'Raleway', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 
+    background var(--transition-speed) ease-in-out, 
+    transform var(--transition-speed) cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+    box-shadow var(--transition-speed) ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.signup-button:hover {
+  background: linear-gradient(135deg, #3b87d3 0%, var(--primary-color) 100%);
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.signup-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.signup-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Login Link */
+.login-link {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.login-link a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition-speed) ease;
+}
+
+.login-link a:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+/* Progress Bar */
+.progress {
+  background-color: #e9ecef;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: #28a745; /* Green color for progress */
+  height: 10px;
+  transition: width var(--transition-speed) ease;
+}
+
+.login-button {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--gradient-secondary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-family: 'Raleway', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 
+    background var(--transition-speed) ease-in-out, 
+    transform var(--transition-speed) ease, 
+    box-shadow var(--transition-speed) ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.login-button:hover {
+  background: linear-gradient(135deg,  #FF9933 0%, var(--secondary-color) 100%);
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.login-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

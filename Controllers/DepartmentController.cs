@@ -39,6 +39,20 @@ namespace ASTREE_PFE.Controllers
                 // Remove CreatedDate and UpdatedDate references
             }).ToList();
             
+            [HttpGet("public")]
+            [AllowAnonymous]
+            public async Task<ActionResult<IEnumerable<DepartmentListDto>>> GetPublicDepartments()
+            {
+                var departments = await _departmentService.GetAllDepartmentsAsync();
+                var departmentDtos = departments.Select(d => new DepartmentListDto
+                {
+                    Id = d.Id,
+                    Name = d.Name
+                }).ToList();
+                
+                return departmentDtos;
+            }
+            
             return departmentDtos;
         }
 
