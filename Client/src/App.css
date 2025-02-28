@@ -7,11 +7,11 @@
   --text-primary: #333333;
   --text-secondary: #666666;
   --accent: #00CED1;
-  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #0066CC 100%);
+  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
   --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
-  --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
   --border-radius: 8px;
-  --transition-speed: 0.3s;
+  --transition-speed: 0.5s;
 }
 
 body {

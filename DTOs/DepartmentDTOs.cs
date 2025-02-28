@@ -33,4 +33,10 @@ namespace ASTREE_PFE.DTOs
         // Make sure EmployeeResponseDto is properly referenced
         public ICollection<EmployeeResponseDto>? Employees { get; set; }
     }
+
+    public class DepartmentListDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
 }
