@@ -1,54 +1,77 @@
 using ASTREE_PFE.Models;
+using ASTREE_PFE.Repositories.Interfaces;  // Add this line
 using MongoDB.Driver;
-using System.Linq.Expressions;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Repositories
 {
-    public class PostRepository : MongoRepository<Post>, IPostRepository
+    public class PostRepository : IPostRepository
     {
-        private readonly IMongoCollection<Post> _collection;
+        private readonly IMongoCollection<Post> _posts;
 
-        public PostRepository(IMongoDatabase database) 
-            : base(database, "Posts")
+        public PostRepository(IMongoDatabase database)
         {
-            _collection = database.GetCollection<Post>("Posts");
+            _posts = database.GetCollection<Post>("Posts");
         }
 
-        public async Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId)
+        public async Task<IEnumerable<Post>> GetAllAsync()
         {
-            var filter = Builders<Post>.Filter.Eq(p => p.AuthorId.ToString(), authorId);
-            return await _collection.Find(filter).ToListAsync();
+            return await _posts.Find(_ => true).ToListAsync();
         }
 
-        public async Task<IEnumerable<Post>> GetPostsByChannelAsync(int channelId)
+        public async Task<Post> GetByIdAsync(string id)
         {
-            var filter = Builders<Post>.Filter.Eq(p => p.ChannelId, channelId.ToString());
-            return await _collection.Find(filter).ToListAsync();
+            return await _posts.Find(p => p.Id == id).FirstOrDefaultAsync();
+        }
+
+        public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId)
+        {
+            return await _posts.Find(p => p.AuthorId == authorId).ToListAsync();
+        }
+
+        public async Task CreateAsync(Post post)
+        {
+            await _posts.InsertOneAsync(post);
+        }
+
+        public async Task UpdateAsync(string id, Post post)
+        {
+            await _posts.ReplaceOneAsync(p => p.Id == id, post);
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            await _posts.DeleteOneAsync(p => p.Id == id);
         }
 
         public async Task AddCommentAsync(string postId, Comment comment)
         {
-            Expression<Func<Post, string>> postIdExpression = p => p.Id;
-            var filter = Builders<Post>.Filter.Eq(postIdExpression, postId);
+            var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
             var update = Builders<Post>.Update.Push(p => p.Comments, comment);
-            await _collection.UpdateOneAsync(filter, update);
+            await _posts.UpdateOneAsync(filter, update);
+        }
+
+        public async Task RemoveCommentAsync(string postId, string commentId)
+        {
+            var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
+            var update = Builders<Post>.Update.PullFilter(p => p.Comments, c => c.Id == commentId);
+            await _posts.UpdateOneAsync(filter, update);
         }
 
         public async Task UpdateReactionsAsync(string postId, Dictionary<ReactionType, int> reactions)
         {
-            Expression<Func<Post, string>> postIdExpression = p => p.Id;
-            var filter = Builders<Post>.Filter.Eq(postIdExpression, postId);
+            var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
             var update = Builders<Post>.Update.Set(p => p.Reactions, reactions);
-            await _collection.UpdateOneAsync(filter, update);
+            await _posts.UpdateOneAsync(filter, update);
         }
 
         public async Task<IEnumerable<Post>> GetRecentPostsAsync(int count)
         {
-            return await _collection
-                .Find(_ => true)
-                .SortByDescending(p => p.Timestamp)
-                .Limit(count)
-                .ToListAsync();
+            return await _posts.Find(_ => true)
+                                .SortByDescending(p => p.Timestamp)
+                                .Limit(count)
+                                .ToListAsync();
         }
     }
 }

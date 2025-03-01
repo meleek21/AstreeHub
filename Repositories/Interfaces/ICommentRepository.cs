@@ -2,12 +2,17 @@ using ASTREE_PFE.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace ASTREE_PFE.Repositories
+namespace ASTREE_PFE.Repositories.Interfaces
 {
-    public interface ICommentRepository : IMongoRepository<Comment>
+    public interface ICommentRepository
     {
-        Task<IEnumerable<Comment>> GetCommentsByPostAsync(int postId);
-        Task<IEnumerable<Comment>> GetCommentsByAuthorAsync(string authorId);
+        Task<IEnumerable<Comment>> GetAllAsync();
+        Task<Comment> GetByIdAsync(string id);
+        Task<IEnumerable<Comment>> GetByPostIdAsync(string postId);
+        Task<IEnumerable<Comment>> GetByAuthorIdAsync(string authorId);
+        Task CreateAsync(Comment comment);
+        Task UpdateAsync(string id, Comment comment);
+        Task DeleteAsync(string id);
         Task AddReplyAsync(string commentId, Comment reply);
         Task UpdateReactionsAsync(string commentId, Dictionary<ReactionType, int> reactions);
     }

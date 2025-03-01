@@ -1,9 +1,9 @@
 using ASTREE_PFE.Data;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
+using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services;
 using ASTREE_PFE.Services.Interfaces;
-// Remove the Hubs reference until we create it
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -42,12 +42,17 @@ builder.Services.AddScoped<IMongoRepository<Post>>(sp =>
 builder.Services.AddScoped<IMongoRepository<Notification>>(sp => 
     new MongoRepository<Notification>(sp.GetRequiredService<IMongoDatabase>(), "Notifications"));
 
+// Add MongoDB repository for Reactions
+builder.Services.AddScoped<IMongoRepository<Reaction>>(sp => 
+    new MongoRepository<Reaction>(sp.GetRequiredService<IMongoDatabase>(), "Reactions"));
+
 // Register Repositories
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
 
 // Add DbContext with SQL Server
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -100,7 +105,35 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
     });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "ASTREE_PFE API", Version = "v1" });
+    
+    // Add JWT Authentication
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // Register Services
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
@@ -109,6 +142,7 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IReactionService, ReactionService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -130,7 +164,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "ADMIN", "USER", "EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" }; // Added SUPER_ADMIN
+    var roles = new[] {"EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" };
     
     foreach (var role in roles)
     {
@@ -139,42 +173,8 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
         }
     }
+    
 
-    // Seed initial data
-    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Employee>>();
-
-    // Check if the Departments table is empty
-    if (!dbContext.Departments.Any())
-    {
-        // Create an employee
-        var employee = new Employee
-        {
-            FirstName = "Admin",
-            LastName = "User",
-            Email = "admin@example.com",
-            Role = RoleType.SUPER_ADMIN,
-            Status = UserStatus.Active,
-            DateOfBirth = new DateTime(1990, 1, 1)
-        };
-
-        var result = await userManager.CreateAsync(employee, "Admin123!");
-        if (result.Succeeded)
-        {
-            await userManager.AddToRoleAsync(employee, employee.Role.ToString());
-
-            // Create a department with the employee as the director
-            var department = new Department
-            {
-                Name = "HR",
-                Description = "Human Resources Department",
-                DirectorId = employee.Id
-            };
-
-            dbContext.Departments.Add(department);
-            dbContext.SaveChanges();
-        }
-    }
 }
 
 // Configure the HTTP request pipeline
@@ -187,9 +187,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 
-app.UseAuthentication();
+app.UseAuthentication(); // This should come before UseAuthorization
 app.UseAuthorization();
-
 app.MapControllers();
 // Comment out the hub mapping until we create the hub
 // app.MapHub<NotificationHub>("/hubs/notification");

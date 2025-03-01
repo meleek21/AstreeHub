@@ -7,12 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
+using System.Linq;
 
 namespace ASTREE_PFE.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class EmployeeController : ControllerBase
     {
         private readonly IEmployeeService _employeeService;
@@ -24,9 +24,11 @@ namespace ASTREE_PFE.Controllers
             _departmentService = departmentService;
         }
 
+        
+
         // Update the GetAllEmployees method
         [HttpGet]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
@@ -49,7 +51,7 @@ namespace ASTREE_PFE.Controllers
         
         // Update the GetEmployee method
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -77,7 +79,7 @@ namespace ASTREE_PFE.Controllers
         
         // Update the GetEmployeesByDepartment method
         [HttpGet("department/{departmentId}")]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(int departmentId)
         {
             var employees = await _employeeService.GetEmployeesByDepartmentAsync(departmentId);
@@ -99,7 +101,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPER_ADMIN")]
         public async Task<ActionResult> CreateEmployee([FromBody] EmployeeCreateDto employeeDto)
         {
             if (!ModelState.IsValid)
@@ -130,7 +132,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPER_ADMIN")]
         public async Task<ActionResult> UpdateEmployee(string id, [FromBody] EmployeeUpdateDto employeeDto)
         {
             if (!ModelState.IsValid)
@@ -162,7 +164,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPER_ADMIN")]
         public async Task<ActionResult> DeleteEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -188,7 +190,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPER_ADMIN")]
         public async Task<ActionResult> ChangeEmployeeStatus(string id, [FromBody] StatusUpdateDto statusDto)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -207,7 +209,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPatch("{id}/department")]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult> AssignEmployeeToDepartment(string id, [FromBody] DepartmentAssignDto departmentDto)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);

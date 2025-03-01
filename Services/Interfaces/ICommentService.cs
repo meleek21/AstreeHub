@@ -8,12 +8,13 @@ namespace ASTREE_PFE.Services.Interfaces
     {
         Task<IEnumerable<Comment>> GetAllCommentsAsync();
         Task<Comment> GetCommentByIdAsync(string id);
-        Task<IEnumerable<Comment>> GetCommentsByPostAsync(int postId);
         Task<IEnumerable<Comment>> GetCommentsByAuthorAsync(string authorId);
+        Task<IEnumerable<Comment>> GetCommentsByPostAsync(string postId);
         Task<Comment> CreateCommentAsync(Comment comment);
         Task UpdateCommentAsync(string id, Comment comment);
         Task DeleteCommentAsync(string id);
         Task AddReplyAsync(string commentId, Comment reply);
+        Task UpdateReactionsAsync(string commentId);
         Task UpdateReactionsAsync(string commentId, Dictionary<ReactionType, int> reactions);
     }
 }
