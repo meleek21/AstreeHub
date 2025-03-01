@@ -1,19 +1,28 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using System.Text.Json.Serialization;
+using System;
 
-namespace ASTREE_PFE.Models{
-    public class Reaction
+namespace ASTREE_PFE.Models
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public Guid Id { get; set; }
-
-    public Guid ReactionId { get; set; }
-    public Guid PostId { get; set; }
-    public Guid CommentId { get; set; }
-    public Guid EmployeeId { get; set; }
-    public ReactionType Type { get; set; }
-    public DateTime Timestamp { get; set; }
-}
+    public class Reaction
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string Id { get; set; }
+        
+        // Changed to regular string to support UUID/GUID format
+        public string EmployeeId { get; set; }
+        
+        // Changed to regular string to support UUID/GUID format
+        public string PostId { get; set; }
+        
+        // Changed to regular string to support UUID/GUID format if needed
+        public string CommentId { get; set; }
+        
+        public ReactionType Type { get; set; }
+        
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        
+        public DateTime? UpdatedAt { get; set; }
+    }
 }

@@ -9,12 +9,10 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<IEnumerable<Post>> GetAllPostsAsync();
         Task<Post> GetPostByIdAsync(string id);
         Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId);
-        Task<IEnumerable<Post>> GetPostsByChannelAsync(int channelId);
         Task<Post> CreatePostAsync(Post post);
         Task UpdatePostAsync(string id, Post post);
         Task DeletePostAsync(string id);
         Task AddCommentAsync(string postId, Comment comment);
-        Task UpdateReactionsAsync(string postId, Dictionary<ReactionType, int> reactions);
-        Task<IEnumerable<Post>> GetRecentPostsAsync(int count);
+        Task UpdateReactionsAsync(string postId);
     }
 }
