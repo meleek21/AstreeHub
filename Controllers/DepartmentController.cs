@@ -36,7 +36,6 @@ namespace ASTREE_PFE.Controllers
                 Name = d.Name,
                 Description = d.Description,
                 DirectorId = d.DirectorId
-                // Remove CreatedDate and UpdatedDate references
             }).ToList();
             
             return departmentDtos;
@@ -56,6 +55,19 @@ namespace ASTREE_PFE.Controllers
             return departmentDtos;
         }
 
+        [HttpGet("public")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<DepartmentListDto>>> GetPublicDepartments()
+        {
+            var departments = await _departmentService.GetAllDepartmentsAsync();
+            var departmentDtos = departments.Select(d => new DepartmentListDto
+            {
+                Id = d.Id,
+                Name = d.Name
+            }).ToList();
+            
+            return departmentDtos;
+        }
         [HttpGet("{id}")]
         [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<DepartmentResponseDto>> GetDepartment(int id)

@@ -31,7 +31,7 @@ const Login = () => {
       const response = await axios.post('http://localhost:5126/api/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       toast.success('Connexion réussie ! Redirection en cours...');
-      setTimeout(() => navigate('/dashboard'), 1500); // Redirect after 1.5 seconds
+      setTimeout(() => navigate('/home'), 1500); // Redirect after 1.5 seconds
     } catch (err) {
       setError(err.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.');
       toast.error(err.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.');

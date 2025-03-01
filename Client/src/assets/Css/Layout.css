@@ -1,0 +1,219 @@
+/* Layout container */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background-color);
+}
+
+/* Navbar styles */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem; /* Increased padding for better spacing */
+  background-color: var(--background-color);
+  color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-brand a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 1.75rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.3s ease, transform 0.3s ease;
+  margin-right: 2rem; /* Added margin to space out the brand */
+}
+
+.navbar-brand a:hover {
+  color: var(--primary-color);
+  transform: scale(1.05);
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 30px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  margin: 0 1.5rem; /* Added margin for spacing */
+}
+
+.search-bar:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.search-bar input {
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  width: 200px;
+  transition: width 0.3s ease;
+}
+
+.search-bar input:focus {
+  width: 250px;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  gap: 2rem; /* Increased gap between links */
+  margin: 0 1.5rem; /* Added margin for spacing */
+}
+
+.navbar-links li a {
+  color: var(--primary-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+.navbar-home{
+  margin-left: 4%;
+}
+.navbar-links li a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* User Dropdown */
+.user-dropdown {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin-left: auto; /* Move dropdown to the left */
+  margin-right: 1.5rem; /* Added margin for spacing */
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--primary-color);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.dropdown-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--background-color);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 0;
+  min-width: 150px;
+  display: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dropdown-content a {
+  color: var(--primary-color);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.user-dropdown:hover .dropdown-content {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+/* Sidebar styles */
+.sidebar {
+  width: 240px;
+  background: var(--primary-color);
+  border-radius: 15px;
+  padding: 1rem;
+  position: fixed;
+  top:80px;
+  left: 0;
+  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-links li {
+  margin: 1rem 0;
+}
+
+.sidebar-links li a {
+  color: var(--background-color);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  padding: 1px;
+  transition: all 0.3s ease;
+}
+span{
+  font-size: 1rem;
+  border-radius: 15px;
+  padding: 0.75rem ;
+  transition: all 0.3s ease;
+}
+/* Hover effect for the link text only */
+.sidebar-links li a:hover span {
+  color: var(--primary-color);
+  transform: translateX(5px);
+  background-color: var(--background-color);
+  transition: all 0.3s ease;
+}
+
+.sidebar-links li a.active span {
+  color: var(--primary-color);
+  background-color: var(--background-color);
+  font-weight: bold;
+}
+
+/* Ensure icons are not affected by hover */
+.sidebar-links li a .lord-icon {
+  transition: none; /* Disable transitions for icons */
+}
+
+/* Main content area */
+.main-content {
+  margin-left: 210px; 
+  flex-grow: 1;
+  z-index: 999;
+  padding: 1rem;
+  background-color: var(--background-color);
+  border-radius: 20px;
+  transition: margin-left 0.3s ease;
+}

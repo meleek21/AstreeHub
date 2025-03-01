@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Signup from '../components/Signup';
-import Login from '../components/Login'; 
-import '../assets/CSS/Authen.css'; 
+import Login from '../components/Login';
+import '../assets/CSS/Authen.css';
 
 function Authen() {
   const location = useLocation();
