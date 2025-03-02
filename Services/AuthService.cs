@@ -45,7 +45,7 @@ namespace ASTREE_PFE.Services
             user.IsFirstLogin = false;
             await _userManager.UpdateAsync(user);
 
-            var token = GenerateJwtToken(user);
+            var token = await GenerateJwtTokenAsync(user);
             return (true, "Login successful", token);
         }
 
@@ -91,7 +91,7 @@ namespace ASTREE_PFE.Services
             return (true, "Registration successful");
         }
 
-        private string GenerateJwtToken(Employee user)
+        public async Task<string> GenerateJwtTokenAsync(Employee user)
         {
             var claims = new List<Claim>
             {
@@ -134,6 +134,42 @@ namespace ASTREE_PFE.Services
             catch (Exception ex)
             {
                 return (false, $"Logout failed: {ex.Message}");
+            }
+        }
+
+        public async Task<string> ValidateTokenAsync(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+                return string.Empty;
+
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? 
+                    throw new InvalidOperationException("JWT:Secret is not configured"));
+
+                // Set up validation parameters
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = _configuration["JWT:ValidIssuer"],
+                    ValidAudience = _configuration["JWT:ValidAudience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                };
+
+                // Validate and decode the token
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
+
+                // Extract the user ID from the claims
+                var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                return userId ?? string.Empty;
+            }
+            catch (Exception)
+            {
+                return string.Empty;
             }
         }
     }

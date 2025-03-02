@@ -1,0 +1,9 @@
+.feed-container {
+  padding: 20px;
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

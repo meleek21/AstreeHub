@@ -1,0 +1,18 @@
+.reaction-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .reaction-container button {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  
+  .reaction-container button:hover {
+    background-color: #0056b3;
+  }

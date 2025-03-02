@@ -1,0 +1,27 @@
+/* src/assets/Css/Post.css */
+.post-container {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    background-color: #fff;
+  }
+  
+  .post-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  
+  .post-author {
+    font-weight: bold;
+  }
+  
+  .post-timestamp {
+    color: #666;
+    font-size: 0.9em;
+  }
+  
+  .post-content {
+    margin-bottom: 12px;
+  }
