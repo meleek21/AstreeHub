@@ -4,8 +4,10 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { FaLock, FaUnlock } from 'react-icons/fa'; // For lock icons
 import '../assets/Css/Signup.css';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -29,17 +31,20 @@ const Login = () => {
 
     try {
       const response = await axios.post('http://localhost:5126/api/auth/login', formData);
-      localStorage.setItem('token', response.data.token);
-      toast.success('Connexion réussie ! Redirection en cours...');
-      setTimeout(() => navigate('/home'), 1500); // Redirect after 1.5 seconds
+      if (response.data && response.data.token) {
+        login(response.data.token);
+        toast.success('Connexion réussie ! Redirection en cours...');
+      } else {
+        throw new Error('Token not found in response');
+      }
     } catch (err) {
-      setError(err.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.');
-      toast.error(err.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.');
+      const errorMessage = err.response?.data?.message || err.message || 'Une erreur est survenue. Veuillez réessayer.';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="auth-container">
       <h2>Connexion</h2>

@@ -11,7 +11,6 @@ using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 using CloudinaryDotNet;
 using System.Text.Json.Serialization;
-using System.Text.Json;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -35,14 +34,10 @@ builder.Services.AddSingleton<IMongoDatabase>(database);
 // Register MongoDB repositories with collection names
 builder.Services.AddScoped<IMongoRepository<Comment>>(sp => 
     new MongoRepository<Comment>(sp.GetRequiredService<IMongoDatabase>(), "Comments"));
-    
 builder.Services.AddScoped<IMongoRepository<Post>>(sp => 
     new MongoRepository<Post>(sp.GetRequiredService<IMongoDatabase>(), "Posts"));
-    
 builder.Services.AddScoped<IMongoRepository<Notification>>(sp => 
     new MongoRepository<Notification>(sp.GetRequiredService<IMongoDatabase>(), "Notifications"));
-
-// Add MongoDB repository for Reactions
 builder.Services.AddScoped<IMongoRepository<Reaction>>(sp => 
     new MongoRepository<Reaction>(sp.GetRequiredService<IMongoDatabase>(), "Reactions"));
 
@@ -78,6 +73,19 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["JWT:ValidAudience"],
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
+    };
+
+    // Disable redirects for API endpoints
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = context =>
+        {
+            context.HandleResponse();
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { error = "Unauthorized" });
+            return context.Response.WriteAsync(result);
+        }
     };
 });
 
@@ -164,7 +172,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] {"EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" };
+    var roles = new[] { "EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" };
     
     foreach (var role in roles)
     {
@@ -173,8 +181,6 @@ using (var scope = app.Services.CreateScope())
             await roleManager.CreateAsync(new IdentityRole(role));
         }
     }
-    
-
 }
 
 // Configure the HTTP request pipeline
