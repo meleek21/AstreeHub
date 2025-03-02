@@ -19,6 +19,15 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/" element={<Navigate to="authen" />} />
+
+          {/* Private routes wrapped in Layout */}
+          <Route element={<Layout />}>
+            <Route path="/home" element={<Home />} />
+            {/* Add more private routes here */}
+          </Route>
+
+          {/* Redirect to home if no route matches */}
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
     </Router>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 
 function Navbar() {
+  const navigate = useNavigate();
   const loggedInUser = {
     name: 'Jean Dupont',
     avatar: 'https://via.placeholder.com/40',
@@ -12,6 +13,29 @@ function Navbar() {
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('http://localhost:5126/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Clear any local storage or state if needed
+        localStorage.removeItem('user');
+        // Redirect to login page
+        navigate('/login');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -81,9 +105,9 @@ function Navbar() {
               <Link to="/settings" className="dropdown-link">
                 <FaCog /> Paramètres
               </Link>
-              <Link to="/logout" className="dropdown-link">
+              <button onClick={handleLogout} className="logout-button">
                 <FaSignOutAlt /> Déconnexion
-              </Link>
+              </button>
             </div>
           )}
         </div>

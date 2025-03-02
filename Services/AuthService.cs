@@ -124,5 +124,17 @@ namespace ASTREE_PFE.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public async Task<(bool success, string message)> LogoutAsync()
+        {
+            try
+            {
+                await _signInManager.SignOutAsync();
+                return (true, "Logged out successfully");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Logout failed: {ex.Message}");
+            }
+        }
     }
 }

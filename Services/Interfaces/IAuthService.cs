@@ -6,5 +6,6 @@ namespace ASTREE_PFE.Services.Interfaces
     {
         Task<(bool success, string message, string? token)> LoginAsync(LoginDTO model);
         Task<(bool success, string message)> RegisterAsync(RegisterDTO model);
+        Task<(bool success, string message)> LogoutAsync(); 
     }
 }
