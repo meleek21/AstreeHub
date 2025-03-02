@@ -17,14 +17,21 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(LoginDTO model)
-        {
-            var (success, message, token) = await _authService.LoginAsync(model);
-            if (!success)
-                return BadRequest(new { message });
+public async Task<IActionResult> Login(LoginDTO model)
+{
+    var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
+    if (!result.Succeeded)
+        return BadRequest(new { message = "Invalid credentials" });
 
-            return Ok(new { token, message });
-        }
+    var user = await _userManager.FindByEmailAsync(model.Email);
+    return Ok(new
+    {
+        user.Id,
+        user.FirstName,
+        user.LastName,
+        user.Email
+    });
+}
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDTO model)
@@ -35,5 +42,15 @@ namespace ASTREE_PFE.Controllers
 
             return Ok(new { message });
         }
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var (success, message) = await _authService.LogoutAsync();
+            if (!success)
+                return BadRequest(new { message });
+
+            return Ok(new { message });
+        }
+        
     }
 }

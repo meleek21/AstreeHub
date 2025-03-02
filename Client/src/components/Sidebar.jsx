@@ -13,7 +13,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/fkaukecx.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#00CED1"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Bibliothèque</span>
@@ -24,7 +24,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/wmlleaaf.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#FF9933"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Événement</span>
@@ -35,7 +35,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/lyrrgrsl.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#00CED1"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Annonce</span>
@@ -46,7 +46,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/eouimtlu.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#FF9933"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Fil d'actualité</span>
@@ -57,7 +57,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/ayhtotha.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#00CED1"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Messages</span>
@@ -70,7 +70,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/hqymfzvj.json"
               trigger="hover"
-              colors="primary:#ffffff,secondary:#FF9933"
+              colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Nouvelle annonce?</span>
