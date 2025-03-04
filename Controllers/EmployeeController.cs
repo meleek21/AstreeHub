@@ -24,6 +24,18 @@ namespace ASTREE_PFE.Controllers
             _departmentService = departmentService;
         }
 
+        [HttpGet("user-info/{id}")]
+        [Authorize]
+        public async Task<ActionResult<UserInfoDTO>> GetUserInfo(string id)
+        {
+            var userInfo = await _employeeService.GetUserInfoAsync(id);
+            if (userInfo == null)
+            {
+                return NotFound();
+            }
+            return userInfo;
+        }
+
         
 
         // Update the GetAllEmployees method

@@ -51,4 +51,17 @@ namespace ASTREE_PFE.DTOs
     }
     
     // Other employee DTOs would go here
+    public class EmployeeDTO
+    {
+        public string Id { get; set; } = string.Empty;
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? PhoneNumber { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public RoleType Role { get; set; }
+        public UserStatus Status { get; set; }
+        public int? DepartmentId { get; set; }
+
+    }
 }

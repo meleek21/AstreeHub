@@ -1,4 +1,5 @@
 using ASTREE_PFE.Models;
+using ASTREE_PFE.DTOs;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -15,5 +16,6 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> DeleteEmployeeAsync(string id);
         Task<bool> ChangeEmployeeStatusAsync(string id, UserStatus status);
         Task<bool> AssignEmployeeToDepartmentAsync(string employeeId, int departmentId);
+        Task<UserInfoDTO> GetUserInfoAsync(string id);
     }
 }
