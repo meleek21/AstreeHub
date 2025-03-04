@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
 import Signup from './components/Signup';
@@ -7,9 +7,10 @@ import Layout from './pages/Layout';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ErrorBoundary from './components/ErrorBoundary';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './Context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import { useEffect } from 'react';
 
 function App() {
   return (

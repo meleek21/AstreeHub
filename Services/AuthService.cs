@@ -148,7 +148,7 @@ namespace ASTREE_PFE.Services
                 var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? 
                     throw new InvalidOperationException("JWT:Secret is not configured"));
 
-                // Set up validation parameters
+                // Set up validation parameters to match Program.cs configuration
                 var validationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -157,7 +157,8 @@ namespace ASTREE_PFE.Services
                     ValidateIssuerSigningKey = true,
                     ValidIssuer = _configuration["JWT:ValidIssuer"],
                     ValidAudience = _configuration["JWT:ValidAudience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(key)
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero  // Match Program.cs configuration
                 };
 
                 // Validate and decode the token

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { useAuth } from '../Context/AuthContext';
 
 function Navbar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  
   const loggedInUser = {
-    name: 'Jean Dupont',
+    name: user?.firstName ? `${user.firstName} ${user.lastName}` : 'User',
     avatar: 'https://via.placeholder.com/40',
   };
 
@@ -15,27 +18,10 @@ function Navbar() {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
-  const handleLogout = async () => {
-    try {
-      const response = await fetch('http://localhost:5126/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        // Clear any local storage or state if needed
-        localStorage.removeItem('user');
-        // Redirect to login page
-        navigate('/login');
-      } else {
-        console.error('Logout failed');
-      }
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
+  const handleLogout = () => {
+    // Use the logout function from AuthContext which properly handles token removal
+    logout();
+    // No need to navigate here as the logout function in AuthContext already handles navigation
   };
 
   return (

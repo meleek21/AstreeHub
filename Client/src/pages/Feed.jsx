@@ -1,78 +1,86 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../Context/AuthContext';
+import { postsAPI } from '../services/apiServices';
 import '../assets/Css/Feed.css';
 
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        console.log('Fetching posts - Starting request');
-        const token = localStorage.getItem('token');
-        console.log('Token status:', token ? 'Token found' : 'No token');
-
-        if (!token) {
-          throw new Error('No authentication token found');
+        // Check if authenticated
+        if (!isAuthenticated) {
+          console.log('User not authenticated, redirecting to login');
+          navigate('/login');
+          return;
         }
 
-        console.log('Making API request to:', 'http://localhost:5126/api/post');
-        console.log('Request headers:', { Authorization: `Bearer ${token.substring(0, 10)}...` });
-
-        const response = await axios.get('http://localhost:5126/api/post', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        console.log('Fetching posts - Starting request');
+        
+        // Use the postsAPI service instead of direct axios call
+        const response = await postsAPI.getAllPosts();
 
         console.log('API Response status:', response.status);
-        console.log('API Response data:', response.data ? 'Data received' : 'No data');
+        console.log('Posts received:', response.data.length);
 
         setPosts(response.data);
-        setLoading(false);
       } catch (err) {
-        console.error('Error fetching posts:', {
-          status: err.response?.status,
-          statusText: err.response?.statusText,
-          data: err.response?.data,
-          config: {
-            url: err.config?.url,
-            method: err.config?.method,
-            headers: err.config?.headers
+        console.error('Error fetching posts:', err);
+
+        // Check if error is authentication related
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          console.error('Authentication error:', err.response.data);
+          
+          // Be more specific about when to logout - only for actual token errors
+          const errorMessage = JSON.stringify(err.response.data || '').toLowerCase();
+          const isTokenError = 
+            errorMessage.includes('invalid token') || 
+            errorMessage.includes('expired token') || 
+            errorMessage.includes('malformed token');
+          
+          if (isTokenError) {
+            console.log('Token-related authentication error, logging out');
+            setError('Authentication error. Please log in again.');
+            logout();
+            return;
+          } else {
+            // For general 401/403 errors that aren't specifically token-related
+            // Just show an error but don't log out
+            setError('Access denied. You may not have permission to view these posts.');
+            return;
           }
-        });
-        setError('Failed to fetch posts. Please log in again.');
+        }
+
+        setError('Failed to fetch posts. Please try again later.');
+      } finally {
         setLoading(false);
       }
     };
 
-    if (isAuthenticated) {
-      console.log('User is authenticated, fetching posts...');
-      fetchPosts();
-    } else {
-      console.log('User is not authenticated');
-      setError('You must be logged in to view posts.');
-    }
-  }, [isAuthenticated]);
+    fetchPosts();
+  }, [isAuthenticated, navigate, logout]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div className="loading-container">Loading...</div>;
+  if (error) return <div className="error-container">{error}</div>;
+  if (!posts || posts.length === 0) return <div className="no-posts">No posts available.</div>;
 
   return (
     <div className="feed-container">
-      <h1>Feed</h1>
+      <h1 className="feed-title">Posts Feed</h1>
       <div className="posts-list">
         {posts.map((post) => (
-          <div key={post.id} className="post-card">
-            <h3>{post.title}</h3>
-            <p>{post.content}</p>
+          <div key={post.id || post._id} className="post-card">
+            <h2 className="post-title">{post.title || 'Untitled Post'}</h2>
+            <p className="post-content">{post.content}</p>
             <div className="post-meta">
-              <span>Posted by: {post.authorName}</span>
-              <span>Date: {new Date(post.createdAt).toLocaleDateString()}</span>
+              <span>Posted by: {post.authorName || 'Unknown'}</span>
+              <span>Date: {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
             </div>
           </div>
         ))}

@@ -59,10 +59,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
     var jwtSecret = builder.Configuration["JWT:Secret"] ?? 
         throw new InvalidOperationException("JWT:Secret configuration is missing");
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -72,7 +75,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["JWT:ValidIssuer"],
         ValidAudience = builder.Configuration["JWT:ValidAudience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]!))
+            Encoding.UTF8.GetBytes(jwtSecret)),
+        ClockSkew = TimeSpan.Zero
     };
 
     // Disable redirects for API endpoints
@@ -80,10 +84,21 @@ builder.Services.AddAuthentication(options =>
     {
         OnChallenge = context =>
         {
+            // Prevent default behavior (redirect)
             context.HandleResponse();
+            
+            // Return 401 Unauthorized with JSON response
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
             context.Response.ContentType = "application/json";
             var result = System.Text.Json.JsonSerializer.Serialize(new { error = "Unauthorized" });
+            return context.Response.WriteAsync(result);
+        },
+        OnForbidden = context =>
+        {
+            // Handle forbidden requests (403)
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+            var result = System.Text.Json.JsonSerializer.Serialize(new { error = "Forbidden" });
             return context.Response.WriteAsync(result);
         }
     };
@@ -101,6 +116,25 @@ builder.Services.AddIdentity<Employee, IdentityRole>(options =>
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
+
+// Configure cookie settings for API endpoints
+builder.Services.ConfigureApplicationCookie(cookieOptions =>
+{
+    cookieOptions.Events.OnRedirectToLogin = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new { error = "Unauthorized" });
+        return context.Response.WriteAsync(result);
+    };
+    cookieOptions.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new { error = "Forbidden" });
+        return context.Response.WriteAsync(result);
+    };
+});
 
 // Register AuthService
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -155,48 +189,38 @@ builder.Services.AddScoped<IReactionService, ReactionService>();
 // Add SignalR
 builder.Services.AddSignalR();
 
-// Add CORS
+// Add CORS configuration
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        builder => builder
-            .WithOrigins("http://localhost:5173")
-            .AllowAnyMethod()
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowCredentials());
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
 
 var app = builder.Build();
 
-// Create roles
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var roles = new[] { "EMPLOYEE", "DIRECTOR", "SUPER_ADMIN" };
-    
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
-}
-
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ASTREE_PFE API v1"));
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
 
-app.UseAuthentication(); // This should come before UseAuthorization
+// Add CORS middleware before authentication and authorization
+app.UseCors();
+
+// Add authentication and authorization middleware
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-// Comment out the hub mapping until we create the hub
-// app.MapHub<NotificationHub>("/hubs/notification");
+//app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using ASTREE_PFE.Models;
+using System.Security.Claims;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -24,15 +25,14 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(LoginDTO model)
         {
-            var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, false, false);
-            if (!result.Succeeded)
-                return BadRequest(new { message = "Invalid credentials" });
+            var (success, message, token) = await _authService.LoginAsync(model);
+            if (!success)
+                return BadRequest(new { message });
 
             var user = await _userManager.FindByEmailAsync(model.Email);
-            var token = await _authService.GenerateJwtTokenAsync(user);
-
             return Ok(new
             {
                 token,
@@ -41,12 +41,14 @@ namespace ASTREE_PFE.Controllers
                     user.Id,
                     user.FirstName,
                     user.LastName,
-                    user.Email
+                    user.Email,
+                    user.Role
                 }
             });
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(RegisterDTO model)
         {
             var (success, message) = await _authService.RegisterAsync(model);
@@ -56,6 +58,7 @@ namespace ASTREE_PFE.Controllers
             return Ok(new { message });
         }
 
+        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
@@ -66,37 +69,33 @@ namespace ASTREE_PFE.Controllers
             return Ok(new { message });
         }
 
-        [Authorize] // Ensure only authenticated users can access this endpoint
-        [HttpPost("me")]
-        public async Task<IActionResult> GetCurrentUser([FromBody] TokenDTO model)
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUser()
         {
-            if (string.IsNullOrEmpty(model.Token))
-                return BadRequest(new { message = "Token is required" });
-
             try
             {
-                // Verify the token and get the user ID
-                var userId = await _authService.ValidateTokenAsync(model.Token);
+                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId))
-                    return Unauthorized(new { message = "Invalid token" });
+                    return Unauthorized(new { message = "User ID not found in token" });
 
-                // Fetch the user from the database
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                     return NotFound(new { message = "User not found" });
 
-                // Return the user's data
                 return Ok(new
                 {
                     user.Id,
                     user.FirstName,
                     user.LastName,
-                    user.Email
+                    user.Email,
+                    user.Role,
+                    user.DepartmentId
                 });
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = "Invalid token: " + ex.Message });
+                return StatusCode(500, new { message = "An error occurred while fetching user data" });
             }
         }
     }
