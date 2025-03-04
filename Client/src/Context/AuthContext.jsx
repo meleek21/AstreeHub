@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { authAPI } from '../services/apiServices';
 
 const AuthContext = createContext();
 
@@ -19,15 +19,11 @@ export const AuthProvider = ({ children }) => {
 
       if (token) {
         try {
-          // Set default authorization header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          console.log('Set Authorization header with token');
-
-          // Validate token with backend
+          // Validate token with backend using apiServices
           console.log('Attempting to validate token with backend...');
           try {
             // Try to get user data with the token
-            const response = await axios.get('http://localhost:5126/api/auth/me');
+            const response = await authAPI.getUserInfo();
             console.log('User data retrieved successfully');
             setUser(response.data);
             setIsAuthenticated(true);
@@ -40,19 +36,16 @@ export const AuthProvider = ({ children }) => {
 
             // If validation fails, clear token and set as unauthenticated
             localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
             setIsAuthenticated(false);
             setUser(null);
           }
         } catch (error) {
           console.error('Error during token verification:', error.message);
-          delete axios.defaults.headers.common['Authorization'];
           setIsAuthenticated(false);
           setUser(null);
         }
       } else {
         console.log('No token found, user is not authenticated');
-        delete axios.defaults.headers.common['Authorization'];
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -63,21 +56,31 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function
-  const login = async (token) => {
+  const login = async (tokenData) => {
+    // Check if tokenData is a string (just the token) or an object with token and user
+    const token = typeof tokenData === 'string' ? tokenData : tokenData?.token;
+    const userData = typeof tokenData === 'object' ? tokenData.user : null;
+    
     if (!token) {
       console.error('No token provided');
       return;
     }
     console.log('Login: Storing token and setting authorization header');
     localStorage.setItem('token', token);
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-    try {
-      // Try to get user data with the token
-      const response = await axios.get('http://localhost:5126/api/auth/me');
-      setUser(response.data);
-    } catch (error) {
-      console.error('Error fetching user data:', error.message);
+    // If user data was provided directly, use it
+    if (userData) {
+      console.log('User data provided with login');
+      setUser(userData);
+    } else {
+      // Otherwise fetch user data
+      try {
+        // Try to get user data with the token using apiServices
+        const response = await authAPI.getUserInfo();
+        setUser(response.data);
+      } catch (error) {
+        console.error('Error fetching user data:', error.message);
+      }
     }
 
     setIsAuthenticated(true);
@@ -88,18 +91,21 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     console.log('Logging out: Removing token and authorization header');
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
     setIsAuthenticated(false);
     setUser(null);
     navigate('/login');
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const value = {
+    isAuthenticated,
+    isLoading,
+    user,
+    login,
+    logout
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

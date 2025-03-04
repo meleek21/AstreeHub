@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { FaLock, FaUnlock } from 'react-icons/fa'; // For lock icons
 import '../assets/Css/Signup.css';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../Context/AuthContext';
 
 const Login = () => {
   const { login } = useAuth();
@@ -32,7 +32,8 @@ const Login = () => {
     try {
       const response = await axios.post('http://localhost:5126/api/auth/login', formData);
       if (response.data && response.data.token) {
-        login(response.data.token);
+        // Pass the entire response data object which contains both token and user info
+        login(response.data);
         toast.success('Connexion réussie ! Redirection en cours...');
       } else {
         throw new Error('Token not found in response');
