@@ -3,6 +3,7 @@ using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Services.Interfaces;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ASTREE_PFE.DTOs;
 
 namespace ASTREE_PFE.Services
 {
@@ -48,6 +49,31 @@ namespace ASTREE_PFE.Services
         public async Task<bool> ChangeEmployeeStatusAsync(string id, UserStatus status)
         {
             return await _employeeRepository.ChangeStatusAsync(id, status);
+        }
+
+        public async Task<UserInfoDTO> GetUserInfoAsync(string id)
+        {
+            var employee = await _employeeRepository.GetByIdAsync(id);
+            if (employee == null) return null;
+
+            return new UserInfoDTO
+            {
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                DateOfBirth = employee.DateOfBirth,
+                Role = employee.Role,
+                Status = employee.Status,
+                DepartmentId = employee.DepartmentId,
+                LastLoginDate = employee.LastLoginDate,
+                IsFirstLogin = employee.IsFirstLogin,
+                CreatedDate = employee.CreatedDate,
+                Department = employee.Department != null ? new DepartmentDTO
+                {
+                    Id = employee.Department.Id,
+                    Name = employee.Department.Name,
+                    Description = employee.Department.Description
+                } : null
+            };
         }
 
         public async Task<bool> AssignEmployeeToDepartmentAsync(string employeeId, int departmentId)

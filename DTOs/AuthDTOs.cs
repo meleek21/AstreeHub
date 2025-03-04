@@ -41,4 +41,8 @@ namespace ASTREE_PFE.DTOs
         [DataType(DataType.Date)]
         public DateTime DateOfBirth { get; set; }
     }
+    public class TokenDTO
+    {
+        public string Token { get; set; }
+    }
 }

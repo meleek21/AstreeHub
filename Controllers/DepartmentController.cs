@@ -73,7 +73,7 @@ namespace ASTREE_PFE.Controllers
                 Name = department.Name,
                 Description = department.Description,
                 DirectorId = department.DirectorId,
-                Employees = employees.Select(e => new EmployeeResponseDto
+                Employees = employees.Select(e => new EmployeeDTO
                 {
                     Id = e.Id,
                     FirstName = e.FirstName,
@@ -82,9 +82,8 @@ namespace ASTREE_PFE.Controllers
                     Role = e.Role,
                     Status = e.Status,
                     Email = e.Email,
-                    PasswordHash = e.PasswordHash,
-                    DepartmentId = e.DepartmentId,
-                    PhoneNumber = e.PhoneNumber
+                    PhoneNumber = e.PhoneNumber,
+                    DepartmentId = e.DepartmentId
                 }).ToList()
             };
             
