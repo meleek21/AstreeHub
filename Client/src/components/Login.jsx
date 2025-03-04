@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
+import { authAPI } from '../services/apiServices';
 import { FaLock, FaUnlock } from 'react-icons/fa'; // For lock icons
 import '../assets/Css/Signup.css';
 import { useAuth } from '../Context/AuthContext';
@@ -30,7 +30,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5126/api/auth/login', formData);
+      const response = await authAPI.login(formData);
       if (response.data && response.data.token) {
         // Pass the entire response data object which contains both token and user info
         login(response.data);

@@ -14,10 +14,10 @@ function Feed() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        // Check if authenticated
-        if (!isAuthenticated) {
-          console.log('User not authenticated, redirecting to login');
-          navigate('/login');
+        const token = localStorage.getItem('token');
+        if (!token || !isAuthenticated) {
+          console.log('No token or not authenticated, redirecting to login');
+          navigate('/authen');
           return;
         }
 

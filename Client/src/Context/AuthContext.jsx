@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
     const handleAuthError = (event) => {
       console.log('Auth error event received:', event.detail.message);
       logout();
-      navigate('/login');
+      navigate('/authen');
     };
 
     window.addEventListener('authError', handleAuthError);
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('token');
           setIsAuthenticated(false);
           setUser(null);
-          navigate('/login');
+          navigate('/authen');
         }
       } else {
         setIsAuthenticated(false);
@@ -50,31 +50,36 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   const login = async (tokenData) => {
-    const token = typeof tokenData === 'string' ? tokenData : tokenData?.token;
-    const userData = typeof tokenData === 'object' ? tokenData.user : null;
-    
-    if (!token) {
-      console.error('No token provided');
-      return;
-    }
-
-    localStorage.setItem('token', token);
-
-    if (userData) {
-      setUser(userData);
-    } else {
-      try {
-        const response = await authAPI.getUserInfo();
-        setUser(response.data);
-      } catch (error) {
-        console.error('Error fetching user data:', error.message);
-        logout();
-        return;
+    try {
+      const token = typeof tokenData === 'string' ? tokenData : tokenData?.token;
+      const userData = typeof tokenData === 'object' ? tokenData.user : null;
+      
+      if (!token) {
+        console.error('No token provided');
+        throw new Error('No token provided');
       }
-    }
 
-    setIsAuthenticated(true);
-    navigate('/home');
+      // Store token first
+      localStorage.setItem('token', token);
+
+      // Validate token by fetching user data
+      const userResponse = userData || await authAPI.getUserInfo();
+      const validatedUser = userData || userResponse.data;
+
+      if (!validatedUser) {
+        throw new Error('Failed to validate user data');
+      }
+
+      setUser(validatedUser);
+      setIsAuthenticated(true);
+      navigate('/home');
+    } catch (error) {
+      console.error('Login error:', error.message);
+      localStorage.removeItem('token');
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    }
   };
 
   // Logout function
@@ -82,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/login');
+    navigate('/authen');
   };
 
   const value = {
