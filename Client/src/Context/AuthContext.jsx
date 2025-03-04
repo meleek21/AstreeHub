@@ -10,42 +10,35 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const handleAuthError = (event) => {
+      console.log('Auth error event received:', event.detail.message);
+      logout();
+      navigate('/login');
+    };
+
+    window.addEventListener('authError', handleAuthError);
+    return () => window.removeEventListener('authError', handleAuthError);
+  }, [navigate]);
+
   // Check for token in localStorage on app load
   useEffect(() => {
     const verifyToken = async () => {
-      console.log('Verifying authentication token...');
       const token = localStorage.getItem('token');
-      console.log('Token exists:', !!token);
 
       if (token) {
         try {
-          // Validate token with backend using apiServices
-          console.log('Attempting to validate token with backend...');
-          try {
-            // Try to get user data with the token
-            const response = await authAPI.getUserInfo();
-            console.log('User data retrieved successfully');
-            setUser(response.data);
-            setIsAuthenticated(true);
-          } catch (validationError) {
-            console.error('Token validation failed:', validationError.message);
-            console.log('Error details:', {
-              status: validationError.response?.status,
-              data: validationError.response?.data,
-            });
-
-            // If validation fails, clear token and set as unauthenticated
-            localStorage.removeItem('token');
-            setIsAuthenticated(false);
-            setUser(null);
-          }
+          const response = await authAPI.getUserInfo();
+          setUser(response.data);
+          setIsAuthenticated(true);
         } catch (error) {
-          console.error('Error during token verification:', error.message);
+          console.error('Token validation failed:', error.message);
+          localStorage.removeItem('token');
           setIsAuthenticated(false);
           setUser(null);
+          navigate('/login');
         }
       } else {
-        console.log('No token found, user is not authenticated');
         setIsAuthenticated(false);
         setUser(null);
       }
@@ -53,11 +46,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     verifyToken();
-  }, []);
+  }, [navigate]);
 
   // Login function
   const login = async (tokenData) => {
-    // Check if tokenData is a string (just the token) or an object with token and user
     const token = typeof tokenData === 'string' ? tokenData : tokenData?.token;
     const userData = typeof tokenData === 'object' ? tokenData.user : null;
     
@@ -65,21 +57,19 @@ export const AuthProvider = ({ children }) => {
       console.error('No token provided');
       return;
     }
-    console.log('Login: Storing token and setting authorization header');
+
     localStorage.setItem('token', token);
 
-    // If user data was provided directly, use it
     if (userData) {
-      console.log('User data provided with login');
       setUser(userData);
     } else {
-      // Otherwise fetch user data
       try {
-        // Try to get user data with the token using apiServices
         const response = await authAPI.getUserInfo();
         setUser(response.data);
       } catch (error) {
         console.error('Error fetching user data:', error.message);
+        logout();
+        return;
       }
     }
 
@@ -89,7 +79,6 @@ export const AuthProvider = ({ children }) => {
 
   // Logout function
   const logout = () => {
-    console.log('Logging out: Removing token and authorization header');
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
@@ -104,14 +93,9 @@ export const AuthProvider = ({ children }) => {
     logout
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Define useAuth outside of AuthProvider
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
