@@ -15,5 +15,6 @@ namespace ASTREE_PFE.DTOs
         public bool IsFirstLogin { get; set; }
         public DateTime CreatedDate { get; set; }
         public DepartmentDTO? Department { get; set; }
+        public string ProfilePictureUrl { get; set; }
     }
 }

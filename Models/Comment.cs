@@ -30,5 +30,6 @@ namespace ASTREE_PFE.Models
         public List<Comment> Replies { get; set; } = new List<Comment>();
         
         public Dictionary<ReactionType, int> Reactions { get; set; } = new Dictionary<ReactionType, int>();
+        public DateTime? UpdatedAt { get; set; }
     }
 }

@@ -25,5 +25,9 @@ namespace ASTREE_PFE.Models
         public List<Comment> Comments { get; set; } = new List<Comment>();
         public Dictionary<ReactionType, int> Reactions { get; set; } = new Dictionary<ReactionType, int>();
         public string[] Tags { get; set; } = Array.Empty<string>();
+        public DateTime? UpdatedAt { get; set; }
+        public List<Document> Documents { get; set; } 
+        public Dictionary<ReactionType, int> ReactionCounts { get; set; } // Add this property
+        public ReactionType? UserReaction { get; set; } // Add this property
     }
 }
