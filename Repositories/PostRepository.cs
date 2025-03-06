@@ -8,7 +8,8 @@ namespace ASTREE_PFE.Repositories
 {
     public class PostRepository : IPostRepository
     {
-        private readonly IMongoCollection<Post> _posts;
+        public IMongoCollection<Post> Collection => _posts;
+    private readonly IMongoCollection<Post> _posts;
 
         public PostRepository(IMongoDatabase database)
         {

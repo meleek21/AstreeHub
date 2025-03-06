@@ -1,11 +1,14 @@
 using ASTREE_PFE.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MongoDB.Driver;
+using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.Repositories.Interfaces
 {
     public interface IPostRepository
     {
+        IMongoCollection<Post> Collection { get; }
         Task<IEnumerable<Post>> GetAllAsync();
         Task<Post> GetByIdAsync(string id);
         Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId);

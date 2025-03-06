@@ -6,6 +6,9 @@ namespace ASTREE_PFE.Services.Interfaces
 {
     public interface IPostService
     {
+        Task DecrementReactionCountAsync(string postId, ReactionType reactionType);
+        Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType);
+        Task IncrementReactionCountAsync(string postId, ReactionType type);
         Task<IEnumerable<Post>> GetAllPostsAsync();
         Task<Post> GetPostByIdAsync(string id);
         Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId);

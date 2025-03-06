@@ -1,5 +1,6 @@
 using ASTREE_PFE.Models;
-using ASTREE_PFE.Repositories.Interfaces;  // Add this line
+using ASTREE_PFE.Repositories.Interfaces;
+using MongoDB.Driver;
 using ASTREE_PFE.Services.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ namespace ASTREE_PFE.Services
 {
     public class PostService : IPostService
     {
+        public IMongoCollection<Post> Collection => _postRepository.Collection;
         private readonly IPostRepository _postRepository;
 
         public PostService(IPostRepository postRepository)
@@ -16,15 +18,66 @@ namespace ASTREE_PFE.Services
             _postRepository = postRepository;
         }
 
-        // Add the missing method
-        public async Task UpdateReactionsAsync(string postId)
+        public async Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType)
         {
-            // Implementation for updating reactions count
             var post = await _postRepository.GetByIdAsync(postId);
-            if (post != null)
+            if (post == null) return;
+
+            // Only process if types are different
+            if (oldType != newType)
             {
-                // Update reaction counts logic here
-                // This would depend on your Post model structure
+                // Remove old reaction count
+                if (oldType != ReactionType.None)
+                {
+                    if (post.ReactionCounts.ContainsKey(oldType))
+                    {
+                        post.ReactionCounts[oldType]--;
+                        if (post.ReactionCounts[oldType] <= 0)
+                        {
+                            post.ReactionCounts.Remove(oldType);
+                        }
+                    }
+                }
+
+                // Add new reaction count
+                if (newType != ReactionType.None)
+                {
+                    post.ReactionCounts[newType] = post.ReactionCounts.GetValueOrDefault(newType, 0) + 1;
+                }
+
+                await _postRepository.UpdateAsync(postId, post);
+            }
+        }
+
+        public async Task IncrementReactionCountAsync(string postId, ReactionType type)
+        {
+            // First get the post to check if ReactionCounts is properly initialized
+            var post = await _postRepository.GetByIdAsync(postId);
+            if (post == null) return;
+            
+            // Initialize ReactionCounts if it's null or not properly set up
+            if (post.ReactionCounts == null)
+            {
+                post.ReactionCounts = new Dictionary<ReactionType, int>();
+            }
+            
+            // Update the reaction count in memory
+            post.ReactionCounts[type] = post.ReactionCounts.GetValueOrDefault(type, 0) + 1;
+            
+            // Update the post with the new reaction counts
+            await _postRepository.UpdateAsync(postId, post);
+        }
+
+        public async Task DecrementReactionCountAsync(string postId, ReactionType reactionType)
+        {
+            var post = await _postRepository.GetByIdAsync(postId);
+            if (post?.ReactionCounts?.ContainsKey(reactionType) == true)
+            {
+                post.ReactionCounts[reactionType]--;
+                if (post.ReactionCounts[reactionType] <= 0)
+                {
+                    post.ReactionCounts.Remove(reactionType);
+                }
                 await _postRepository.UpdateAsync(postId, post);
             }
         }
@@ -65,14 +118,13 @@ namespace ASTREE_PFE.Services
             await _postRepository.AddCommentAsync(postId, comment);
         }
 
-        public async Task UpdateReactionsCountAsync(string postId, Dictionary<ReactionType, int> reactions)
+        public async Task UpdateReactionsAsync(string postId)
         {
-            await _postRepository.UpdateReactionsAsync(postId, reactions);
-        }
-
-        public async Task<IEnumerable<Post>> GetRecentPostsAsync(int count)
-        {
-            return await _postRepository.GetRecentPostsAsync(count);
+            var post = await _postRepository.GetByIdAsync(postId);
+            if (post != null)
+            {
+                await _postRepository.UpdateAsync(postId, post);
+            }
         }
     }
 }
