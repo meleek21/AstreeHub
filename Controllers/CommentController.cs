@@ -6,7 +6,9 @@ using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
+using ASTREE_PFE.DTOs;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -36,16 +38,23 @@ public class CommentController : ControllerBase
                                .Distinct()
                                .ToList();
 
-        var userInfos = await _employeeService.GetUsersInfoAsync(authorIds);
-        var userInfoDict = userInfos.ToDictionary(u => u.Id);
+        var userInfoDict = new Dictionary<string, UserInfoDTO>();
+        foreach (var authorId in authorIds)
+        {
+            var userInfo = await _employeeService.GetUserInfoAsync(authorId);
+            if (userInfo != null)
+            {
+                userInfoDict[authorId] = userInfo;
+            }
+        }
 
         var commentDtos = comments.Select(comment => new CommentResponseDTO
         {
             Id = comment.Id,
             Content = comment.Content,
             AuthorId = comment.AuthorId,
-            AuthorName = $"{userInfoDict[comment.AuthorId]?.FirstName} {userInfoDict[comment.AuthorId]?.LastName}",
-            AuthorProfilePicture = userInfoDict[comment.AuthorId]?.ProfilePictureUrl,
+            AuthorName = userInfoDict.ContainsKey(comment.AuthorId) ? $"{userInfoDict[comment.AuthorId].FirstName} {userInfoDict[comment.AuthorId].LastName}" : string.Empty,
+            AuthorProfilePicture = userInfoDict.ContainsKey(comment.AuthorId) ? userInfoDict[comment.AuthorId].ProfilePictureUrl : string.Empty,
             CreatedAt = comment.Timestamp,
             UpdatedAt = comment.UpdatedAt,
             Replies = comment.Replies?.Select(reply => new ReplyResponseDTO
@@ -53,8 +62,8 @@ public class CommentController : ControllerBase
                 Id = reply.Id,
                 Content = reply.Content,
                 AuthorId = reply.AuthorId,
-                AuthorName = $"{userInfoDict[reply.AuthorId]?.FirstName} {userInfoDict[reply.AuthorId]?.LastName}",
-                AuthorProfilePicture = userInfoDict[reply.AuthorId]?.ProfilePictureUrl,
+                AuthorName = userInfoDict.ContainsKey(reply.AuthorId) ? $"{userInfoDict[reply.AuthorId].FirstName} {userInfoDict[reply.AuthorId].LastName}" : string.Empty,
+                AuthorProfilePicture = userInfoDict.ContainsKey(reply.AuthorId) ? userInfoDict[reply.AuthorId].ProfilePictureUrl : string.Empty,
                 CreatedAt = reply.Timestamp,
                 UpdatedAt = reply.UpdatedAt
             }).ToList()
@@ -83,7 +92,7 @@ public class CommentController : ControllerBase
                 AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                 CreatedAt = comment.Timestamp,
                 UpdatedAt = comment.UpdatedAt,
-                Replies = comment.Replies?.Select(r => new CommentResponseDTO
+                Replies = comment.Replies?.Select(r => new ReplyResponseDTO
                 {
                     Id = r.Id,
                     Content = r.Content,
@@ -176,36 +185,5 @@ public class CommentController : ControllerBase
             await _commentService.DeleteCommentAsync(id);
             return NoContent();
         }
-    }
-
-    // DTOs to separate input/output models
-    public class CommentCreateDto
-    {
-        [Required]
-        public string Content { get; set; } = null!;
-
-        [Required]
-        public string AuthorId { get; set; } = null!;
-
-        [Required]
-        public string PostId { get; set; } = null!;
-    }
-
-    public class CommentUpdateDto
-    {
-        [Required]
-        public string Content { get; set; } = null!;
-    }
-
-    public class CommentResponseDTO
-    {
-        public string Id { get; set; }
-        public string Content { get; set; }
-        public string AuthorId { get; set; }
-        public string AuthorName { get; set; }
-        public string AuthorProfilePicture { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public List<CommentResponseDTO> Replies { get; set; }
     }
 }
