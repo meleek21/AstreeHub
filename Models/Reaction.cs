@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
 using System;
 
 namespace ASTREE_PFE.Models
@@ -20,7 +21,8 @@ namespace ASTREE_PFE.Models
         public string CommentId { get; set; }
         
         public ReactionType Type { get; set; }
-        
+        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
+        public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime? UpdatedAt { get; set; }

@@ -13,10 +13,12 @@ namespace ASTREE_PFE.Services
     public class ReactionService : IReactionService
     {
         private readonly IReactionRepository _reactionRepository;
+        private readonly IPostService _postService;
 
-        public ReactionService(IReactionRepository reactionRepository)
+        public ReactionService(IReactionRepository reactionRepository, IPostService postService)
         {
             _reactionRepository = reactionRepository;
+            _postService = postService;
         }
 
         public async Task<IEnumerable<Reaction>> GetAllAsync()
@@ -75,20 +77,30 @@ namespace ASTREE_PFE.Services
                 var existingReaction = await GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
 
                 // If reaction exists and is the same type, delete it (toggle off)
-                if (existingReaction != null && existingReaction.Type == request.Type)
+                if (existingReaction != null)
                 {
-                    await _reactionRepository.DeleteAsync(existingReaction.Id);
-                    return null;
+                    if (existingReaction.Type == request.Type)
+                    {
+                        await _reactionRepository.DeleteAsync(existingReaction.Id);
+                        if (!string.IsNullOrEmpty(request.PostId))
+                        {
+                            await _postService.DecrementReactionCountAsync(request.PostId, existingReaction.Type);
+                        }
+                        return null;
+                    }
+                    else
+                    {
+                        var previousType = existingReaction.Type;
+                        existingReaction.Type = request.Type;
+                        existingReaction.UpdatedAt = DateTime.UtcNow;
+                        await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
+                        if (!string.IsNullOrEmpty(request.PostId))
+                        {
+                            await _postService.UpdateReactionCountAsync(request.PostId, previousType, request.Type);
+                        }
+                        return existingReaction;
+                    }
                 }
-                // If reaction exists but with different type, update it
-                else if (existingReaction != null)
-                {
-                    existingReaction.Type = request.Type;
-                    existingReaction.UpdatedAt = DateTime.UtcNow;
-                    await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
-                    return existingReaction;
-                }
-                // Otherwise, create a new reaction
                 else
                 {
                     var reaction = new Reaction
@@ -99,6 +111,7 @@ namespace ASTREE_PFE.Services
                         Type = request.Type
                     };
                     await _reactionRepository.CreateAsync(reaction);
+                    await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
                     return reaction;
                 }
             }
@@ -113,6 +126,7 @@ namespace ASTREE_PFE.Services
                 if (existingReaction != null && existingReaction.Type == request.Type)
                 {
                     await _reactionRepository.DeleteAsync(existingReaction.Id);
+                    await _postService.DecrementReactionCountAsync(request.PostId, existingReaction.Type);
                     return null;
                 }
                 else if (existingReaction != null)
@@ -141,12 +155,37 @@ namespace ASTREE_PFE.Services
             }
         }
 
+        public async Task<Reaction> UpdateReactionAsync(string reactionId, ReactionRequest request)
+        {
+            var existingReaction = await _reactionRepository.GetByIdAsync(reactionId);
+            if (existingReaction == null)
+                throw new KeyNotFoundException("Reaction not found");
+
+            var previousType = existingReaction.Type;
+            existingReaction.Type = request.Type;
+            existingReaction.UpdatedAt = DateTime.UtcNow;
+
+            await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
+
+            if (!string.IsNullOrEmpty(existingReaction.PostId))
+            {
+                await _postService.UpdateReactionCountAsync(existingReaction.PostId, previousType, request.Type);
+            }
+
+            return existingReaction;
+        }
+
         public async Task DeleteReactionAsync(string id)
         {
             if (!ObjectId.TryParse(id, out _))
                 throw new ArgumentException("Invalid reaction ID format");
 
-            await _reactionRepository.DeleteAsync(id);
+            var reaction = await _reactionRepository.GetByIdAsync(id);
+            if (reaction != null && !string.IsNullOrEmpty(reaction.PostId))
+            {
+                await _postService.DecrementReactionCountAsync(reaction.PostId, reaction.Type);
+                await _reactionRepository.DeleteAsync(reaction.Id);
+            }
         }
 
         public async Task<IEnumerable<Reaction>> GetReactionsByEmployeeAsync(string employeeId)

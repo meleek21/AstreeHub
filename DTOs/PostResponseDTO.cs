@@ -4,6 +4,8 @@ using ASTREE_PFE.Models;
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
+using MongoDB.Bson.Serialization.Options;
 
 namespace ASTREE_PFE.DTOs
 {
@@ -18,7 +20,8 @@ namespace ASTREE_PFE.DTOs
     public DateTime? UpdatedAt { get; set; }
     public List<Document> Documents { get; set; }
     public List<CommentResponseDTO> Comments { get; set; }
-    public Dictionary<ReactionType, int> ReactionCounts { get; set; }
+    [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
+    public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
     public ReactionType? UserReaction { get; set; }
 }
 }

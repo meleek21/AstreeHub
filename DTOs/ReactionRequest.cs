@@ -10,6 +10,7 @@ namespace ASTREE_PFE.DTOs
         public string EmployeeId { get; set; } = null!;
 
         [Required]
+        [Range(1, 6, ErrorMessage = "Reaction type must be between 1 (Like) and 6 (Angry)")]
         public ReactionType Type { get; set; }
 
         public string? PostId { get; set; }

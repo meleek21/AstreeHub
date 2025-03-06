@@ -1,3 +1,4 @@
+using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 
 namespace ASTREE_PFE.Data{
@@ -7,6 +8,13 @@ namespace ASTREE_PFE.Data{
 
     public MongoDbContext(IConfiguration configuration)
     {
+        // Register enum string converter convention
+        var pack = new ConventionPack
+        {
+            new EnumRepresentationConvention(MongoDB.Bson.BsonType.String)
+        };
+        ConventionRegistry.Register("EnumStringConvention", pack, t => true);
+
         var client = new MongoClient(configuration["MongoDbSettings:ConnectionString"]);
         _database = client.GetDatabase(configuration["MongoDbSettings:DatabaseName"]);
     }

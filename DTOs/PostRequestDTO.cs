@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson.Serialization.Options;
+using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.DTOs
 {
@@ -20,7 +22,8 @@ namespace ASTREE_PFE.DTOs
 
         public List<Document> Documents { get; set; } = new List<Document>();
 
-        public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new Dictionary<ReactionType, int>();
+        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
+        public Dictionary<ReactionType, int> ReactionCounts { get; set; }
 
         public ReactionType? UserReaction { get; set; }
 
