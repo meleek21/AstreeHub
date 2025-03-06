@@ -5,7 +5,7 @@ const API_BASE_URL = 'http://localhost:5126/api';
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // Enable sending cookies in cross-origin requests
+  withCredentials: true,
 });
 
 // Request interceptor to add auth token
@@ -54,3 +54,4 @@ export const postsAPI = {
   updatePost: (id, postData) => api.put(`/post/${id}`, postData),
   deletePost: (id) => api.delete(`/post/${id}`),
 };
+
