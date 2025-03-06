@@ -7,7 +7,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace ASTREE_PFE.DTOs
 {
-    public class CommentResponseDTO
+    public class ReplyResponseDTO
     {
         public string Id { get; set; }
         public string Content { get; set; }
@@ -16,6 +16,5 @@ namespace ASTREE_PFE.DTOs
         public string AuthorProfilePicture { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
-        public List<ReplyResponseDTO> Replies { get; set; }
     }
 }
