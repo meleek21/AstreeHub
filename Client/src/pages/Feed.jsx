@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
 import CreatePost from '../components/CreatePost';
+import Comment from '../components/Comment';
 import '../assets/Css/Feed.css';
-import toast from 'react-hot-toast'; // Import react-hot-toast for notifications
+import toast from 'react-hot-toast'; 
 
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { isAuthenticated, logout, user } = useAuth();
-  const userId = user?.id; // Get the logged-in user's ID
+  const userId = user?.id; 
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -103,8 +105,12 @@ function Feed() {
               <span>Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
             </div>
             <p className="post-content">{post.content}</p>
-            
-
+            <Comment 
+    postId={post.id} 
+    userId={userId} 
+    isAuthenticated={isAuthenticated}
+    token={token}
+/>
             {/* 3-Dot Menu for Posts by the Logged-In User */}
             {post.authorId === userId && (
               <div className="post-actions">
