@@ -31,8 +31,6 @@ namespace ASTREE_PFE.Models
         
         public List<Comment> Replies { get; set; } = new List<Comment>();
         
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
-        public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
         public DateTime? UpdatedAt { get; set; }
     }
 }

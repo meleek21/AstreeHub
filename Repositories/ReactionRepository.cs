@@ -30,10 +30,6 @@ namespace ASTREE_PFE.Repositories
             return await _reactions.Find(r => r.PostId == postId).ToListAsync();
         }
         
-        public async Task<IEnumerable<Reaction>> GetReactionsByCommentAsync(string commentId)
-        {
-            return await _reactions.Find(r => r.CommentId == commentId).ToListAsync();
-        }
         
         public async Task<IEnumerable<Reaction>> GetReactionsByEmployeeAsync(string employeeId)
         {
@@ -45,10 +41,6 @@ namespace ASTREE_PFE.Repositories
             return await _reactions.Find(r => r.EmployeeId == employeeId && r.PostId == postId).FirstOrDefaultAsync();
         }
         
-        public async Task<Reaction> GetReactionByEmployeeAndCommentAsync(string employeeId, string commentId)
-        {
-            return await _reactions.Find(r => r.EmployeeId == employeeId && r.CommentId == commentId).FirstOrDefaultAsync();
-        }
         
         public async Task CreateAsync(Reaction reaction)
         {

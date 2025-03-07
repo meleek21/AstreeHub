@@ -40,13 +40,7 @@ namespace ASTREE_PFE.Services
             return await _reactionRepository.GetReactionsByPostAsync(postId);
         }
 
-        public async Task<IEnumerable<Reaction>> GetReactionsByCommentAsync(string commentId)
-        {
-            if (!ObjectId.TryParse(commentId, out _))
-                return new List<Reaction>();
 
-            return await _reactionRepository.GetReactionsByCommentAsync(commentId);
-        }
 
         public async Task<Reaction> GetReactionByEmployeeAndPostAsync(string employeeId, string postId)
         {
@@ -56,15 +50,7 @@ namespace ASTREE_PFE.Services
             return await _reactionRepository.GetReactionByEmployeeAndPostAsync(employeeId, postId);
         }
 
-        public async Task<Reaction> GetReactionByEmployeeAndCommentAsync(string employeeId, string commentId)
-        {
-            // No need to validate employeeId format since we're accepting UUID
-            
-            if (!ObjectId.TryParse(commentId, out _))
-                return null;
 
-            return await _reactionRepository.GetReactionByEmployeeAndCommentAsync(employeeId, commentId);
-        }
 
         public async Task<Reaction> AddReactionAsync(ReactionRequest request)
         {
@@ -74,7 +60,7 @@ namespace ASTREE_PFE.Services
             if (!string.IsNullOrEmpty(request.PostId))
             {
                 // Check if the reaction already exists
-                var existingReaction = await GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
+                var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
 
                 // If reaction exists and is the same type, delete it (toggle off)
                 if (existingReaction != null)
@@ -115,40 +101,7 @@ namespace ASTREE_PFE.Services
                     return reaction;
                 }
             }
-            else if (!string.IsNullOrEmpty(request.CommentId))
-            {
-                if (!ObjectId.TryParse(request.CommentId, out _))
-                    throw new ArgumentException("Invalid comment ID format");
-
-                // Handle comment reaction (similar logic)
-                var existingReaction = await GetReactionByEmployeeAndCommentAsync(request.EmployeeId, request.CommentId);
-
-                if (existingReaction != null && existingReaction.Type == request.Type)
-                {
-                    await _reactionRepository.DeleteAsync(existingReaction.Id);
-                    await _postService.DecrementReactionCountAsync(request.PostId, existingReaction.Type);
-                    return null;
-                }
-                else if (existingReaction != null)
-                {
-                    existingReaction.Type = request.Type;
-                    existingReaction.UpdatedAt = DateTime.UtcNow;
-                    await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
-                    return existingReaction;
-                }
-                else
-                {
-                    var reaction = new Reaction
-                    {
-                        Id = ObjectId.GenerateNewId().ToString(),
-                        EmployeeId = request.EmployeeId,
-                        CommentId = request.CommentId,
-                        Type = request.Type
-                    };
-                    await _reactionRepository.CreateAsync(reaction);
-                    return reaction;
-                }
-            }
+            
             else
             {
                 throw new ArgumentException("Either PostId or CommentId must be provided");
@@ -201,14 +154,7 @@ namespace ASTREE_PFE.Services
             return GenerateReactionsSummary(reactions);
         }
 
-        public async Task<ReactionsSummary> GetReactionsSummaryForCommentAsync(string commentId)
-        {
-            if (!ObjectId.TryParse(commentId, out _))
-                return new ReactionsSummary();
 
-            var reactions = await _reactionRepository.GetReactionsByCommentAsync(commentId);
-            return GenerateReactionsSummary(reactions);
-        }
 
         private ReactionsSummary GenerateReactionsSummary(IEnumerable<Reaction> reactions)
         {

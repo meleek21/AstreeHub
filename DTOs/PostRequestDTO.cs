@@ -22,17 +22,6 @@ namespace ASTREE_PFE.DTOs
 
         public List<Document> Documents { get; set; } = new List<Document>();
 
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
-        public Dictionary<ReactionType, int> ReactionCounts { get; set; }
 
-        public ReactionType? UserReaction { get; set; }
-
-        public List<Comment> Comments { get; set; } = new List<Comment>();
-
-        public Dictionary<ReactionType, int> Reactions { get; set; } = new Dictionary<ReactionType, int>();
-
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-
-        public DateTime? UpdatedAt { get; set; }
     }
 }

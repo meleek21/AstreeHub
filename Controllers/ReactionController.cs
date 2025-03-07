@@ -58,13 +58,6 @@ namespace ASTREE_PFE.Controllers
             return Ok(reactions);
         }
         
-        // GET: api/reaction/comment/{commentId}
-        [HttpGet("comment/{commentId}")]
-        public async Task<ActionResult<IEnumerable<Reaction>>> GetReactionsByComment(string commentId)
-        {
-            var reactions = await _reactionService.GetReactionsByCommentAsync(commentId);
-            return Ok(reactions);
-        }
         
         // GET: api/reaction/employee/{employeeId}
         [HttpGet("employee/{employeeId}")]
@@ -86,17 +79,6 @@ namespace ASTREE_PFE.Controllers
             return Ok(reaction);
         }
         
-        // GET: api/reaction/employee/{employeeId}/comment/{commentId}
-        [HttpGet("employee/{employeeId}/comment/{commentId}")]
-        public async Task<ActionResult<Reaction>> GetReactionByEmployeeAndComment(string employeeId, string commentId)
-        {
-            var reaction = await _reactionService.GetReactionByEmployeeAndCommentAsync(employeeId, commentId);
-            if (reaction == null)
-            {
-                return NotFound();
-            }
-            return Ok(reaction);
-        }
         
         // GET: api/reaction/post/{postId}/summary
         [HttpGet("post/{postId}/summary")]
@@ -106,13 +88,6 @@ namespace ASTREE_PFE.Controllers
             return Ok(summary);
         }
         
-        // GET: api/reaction/comment/{commentId}/summary
-        [HttpGet("comment/{commentId}/summary")]
-        public async Task<ActionResult<ReactionsSummary>> GetReactionsSummaryForComment(string commentId)
-        {
-            var summary = await _reactionService.GetReactionsSummaryForCommentAsync(commentId);
-            return Ok(summary);
-        }
         
         // DELETE: api/reaction/{id}
         [HttpDelete("{id}")]
