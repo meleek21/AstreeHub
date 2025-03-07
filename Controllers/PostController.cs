@@ -149,12 +149,7 @@ public async Task<ActionResult<Post>> CreatePost([FromBody] PostRequestDTO postR
         IsPublic = postRequest.IsPublic,
         Tags = postRequest.Tags,
         Documents = postRequest.Documents,
-        ReactionCounts = postRequest.ReactionCounts,
-        UserReaction = postRequest.UserReaction,
-        Comments = postRequest.Comments,
-        Reactions = postRequest.Reactions,
-        Timestamp = postRequest.Timestamp,
-        UpdatedAt = postRequest.UpdatedAt
+
     };
 
     var createdPost = await _postService.CreatePostAsync(post);

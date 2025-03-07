@@ -83,20 +83,6 @@ namespace ASTREE_PFE.Services
             await _commentRepository.AddReplyAsync(commentId, reply);
         }
         
-        public async Task UpdateReactionsAsync(string commentId)
-        {
-            // Implementation for updating reactions count
-            var comment = await _commentRepository.GetByIdAsync(commentId);
-            if (comment != null)
-            {
-                // Update reaction counts logic here
-                await _commentRepository.UpdateAsync(commentId, comment);
-            }
-        }
-        
-        public async Task UpdateReactionsAsync(string commentId, Dictionary<ReactionType, int> reactions)
-        {
-            await _commentRepository.UpdateReactionsAsync(commentId, reactions);
-        }
+
     }
 }

@@ -70,11 +70,6 @@ namespace ASTREE_PFE.Repositories
             await _comments.UpdateOneAsync(filter, update);
         }
         
-        public async Task UpdateReactionsAsync(string commentId, Dictionary<ReactionType, int> reactions)
-        {
-            var filter = Builders<Comment>.Filter.Eq(c => c.Id, commentId);
-            var update = Builders<Comment>.Update.Set(c => c.ReactionCounts, reactions);
-            await _comments.UpdateOneAsync(filter, update);
-        }
+
     }
 }

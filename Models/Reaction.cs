@@ -18,8 +18,7 @@ namespace ASTREE_PFE.Models
         public string PostId { get; set; }
         
         // Changed to regular string to support UUID/GUID format if needed
-        public string CommentId { get; set; }
-        
+                
         public ReactionType Type { get; set; }
         [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
         public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();

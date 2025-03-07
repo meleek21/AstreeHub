@@ -10,13 +10,11 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<IEnumerable<Reaction>> GetAllAsync();
         Task<Reaction> GetReactionByIdAsync(string id);
         Task<IEnumerable<Reaction>> GetReactionsByPostAsync(string postId);
-        Task<IEnumerable<Reaction>> GetReactionsByCommentAsync(string commentId);
         Task<IEnumerable<Reaction>> GetReactionsByEmployeeAsync(string employeeId);
         Task<Reaction> GetReactionByEmployeeAndPostAsync(string employeeId, string postId);
-        Task<Reaction> GetReactionByEmployeeAndCommentAsync(string employeeId, string commentId);
         Task<Reaction> AddReactionAsync(ReactionRequest request);
         Task DeleteReactionAsync(string id);
         Task<ReactionsSummary> GetReactionsSummaryForPostAsync(string postId);
-        Task<ReactionsSummary> GetReactionsSummaryForCommentAsync(string commentId);
+
     }
 }
