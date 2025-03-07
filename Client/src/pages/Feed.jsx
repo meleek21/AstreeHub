@@ -4,9 +4,43 @@ import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
 import CreatePost from '../components/CreatePost';
 import Comment from '../components/Comment';
+import Reaction from '../components/Reaction';
 import '../assets/Css/Feed.css';
-import toast from 'react-hot-toast'; 
+import toast from 'react-hot-toast';
 
+// PostCard component
+const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost }) => {
+  return (
+    <div key={post.id || post._id} className="post-card">
+      <div className="post-meta">
+        <span>Publié par : {post.authorName || 'Inconnu'}</span>
+        <span>Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
+      </div>
+      <p className="post-content">{post.content}</p>
+      <Comment 
+        postId={post.id} 
+        userId={userId} 
+        isAuthenticated={isAuthenticated}
+        token={token}
+      />
+      <Reaction postId={post.id} employeeId={userId} />
+      {/* 3-Dot Menu for Posts by the Logged-In User */}
+      {post.authorId === userId && (
+        <div className="post-actions">
+          <div className="dropdown">
+            <button className="dropdown-toggle" aria-label="Options">&#8942;</button>
+            <div className="dropdown-content">
+              <button onClick={() => onUpdatePost(post.id)}>Modifier</button>
+              <button onClick={() => onDeletePost(post.id)}>Supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Main Feed component
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,31 +133,15 @@ function Feed() {
       <CreatePost />
       <div className="posts-list">
         {posts.map((post) => (
-          <div key={post.id || post._id} className="post-card">
-            <div className="post-meta">
-              <span>Publié par : {post.authorName || 'Inconnu'}</span>
-              <span>Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
-            </div>
-            <p className="post-content">{post.content}</p>
-            <Comment 
-    postId={post.id} 
-    userId={userId} 
-    isAuthenticated={isAuthenticated}
-    token={token}
-/>
-            {/* 3-Dot Menu for Posts by the Logged-In User */}
-            {post.authorId === userId && (
-              <div className="post-actions">
-                <div className="dropdown">
-                  <button className="dropdown-toggle">&#8942;</button>
-                  <div className="dropdown-content">
-                    <button onClick={() => handleUpdatePost(post.id)}>Modifier</button>
-                    <button onClick={() => handleDeletePost(post.id)}>Supprimer</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <PostCard
+            key={post.id || post._id}
+            post={post}
+            userId={userId}
+            isAuthenticated={isAuthenticated}
+            token={token}
+            onDeletePost={handleDeletePost}
+            onUpdatePost={handleUpdatePost}
+          />
         ))}
       </div>
     </div>
