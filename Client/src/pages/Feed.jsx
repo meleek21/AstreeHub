@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
+import signalRService from '../services/signalRService';
 import CreatePost from '../components/CreatePost';
 import Comment from '../components/Comment';
 import Reaction from '../components/Reaction';
@@ -45,10 +46,149 @@ function Feed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [signalRConnected, setSignalRConnected] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const userId = user?.id; 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+  // Initialize SignalR connection
+  useEffect(() => {
+    const initializeSignalR = async () => {
+      try {
+        // Register event handlers
+        signalRService.onConnectionChange(setSignalRConnected);
+        
+        signalRService.onNewPost((newPost) => {
+          console.log('New post received via SignalR:', newPost);
+          setPosts(prevPosts => [newPost, ...prevPosts]);
+          toast.success('Nouvelle publication reçue!');
+        });
+        
+        signalRService.onUpdatedPost((updatedPost) => {
+          console.log('Updated post received via SignalR:', updatedPost);
+          setPosts(prevPosts => 
+            prevPosts.map(post => 
+              post.id === updatedPost.id ? updatedPost : post
+            )
+          );
+        });
+        
+        signalRService.onDeletedPost((deletedPostId) => {
+          console.log('Deleted post received via SignalR:', deletedPostId);
+          setPosts(prevPosts => 
+            prevPosts.filter(post => post.id !== deletedPostId)
+          );
+        });
+        
+        // Add handlers for comment events
+        signalRService.onNewComment((comment) => {
+          console.log('New comment received via SignalR:', comment);
+          // Refresh the post that received the comment
+          postsAPI.getPostById(comment.postId)
+            .then(response => {
+              setPosts(prevPosts => 
+                prevPosts.map(post => 
+                  post.id === comment.postId ? response.data : post
+                )
+              );
+            })
+            .catch(err => console.error('Error fetching updated post after new comment:', err));
+        });
+        
+        signalRService.onUpdatedComment((comment) => {
+          console.log('Updated comment received via SignalR:', comment);
+          // Refresh the post that contains the updated comment
+          postsAPI.getPostById(comment.postId)
+            .then(response => {
+              setPosts(prevPosts => 
+                prevPosts.map(post => 
+                  post.id === comment.postId ? response.data : post
+                )
+              );
+            })
+            .catch(err => console.error('Error fetching updated post after comment update:', err));
+        });
+        
+        signalRService.onDeletedComment((commentId) => {
+          console.log('Deleted comment received via SignalR:', commentId);
+          // We need to refresh all posts since we don't know which post the comment belonged to
+          postsAPI.getAllPosts()
+            .then(response => {
+              setPosts(response.data);
+            })
+            .catch(err => console.error('Error fetching posts after comment deletion:', err));
+        });
+        
+        signalRService.onNewReply((reply, parentCommentId) => {
+          console.log('New reply received via SignalR:', reply, 'Parent comment ID:', parentCommentId);
+          // Refresh the post that contains the comment that received the reply
+          postsAPI.getPostById(reply.postId)
+            .then(response => {
+              setPosts(prevPosts => 
+                prevPosts.map(post => 
+                  post.id === reply.postId ? response.data : post
+                )
+              );
+            })
+            .catch(err => console.error('Error fetching updated post after new reply:', err));
+        });
+        
+        // Add handlers for reaction events
+        signalRService.onNewReaction((reaction) => {
+          console.log('New reaction received via SignalR:', reaction);
+          // Refresh the post that received the reaction
+          postsAPI.getPostById(reaction.postId)
+            .then(response => {
+              setPosts(prevPosts => 
+                prevPosts.map(post => 
+                  post.id === reaction.postId ? response.data : post
+                )
+              );
+            })
+            .catch(err => console.error('Error fetching updated post after new reaction:', err));
+        });
+        
+        signalRService.onUpdatedReaction((reaction) => {
+          console.log('Updated reaction received via SignalR:', reaction);
+          // Refresh the post that contains the updated reaction
+          postsAPI.getPostById(reaction.postId)
+            .then(response => {
+              setPosts(prevPosts => 
+                prevPosts.map(post => 
+                  post.id === reaction.postId ? response.data : post
+                )
+              );
+            })
+            .catch(err => console.error('Error fetching updated post after reaction update:', err));
+        });
+        
+        signalRService.onDeletedReaction((reactionId) => {
+          console.log('Deleted reaction received via SignalR:', reactionId);
+          // We need to refresh all posts since we don't know which post the reaction belonged to
+          postsAPI.getAllPosts()
+            .then(response => {
+              setPosts(response.data);
+            })
+            .catch(err => console.error('Error fetching posts after reaction deletion:', err));
+        });
+        
+        // Start the connection
+        await signalRService.start();
+      } catch (err) {
+        console.error('Error initializing SignalR:', err);
+      }
+    };
+    
+    if (isAuthenticated) {
+      initializeSignalR();
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      signalRService.stop();
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -110,7 +250,7 @@ function Feed() {
     try {
       await postsAPI.deletePost(postId);
       toast.success('Publication supprimée avec succès !');
-      setPosts(posts.filter((post) => post.id !== postId)); 
+      // No need to update state here as SignalR will handle it
     } catch (err) {
       console.error('Erreur lors de la suppression de la publication :', err);
       toast.error('Échec de la suppression de la publication. Veuillez réessayer.');
@@ -130,6 +270,7 @@ function Feed() {
   return (
     <div className="feed-container">
       <h1 className="feed-title">Fil d'Actualités</h1>
+      {signalRConnected && <div className="realtime-indicator">Mises à jour en temps réel activées</div>}
       <CreatePost />
       <div className="posts-list">
         {posts.map((post) => (
