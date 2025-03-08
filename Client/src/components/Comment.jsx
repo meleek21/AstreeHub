@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import signalRService from '../services/signalRService';
 import '../assets/Css/Comment.css';
 
 const API_BASE_URL = 'http://localhost:5126/api';
@@ -156,6 +157,59 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
     };
 
+    // Set up SignalR event listeners for real-time updates
+    useEffect(() => {
+        if (!postId) return;
+        
+        // Function to handle new comments
+        const onNewComment = (comment) => {
+            if (comment.postId === postId) {
+                console.log('New comment received via SignalR for this post:', comment);
+                // Force immediate refresh instead of waiting for the next render cycle
+                setTimeout(() => fetchComments(), 0); // Refresh comments when a new one is added
+            }
+        };
+        
+        // Function to handle updated comments
+        const onUpdatedComment = (comment) => {
+            if (comment.postId === postId) {
+                console.log('Updated comment received via SignalR for this post:', comment);
+                // Force immediate refresh instead of waiting for the next render cycle
+                setTimeout(() => fetchComments(), 0); // Refresh comments when one is updated
+            }
+        };
+        
+        // Function to handle deleted comments
+        const onDeletedComment = (commentId) => {
+            console.log('Deleted comment received via SignalR:', commentId);
+            // Force immediate refresh instead of waiting for the next render cycle
+            setTimeout(() => fetchComments(), 0); // Refresh comments when one is deleted
+        };
+        
+        // Function to handle new replies
+        const onNewReply = (reply, parentCommentId) => {
+            if (reply.postId === postId) {
+                console.log('New reply received via SignalR for this post:', reply);
+                // Force immediate refresh instead of waiting for the next render cycle
+                setTimeout(() => fetchComments(), 0); // Refresh comments when a new reply is added
+            }
+        };
+        
+        // Register event handlers
+        signalRService.onNewComment(onNewComment);
+        signalRService.onUpdatedComment(onUpdatedComment);
+        signalRService.onDeletedComment(onDeletedComment);
+        signalRService.onNewReply(onNewReply);
+        
+        // Clean up event handlers on unmount
+        return () => {
+            signalRService.onNewComment(null);
+            signalRService.onUpdatedComment(null);
+            signalRService.onDeletedComment(null);
+            signalRService.onNewReply(null);
+        };
+    }, [postId]);
+
     useEffect(() => {
         if (!postId) {
             setError("No post ID provided");
@@ -192,18 +246,39 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         
         try {
             setError(null);
+            // Optimistically add the comment to the UI
+            const optimisticComment = {
+                id: `temp-${Date.now()}`,
+                content: newComment,
+                authorId: userId,
+                postId: postId,
+                createdAt: new Date().toISOString(),
+                replies: []
+            };
+            
+            // Add the optimistic comment to the list
+            setComments(prevComments => [optimisticComment, ...prevComments]);
+            setNewComment(''); // Clear the input field immediately
+            
+            // Send the request to the server
             await authRequest('/comment', 'post', {
                 content: newComment,
                 authorId: userId,
                 postId: postId
             }, token);
             
-            // Refresh comments to get the updated list with author info
-            await fetchComments();
-            setNewComment('');
+            // SignalR will handle the update, but we'll fetch as a fallback
+            console.log('Comment sent to server, waiting for SignalR update');
+            
+            // Refresh comments after a short delay if SignalR doesn't update
+            setTimeout(() => {
+                fetchComments();
+            }, 1000);
         } catch (err) {
             console.error("Error creating comment:", err);
             setError(`Failed to create comment: ${err.response?.data?.message || err.message}`);
+            // Refresh to get the correct state
+            fetchComments();
         }
     };
 
@@ -215,17 +290,47 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         
         try {
             setError(null);
+            // Optimistically add the reply to the UI
+            setComments(prevComments => 
+                prevComments.map(comment => {
+                    if (comment.id === commentId) {
+                        return {
+                            ...comment,
+                            replies: [
+                                ...(comment.replies || []),
+                                {
+                                    id: `temp-reply-${Date.now()}`,
+                                    content: replyContent,
+                                    authorId: userId,
+                                    postId: postId,
+                                    createdAt: new Date().toISOString()
+                                }
+                            ]
+                        };
+                    }
+                    return comment;
+                })
+            );
+            
+            // Send the request to the server
             await authRequest(`/comment/${commentId}/reply`, 'post', {
                 content: replyContent,
                 authorId: userId,
                 postId: postId
             }, token);
             
-            // Refresh comments to get the updated list with author info
-            await fetchComments();
+            // SignalR will handle the update, but we'll fetch as a fallback
+            console.log('Reply sent to server, waiting for SignalR update');
+            
+            // Refresh comments after a short delay if SignalR doesn't update
+            setTimeout(() => {
+                fetchComments();
+            }, 1000);
         } catch (err) {
             console.error("Error adding reply:", err);
             setError(`Failed to add reply: ${err.response?.data?.message || err.message}`);
+            // Refresh to get the correct state
+            fetchComments();
         }
     };
 
@@ -250,13 +355,11 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                     ))}
                 </ul>
             ) : (
-                <p>No comments yet.</p>
+                <p>No comments yet. Be the first to comment!</p>
             )}
             
-            {/* New comment form */}
-            <div className="new-comment-form">
-                <input
-                    type="text"
+            <div className="comment-form">
+                <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Write a comment..."

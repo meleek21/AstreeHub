@@ -50,8 +50,19 @@ export const authAPI = {
 // Posts API service
 export const postsAPI = {
   getAllPosts: () => api.get('/post'),
+  getPostById: (id) => api.get(`/post/${id}`),
   createPost: (postData) => api.post('/post', postData),
   updatePost: (id, postData) => api.put(`/post/${id}`, postData),
   deletePost: (id) => api.delete(`/post/${id}`),
+};
+
+// Reactions API service
+export const reactionsAPI = {
+  addReaction: (reactionData) => api.post('/reaction', reactionData),
+  getReactionsByPost: (postId) => api.get(`/reaction/post/${postId}`),
+  getReactionsByEmployee: (employeeId) => api.get(`/reaction/employee/${employeeId}`),
+  getReactionByEmployeeAndPost: (employeeId, postId) => api.get(`/reaction/employee/${employeeId}/post/${postId}`),
+  getReactionsSummary: (postId) => api.get(`/reaction/post/${postId}/summary`),
+  deleteReaction: (id) => api.delete(`/reaction/${id}`),
 };
 
