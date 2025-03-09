@@ -27,20 +27,24 @@ namespace ASTREE_PFE.Repositories
         
         public async Task<IEnumerable<Reaction>> GetReactionsByPostAsync(string postId)
         {
-            return await _reactions.Find(r => r.PostId == postId).ToListAsync();
+            var filter = Builders<Reaction>.Filter.Eq(r => r.PostId, postId);
+            return await _reactions.Find(filter).ToListAsync();
         }
-        
         
         public async Task<IEnumerable<Reaction>> GetReactionsByEmployeeAsync(string employeeId)
         {
-            return await _reactions.Find(r => r.EmployeeId == employeeId).ToListAsync();
+            var filter = Builders<Reaction>.Filter.Eq(r => r.EmployeeId, employeeId);
+            return await _reactions.Find(filter).ToListAsync();
         }
         
         public async Task<Reaction> GetReactionByEmployeeAndPostAsync(string employeeId, string postId)
         {
-            return await _reactions.Find(r => r.EmployeeId == employeeId && r.PostId == postId).FirstOrDefaultAsync();
+            var filter = Builders<Reaction>.Filter.And(
+                Builders<Reaction>.Filter.Eq(r => r.EmployeeId, employeeId),
+                Builders<Reaction>.Filter.Eq(r => r.PostId, postId)
+            );
+            return await _reactions.Find(filter).FirstOrDefaultAsync();
         }
-        
         
         public async Task CreateAsync(Reaction reaction)
         {
@@ -49,12 +53,14 @@ namespace ASTREE_PFE.Repositories
         
         public async Task UpdateAsync(string id, Reaction reaction)
         {
-            await _reactions.ReplaceOneAsync(r => r.Id == id, reaction);
+            var filter = Builders<Reaction>.Filter.Eq(r => r.Id, id);
+            await _reactions.ReplaceOneAsync(filter, reaction);
         }
         
         public async Task DeleteAsync(string id)
         {
-            await _reactions.DeleteOneAsync(r => r.Id == id);
+            var filter = Builders<Reaction>.Filter.Eq(r => r.Id, id);
+            await _reactions.DeleteOneAsync(filter);
         }
     }
 }

@@ -12,6 +12,7 @@ using MongoDB.Driver;
 using CloudinaryDotNet;
 using System.Text.Json.Serialization;
 using System.Text;
+using ASTREE_PFE.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -221,6 +222,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hubs
+app.MapHub<FeedHub>("/hubs/feed");
 //app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
