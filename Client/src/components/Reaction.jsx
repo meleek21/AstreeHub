@@ -192,59 +192,85 @@ function Reaction({ postId, employeeId }) {
 
   const handleReaction = async (type) => {
     try {
-      // Optimistically update UI before server responds
       const isTogglingOff = userReaction === type;
+      const prevReaction = userReaction;
+      const prevSummary = { ...reactionSummary };
       
-      // Update local state immediately for better UX
+      // Optimistically update UI
       if (isTogglingOff) {
-        // If clicking the same reaction, remove it
         setUserReaction(null);
-        // Decrement the count for this reaction type
         setReactionSummary(prev => ({
           ...prev,
-          [`${type}Count`]: Math.max(0, ensureNumericValue(prev[`${type}Count`]) - 1),
-          Total: Math.max(0, ensureNumericValue(prev.Total) - 1)
+          [`${type}Count`]: Math.max(0, prev[`${type}Count`] - 1),
+          Total: Math.max(0, prev.Total - 1)
         }));
+        
+        // Find the user's reaction ID to delete
+        const userReactionObj = reactedUsers.find(r => r.employeeId === employeeId && r.type === type);
+        if (userReactionObj) {
+          await reactionsAPI.deleteReaction(userReactionObj.id);
+          console.log('Reaction deleted from server, waiting for SignalR update');
+        }
       } else {
-        // If user had a previous reaction, decrement that one
-        if (userReaction) {
-          setReactionSummary(prev => ({
-            ...prev,
-            [`${userReaction}Count`]: Math.max(0, ensureNumericValue(prev[`${userReaction}Count`]) - 1)
-          }));
-        } else {
-          // If no previous reaction, increment total
-          setReactionSummary(prev => ({
-            ...prev,
-            Total: ensureNumericValue(prev.Total) + 1
-          }));
+        if (prevReaction) {
+          // If user had a previous reaction, delete it first
+          const prevReactionObj = reactedUsers.find(r => r.employeeId === employeeId && r.type === prevReaction);
+          if (prevReactionObj) {
+            await reactionsAPI.deleteReaction(prevReactionObj.id);
+          }
         }
         
-        // Set the new reaction
-        setUserReaction(type);
-        // Increment the count for this reaction type
         setReactionSummary(prev => ({
           ...prev,
-          [`${type}Count`]: ensureNumericValue(prev[`${type}Count`]) + 1
+          [`${prevReaction}Count`]: prevReaction ? Math.max(0, prev[`${prevReaction}Count`] - 1) : prev[`${prevReaction}Count`],
+          [`${type}Count`]: prev[`${type}Count`] + 1,
+          Total: prevReaction ? prev.Total : prev.Total + 1
         }));
+        setUserReaction(type);
+        
+        // Add the new reaction
+        await reactionsAPI.addReaction({ postId, type, employeeId });
+        console.log('Reaction sent to server, waiting for SignalR update');
       }
-      
-      // Send request to server using the reactionsAPI service
-      await reactionsAPI.addReaction({ postId, type, employeeId });
-      
-      // SignalR will handle subsequent updates, but we'll fetch as a fallback
-      console.log('Reaction sent to server, waiting for SignalR update');
+
+      // Set a timeout to verify the update
+      const verificationTimeout = setTimeout(async () => {
+        try {
+          const { summaryRes } = await fetchReactionData(postId, employeeId);
+          const serverSummary = summaryRes.data;
+          
+          // If the server data doesn't match our local state, refresh
+          if (JSON.stringify(serverSummary) !== JSON.stringify(reactionSummary)) {
+            console.log('Local state out of sync with server, refreshing...');
+            const { summaryRes, reactionsRes, userRes } = await fetchReactionData(postId, employeeId);
+            
+            const validatedSummary = {
+              Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
+              LikeCount: ensureNumericValue(summaryRes.data?.likeCount || summaryRes.data?.LikeCount),
+              LoveCount: ensureNumericValue(summaryRes.data?.loveCount || summaryRes.data?.LoveCount),
+              HahaCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.HahaCount),
+              WowCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.WowCount),
+              SadCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.SadCount),
+              AngryCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.AngryCount)
+            };
+            
+            setReactionSummary(validatedSummary);
+            setReactedUsers(reactionsRes.data || []);
+            setUserReaction(userRes?.data?.type || null);
+          }
+        } catch (verificationError) {
+          console.error('Error verifying reaction update:', verificationError);
+        }
+      }, 2000); // Wait 2 seconds before verifying
+
+      return () => clearTimeout(verificationTimeout);
     } catch (error) {
       setError('Failed to update reaction. Please try again.');
-      console.error('Error updating reaction', error);
+      console.error('Error updating reaction:', error);
       
       // Revert optimistic update on error
       const { summaryRes, reactionsRes, userRes } = await fetchReactionData(postId, employeeId);
       
-      // Log the raw data to debug
-      console.log('Raw summary data:', summaryRes.data);
-      
-      // Ensure we have valid numeric values when reverting
       const validatedSummary = {
         Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
         LikeCount: ensureNumericValue(summaryRes.data?.likeCount || summaryRes.data?.LikeCount),

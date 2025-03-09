@@ -5,6 +5,8 @@ using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Services 
 {
@@ -12,11 +14,13 @@ namespace ASTREE_PFE.Services
     {
         private readonly ICommentRepository _commentRepository;
         private readonly IPostRepository _postRepository;
+        private readonly IHubContext<FeedHub> _feedHub;
         
-        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository)
+        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, IHubContext<FeedHub> feedHub)
         {
             _commentRepository = commentRepository;
             _postRepository = postRepository;
+            _feedHub = feedHub;
         }
         
         public async Task<IEnumerable<Comment>> GetAllCommentsAsync()
@@ -52,12 +56,18 @@ namespace ASTREE_PFE.Services
             // Also add the comment to the post's Comments list
             await _postRepository.AddCommentAsync(comment.PostId, comment);
             
+            // Broadcast the new comment to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveNewComment", comment);
+            
             return comment;
         }
         
         public async Task UpdateCommentAsync(string id, Comment comment)
         {
             await _commentRepository.UpdateAsync(id, comment);
+            
+            // Broadcast the updated comment to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedComment", comment);
         }
         
         public async Task DeleteCommentAsync(string id)
@@ -69,6 +79,9 @@ namespace ASTREE_PFE.Services
                 
                 // Remove comment from post
                 await _postRepository.RemoveCommentAsync(comment.PostId, id);
+                
+                // Broadcast the deleted comment ID to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveDeletedComment", id);
             }
         }
         
@@ -81,6 +94,9 @@ namespace ASTREE_PFE.Services
             }
             
             await _commentRepository.AddReplyAsync(commentId, reply);
+            
+            // Broadcast the new reply to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveNewReply", reply, commentId);
         }
         
 

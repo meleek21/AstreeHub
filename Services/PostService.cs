@@ -5,6 +5,8 @@ using ASTREE_PFE.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Services
 {
@@ -12,10 +14,12 @@ namespace ASTREE_PFE.Services
     {
         public IMongoCollection<Post> Collection => _postRepository.Collection;
         private readonly IPostRepository _postRepository;
+        private readonly IHubContext<FeedHub> _feedHub;
 
-        public PostService(IPostRepository postRepository)
+        public PostService(IPostRepository postRepository, IHubContext<FeedHub> feedHub)
         {
             _postRepository = postRepository;
+            _feedHub = feedHub;
         }
 
         public async Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType)
@@ -100,17 +104,31 @@ namespace ASTREE_PFE.Services
         public async Task<Post> CreatePostAsync(Post post)
         {
             await _postRepository.CreateAsync(post);
+            
+            // Broadcast the new post to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveNewPost", post);
+            
             return post;
         }
 
         public async Task UpdatePostAsync(string id, Post post)
         {
             await _postRepository.UpdateAsync(id, post);
+            
+            // Broadcast the updated post to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedPost", post);
         }
 
         public async Task DeletePostAsync(string id)
         {
-            await _postRepository.DeleteAsync(id);
+            var post = await _postRepository.GetByIdAsync(id);
+            if (post != null)
+            {
+                await _postRepository.DeleteAsync(id);
+                
+                // Broadcast the deleted post ID to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveDeletedPost", id);
+            }
         }
 
         public async Task AddCommentAsync(string postId, Comment comment)

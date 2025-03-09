@@ -34,7 +34,7 @@ class SignalRService {
     try {
       // Create the connection
       this.connection = new HubConnectionBuilder()
-        .withUrl('http://localhost:5126/feedHub', {
+        .withUrl('http://localhost:5126/hubs/feed', {
           accessTokenFactory: () => localStorage.getItem('token'),
         })
         .withAutomaticReconnect([

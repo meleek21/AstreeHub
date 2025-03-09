@@ -7,6 +7,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Services
 {
@@ -14,11 +16,13 @@ namespace ASTREE_PFE.Services
     {
         private readonly IReactionRepository _reactionRepository;
         private readonly IPostService _postService;
+        private readonly IHubContext<FeedHub> _feedHub;
 
-        public ReactionService(IReactionRepository reactionRepository, IPostService postService)
+        public ReactionService(IReactionRepository reactionRepository, IPostService postService, IHubContext<FeedHub> feedHub)
         {
             _reactionRepository = reactionRepository;
             _postService = postService;
+            _feedHub = feedHub;
         }
 
         public async Task<IEnumerable<Reaction>> GetAllAsync()
@@ -59,49 +63,27 @@ namespace ASTREE_PFE.Services
             // Check if we're dealing with a post or comment reaction
             if (!string.IsNullOrEmpty(request.PostId))
             {
-                // Check if the reaction already exists
-                var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
+                var reaction = new Reaction
+                {
+                    EmployeeId = request.EmployeeId,
+                    PostId = request.PostId,
+                    Type = request.Type,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
 
-                // If reaction exists and is the same type, delete it (toggle off)
-                if (existingReaction != null)
-                {
-                    if (existingReaction.Type == request.Type)
-                    {
-                        await _reactionRepository.DeleteAsync(existingReaction.Id);
-                        if (!string.IsNullOrEmpty(request.PostId))
-                        {
-                            await _postService.DecrementReactionCountAsync(request.PostId, existingReaction.Type);
-                        }
-                        return null;
-                    }
-                    else
-                    {
-                        var previousType = existingReaction.Type;
-                        existingReaction.Type = request.Type;
-                        existingReaction.UpdatedAt = DateTime.UtcNow;
-                        await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
-                        if (!string.IsNullOrEmpty(request.PostId))
-                        {
-                            await _postService.UpdateReactionCountAsync(request.PostId, previousType, request.Type);
-                        }
-                        return existingReaction;
-                    }
-                }
-                else
-                {
-                    var reaction = new Reaction
-                    {
-                        Id = ObjectId.GenerateNewId().ToString(),
-                        EmployeeId = request.EmployeeId,
-                        PostId = request.PostId,
-                        Type = request.Type
-                    };
-                    await _reactionRepository.CreateAsync(reaction);
-                    await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
-                    return reaction;
-                }
+                await _reactionRepository.CreateAsync(reaction);
+                await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
+                
+                // Broadcast the new reaction to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveNewReaction", reaction);
+                
+                // Broadcast updated reaction summary
+                var summary = await GetReactionsSummaryForPostAsync(request.PostId);
+                await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", request.PostId, summary);
+                
+                return reaction;
             }
-            
             else
             {
                 throw new ArgumentException("Either PostId or CommentId must be provided");
@@ -124,7 +106,16 @@ namespace ASTREE_PFE.Services
             {
                 await _postService.UpdateReactionCountAsync(existingReaction.PostId, previousType, request.Type);
             }
-
+            
+            // Broadcast the updated reaction to all connected clients
+            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedReaction", existingReaction);
+            
+            // Broadcast updated reaction summary
+            if (!string.IsNullOrEmpty(existingReaction.PostId))
+            {
+                var summary = await GetReactionsSummaryForPostAsync(existingReaction.PostId);
+                await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", existingReaction.PostId, summary);
+            }
             return existingReaction;
         }
 
@@ -136,8 +127,16 @@ namespace ASTREE_PFE.Services
             var reaction = await _reactionRepository.GetByIdAsync(id);
             if (reaction != null && !string.IsNullOrEmpty(reaction.PostId))
             {
-                await _postService.DecrementReactionCountAsync(reaction.PostId, reaction.Type);
+                var postId = reaction.PostId;
+                await _postService.DecrementReactionCountAsync(postId, reaction.Type);
                 await _reactionRepository.DeleteAsync(reaction.Id);
+                
+                // Broadcast the deleted reaction to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveReactionDeleted", new { ReactionId = id, PostId = postId });
+                
+                // Broadcast updated reaction summary
+                var summary = await GetReactionsSummaryForPostAsync(postId);
+                await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", postId, summary);
             }
         }
 
