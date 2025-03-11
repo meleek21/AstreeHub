@@ -1,294 +1,109 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
-
-:root {
-  --primary-color: #0047AB;
-  --secondary-color: #FF6600;
-  --background-color: #F5F5F5;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --accent: #00CED1;
-  --error-color: #D32F2F;
-  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
-  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
-  --border-radius: 8px;
-  --transition-speed: 0.5s;
-}
-
-/* General Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Nunito', sans-serif;
-  background-color: var(--background-color);
-  color: var(--text-primary);
-  line-height: 1.6;
-}
-
-/* Feed Container */
+/* Feed.css */
 .feed-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-}
-
-.feed-title {
-  text-align: center;
-  font-size: 2.5rem;
-  color: var(--primary-color);
-  margin-bottom: 30px;
-  font-family: 'Pacifico', cursive;
-}
-
-/* Posts List */
-.posts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-}
-
-/* Post Card */
-.post-card {
-  background-color: white;
-  border-radius: var(--border-radius);
-  padding: 25px;
-  box-shadow: var(--box-shadow);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
-}
-
-.post-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-}
-
-/* Post Meta */
-.post-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 15px;
-}
-
-/* Post Content */
-.post-content {
-  font-size: 1rem;
-  color: var(--text-primary);
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-/* Post Actions (3-dot menu) */
-.post-actions {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-toggle {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: color var(--transition-speed);
-}
-
-.dropdown-toggle:hover {
-  color: var(--primary-color);
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  right: 0;
-  background-color: white;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  z-index: 1;
-  animation: fadeIn var(--transition-speed);
-}
-
-.dropdown-content button {
-  display: block;
-  width: 100%;
-  padding: 10px 20px;
-  text-align: left;
-  border: none;
-  background: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color var(--transition-speed);
-}
-
-.dropdown-content button:hover {
-  background-color: var(--background-color);
-}
-
-.post-actions:hover .dropdown-content {
-  display: block;
-}
-
-/* Micro-interactions */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    gap: 15px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }
-}
-
-/* Loading and Error States */
-.loading-container,
-.error-container,
-.no-posts {
-  text-align: center;
-  font-size: 1.2rem;
-  color: var(--text-secondary);
-  margin-top: 20px;
-}
-
-.loading-container {
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.5;
+  
+  /* Loading and error messages */
+  .loading-container,
+  .error-container,
+  .no-posts {
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 20px;
+    color: #ff5e5e;
   }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.5;
-  }
+  
+/* Comments Modal */
+.comments-modal {
+    position: fixed; /* Fixed positioning relative to the viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of other elements */
+    opacity: 0; /* Start hidden */
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-/* Create Post Form Container */
-.create-post-form {
-  background-color: white;
-  border-radius: var(--border-radius);
-  padding: 20px;
-  box-shadow: var(--box-shadow);
-  margin-bottom: 20px;
-  position: sticky;
-  top: 20px;
-  z-index: 10;
-  transition: all var(--transition-speed);
+.comments-modal.open {
+    opacity: 1; /* Fully visible */
+    visibility: visible; /* Fully visible */
 }
 
-.create-post-form.scrolled {
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+.modal-content {
+    background-color: white;
+    border-radius: 15px; /* Slightly rounded corners */
+    padding: 24px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
+    transform: scale(0.9); /* Start slightly smaller */
+    opacity: 0; /* Start hidden */
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Subtle shadow */
 }
 
-.create-post-form h1 {
-  font-size: 1.5rem;
-  color: var(--primary-color);
-  margin-bottom: 15px;
-  text-align: center;
-  transition: font-size var(--transition-speed);
+.comments-modal.open .modal-content {
+    border-radius: 15px;
+    transform: scale(1); /* Scale to normal size */
+    opacity: 1; /* Fully visible */
+    background-color: white;
 }
 
-.create-post-form.scrolled h1 {
-  font-size: 1.2rem;
+.close-modal {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    font-size: 26px;
+    transition: all 0.3s ease;
 }
 
-/* Textarea Styling */
-.create-post-form textarea {
-  width: 100%;
-  min-height: 100px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  color: var(--text-primary);
-  resize: vertical;
-  transition: all var(--transition-speed);
+.close-modal:hover {
+    color: var(--error-color);
+    transform: scale(1.1);
 }
 
-.create-post-form.scrolled textarea {
-  min-height: 80px;
-  font-size: 0.9rem;
+/* Smooth scrollbar for modal content */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
 }
 
-.create-post-form textarea:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  outline: none;
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
 }
 
-.create-post-form textarea::placeholder {
-  color: var(--text-secondary);
+.modal-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
 }
 
-/* Submit Button Styling */
-.create-post-form button {
-  display: block;
-  width: 100%;
-  padding: 12px;
-  margin-top: 15px;
-  background: var(--gradient-primary);
-  color: white;
-  border: none;
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity var(--transition-speed), transform var(--transition-speed);
-  opacity: 1;
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
-.create-post-form.scrolled button {
-  opacity: 0;
-  transform: translateY(10px);
-  pointer-events: none;
-}
-
-.create-post-form textarea:focus + button {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.create-post-form button:hover {
-  background: var(--gradient-secondary);
-  transform: translateY(-2px);
-}
-
-.create-post-form button:active {
-  transform: translateY(0);
-}
-
-.create-post-form button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Micro-interactions */
-@keyframes pulse {
-  0% {
-    opacity: 0.8;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.8;
-  }
-}
-
-.create-post-form button[disabled] {
-  animation: pulse 1.5s infinite;
-}
