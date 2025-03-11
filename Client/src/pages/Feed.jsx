@@ -4,42 +4,10 @@ import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
 import signalRService from '../services/signalRService';
 import CreatePost from '../components/CreatePost';
-import Comment from '../components/Comment';
-import Reaction from '../components/Reaction';
+import PostCard from '../components/PostCard'; // Import the PostCard component
+import Comment from '../components/Comment'; // Import the Comment component
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
-
-// PostCard component
-const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost }) => {
-  return (
-    <div key={post.id || post._id} className="post-card">
-      <div className="post-meta">
-        <span>Publié par : {post.authorName || 'Inconnu'}</span>
-        <span>Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
-      </div>
-      <p className="post-content">{post.content}</p>
-      <Comment 
-        postId={post.id} 
-        userId={userId} 
-        isAuthenticated={isAuthenticated}
-        token={token}
-      />
-      <Reaction postId={post.id} employeeId={userId} />
-      {/* 3-Dot Menu for Posts by the Logged-In User */}
-      {post.authorId === userId && (
-        <div className="post-actions">
-          <div className="dropdown">
-            <button className="dropdown-toggle" aria-label="Options">&#8942;</button>
-            <div className="dropdown-content">
-              <button onClick={() => onUpdatePost(post.id)}>Modifier</button>
-              <button onClick={() => onDeletePost(post.id)}>Supprimer</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Main Feed component
 function Feed() {
@@ -51,6 +19,22 @@ function Feed() {
   const userId = user?.id; 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+  // State for comments modal
+  const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
+  const [selectedPostId, setSelectedPostId] = useState(null);
+
+  // Open comments modal
+  const openCommentsModal = (postId) => {
+    setSelectedPostId(postId);
+    setIsCommentsModalOpen(true);
+  };
+
+  // Close comments modal
+  const closeCommentsModal = () => {
+    setIsCommentsModalOpen(false);
+    setSelectedPostId(null);
+  };
 
   // Initialize SignalR connection
   useEffect(() => {
@@ -269,8 +253,6 @@ function Feed() {
 
   return (
     <div className="feed-container">
-      <h1 className="feed-title">Fil d'Actualités</h1>
-      {signalRConnected && <div className="realtime-indicator">Mises à jour en temps réel activées</div>}
       <CreatePost />
       <div className="posts-list">
         {posts.map((post) => (
@@ -282,9 +264,27 @@ function Feed() {
             token={token}
             onDeletePost={handleDeletePost}
             onUpdatePost={handleUpdatePost}
+            openCommentsModal={openCommentsModal} // Pass the open modal function
           />
         ))}
       </div>
+
+      {/* Comments Modal */}
+      {isCommentsModalOpen && (
+        <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
+          <div className="modal-content">
+            <button className="close-modal" onClick={closeCommentsModal}>
+              &times;
+            </button>
+            <Comment 
+              postId={selectedPostId} 
+              userId={userId} 
+              isAuthenticated={isAuthenticated}
+              token={token}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
