@@ -22,6 +22,7 @@ namespace ASTREE_PFE.DTOs
 
         public List<Document> Documents { get; set; } = new List<Document>();
 
-
+        // Optional channel ID, null by default
+        public string? ChannelId { get; set; } = null;
     }
 }
