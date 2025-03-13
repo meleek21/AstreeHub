@@ -23,5 +23,12 @@ namespace ASTREE_PFE.Models
         
         // Navigation property for Employees in this department
         public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        
+        // Reference to department's channel - stores the MongoDB ObjectId as string
+        public string? ChannelId { get; set; }
+        
+        // Navigation property for Channel (not mapped to database)
+        [NotMapped]
+        public virtual Channel? Channel { get; set; }
     }
 }

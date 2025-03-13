@@ -23,5 +23,6 @@ namespace ASTREE_PFE.DTOs
     [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
     public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
     public ReactionType? UserReaction { get; set; }
+    public string ChannelId { get; set; }
 }
 }

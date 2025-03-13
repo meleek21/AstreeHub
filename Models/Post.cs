@@ -31,5 +31,11 @@ namespace ASTREE_PFE.Models
         [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
         public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
         public ReactionType? UserReaction { get; set; } // Add this property
+        
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string ChannelId { get; set; } = null!;
+        
+        [BsonIgnore]
+        public virtual Channel Channel { get; set; }
     }
 }
