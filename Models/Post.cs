@@ -27,8 +27,7 @@ namespace ASTREE_PFE.Models
         public Dictionary<ReactionType, int> Reactions { get; set; } = new Dictionary<ReactionType, int>();
         public string[] Tags { get; set; } = Array.Empty<string>();
         public DateTime? UpdatedAt { get; set; }
-        public List<Document> Documents { get; set; } 
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
+        public List<string> FileIds { get; set; } = new List<string>();
         public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
         public ReactionType? UserReaction { get; set; } // Add this property
         

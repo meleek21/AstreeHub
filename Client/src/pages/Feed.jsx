@@ -249,25 +249,28 @@ function Feed() {
 
   if (loading) return <div className="loading-container">Chargement en cours...</div>;
   if (error) return <div className="error-container">{error}</div>;
-  if (!posts || posts.length === 0) return <div className="no-posts">Aucune publication disponible.</div>;
 
   return (
     <div className="feed-container">
       <CreatePost />
-      <div className="posts-list">
-        {posts.map((post) => (
-          <PostCard
-            key={post.id || post._id}
-            post={post}
-            userId={userId}
-            isAuthenticated={isAuthenticated}
-            token={token}
-            onDeletePost={handleDeletePost}
-            onUpdatePost={handleUpdatePost}
-            openCommentsModal={openCommentsModal} // Pass the open modal function
-          />
-        ))}
-      </div>
+      {!loading && (!posts || posts.length === 0) ? (
+        <div className="no-posts">Soyez le premier à publier !</div>
+      ) : (
+        <div className="posts-list">
+          {posts.map((post) => (
+            <PostCard
+              key={post.id || post._id}
+              post={post}
+              userId={userId}
+              isAuthenticated={isAuthenticated}
+              token={token}
+              onDeletePost={handleDeletePost}
+              onUpdatePost={handleUpdatePost}
+              openCommentsModal={openCommentsModal} // Pass the open modal function
+            />
+          ))}
+        </div>
+      )}
 
       {/* Comments Modal */}
       {isCommentsModalOpen && (

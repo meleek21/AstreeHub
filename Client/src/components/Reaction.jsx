@@ -1,124 +1,157 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import { debounce } from 'lodash';
 import signalRService from '../services/signalRService';
-import { reactionsAPI } from '../services/apiServices';
+import { reactionsAPI,userAPI } from '../services/apiServices';
 import '../assets/Css/Reactions.css';
 
-// Constants for reaction types
-const reactionTypes = ['Like', 'Love', 'Haha', 'Wow', 'Sad', 'Angry'];
+const reactionTypes = [
+  { type: 'Jaime', icon: <lord-icon src="https://cdn.lordicon.com/jrvgxhep.json" trigger="morph" state="hover-up" colors="primary:#f24c00,secondary:#f4b69c" style={{ width: '50px', height: '50px' }} /> },
+  { type: 'Bravo', icon: <lord-icon src="https://cdn.lordicon.com/hlpsxaub.json" trigger="morph" colors="primary:#f4b69c,secondary:#3a3347" style={{ width: '50px', height: '50px' }} /> },
+  { type: 'Jadore', icon: <lord-icon src="https://cdn.lordicon.com/dqhmanhc.json" trigger="morph" state="morph-glitter" style={{ width: '50px', height: '50px' }} /> },
+  { type: 'Youpi', icon: <lord-icon src="https://cdn.lordicon.com/mhnfcfpf.json" trigger="morph" colors="primary:#4bb3fd,secondary:#ffc738,tertiary:#f28ba8,quaternary:#f24c00" style={{ width: '50px', height: '50px' }} /> },
+  { type: 'Brillant', icon: <lord-icon src="https://cdn.lordicon.com/edplgash.json" trigger="morph" style={{ width: '50px', height: '50px' }} /> },
+];
 
-// Helper function to fetch reaction data
 const fetchReactionData = async (postId, employeeId) => {
   try {
     const [summaryRes, reactionsRes, userRes] = await Promise.all([
       reactionsAPI.getReactionsSummary(postId),
       reactionsAPI.getReactionsByPost(postId),
-      reactionsAPI.getReactionByEmployeeAndPost(employeeId, postId).catch(() => ({ data: null })) // Handle 404 for user reaction
+      reactionsAPI.getReactionByEmployeeAndPost(employeeId, postId).catch(() => ({ data: null })),
     ]);
-    return { summaryRes, reactionsRes, userRes };
+
+    // Get unique employee IDs from reactions
+    const employeeIds = [...new Set(reactionsRes.data.map(r => r.employeeId))];
+    // Fetch user info for all employees who reacted
+    const userInfoPromises = employeeIds.map(id => userAPI.getUserInfo(id));
+    const userInfos = await Promise.all(userInfoPromises);
+
+    // Create a map of employeeId to user info
+    const userInfoMap = userInfos.reduce((map, userInfo) => {
+      map[userInfo.data.employeeId] = userInfo.data;
+      return map;
+    }, {});
+
+    return { 
+      summaryRes, 
+      reactionsRes, 
+      userRes,
+      userInfoMap 
+    };
   } catch (error) {
     console.error('Error fetching reaction data:', error);
     throw error;
   }
 };
 
-// Helper function to ensure numeric values for reaction counts
 const ensureNumericValue = (value) => {
   const numValue = Number(value);
   return !isNaN(numValue) ? numValue : 0;
 };
 
-// ReactionButton component
-const ReactionButton = ({ type, count, isActive, onClick }) => (
+const ReactionButton = ({ type, icon, count, isActive, onClick }) => (
   <button
-    key={type}
     onClick={onClick}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        onClick();
+      }
+    }}
     className={`reaction-button ${isActive ? 'active' : ''}`}
     aria-label={`React with ${type}`}
+    tabIndex={0}
   >
-    {type} ({count})
+    {icon} ({count})
   </button>
 );
 
-// ReactedUsers component
-const ReactedUsers = ({ users }) => (
+const ReactedUsers = ({ users, userInfoMap }) => (
   <div className="reacted-users">
-    {users.map((reaction) => (
-      <span key={reaction.id} className="user-reaction">
-        {reaction.employeeId} ({reaction.type})
-      </span>
-    ))}
+    {users.map((reaction) => {
+      const userInfo = userInfoMap[reaction.employeeId];
+      const displayName = userInfo 
+        ? `${userInfo.firstName} ${userInfo.lastName}`
+        : `User ${reaction.employeeId}`; // Fallback to ID if user info is not available
+      
+      return (
+        <span key={reaction.id} className="user-reaction">
+          {displayName} ({reaction.type})
+        </span>
+      );
+    })}
   </div>
 );
 
-// Main Reaction component
 function Reaction({ postId, employeeId }) {
   const [reactionSummary, setReactionSummary] = useState({
     Total: 0,
-    LikeCount: 0,
-    LoveCount: 0,
-    HahaCount: 0,
-    WowCount: 0,
-    SadCount: 0,
-    AngryCount: 0
+    JaimeCount: 0,
+    JadoreCount: 0,
+    BravoCount: 0,
+    YoupiCount: 0,
+    BrillantCount: 0,
   });
   const [userReaction, setUserReaction] = useState(null);
   const [reactedUsers, setReactedUsers] = useState([]);
+  const [userInfoMap, setUserInfoMap] = useState({});  // New state for user info
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPopover, setShowPopover] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Set up SignalR event handlers
   useEffect(() => {
     const refreshReactionData = async () => {
       try {
-        const { summaryRes, reactionsRes, userRes } = await fetchReactionData(postId, employeeId);
+        const { summaryRes, reactionsRes, userRes, userInfoMap } = await fetchReactionData(postId, employeeId);
+        // ... existing summary validation ...
         const validatedSummary = {
           Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-          LikeCount: ensureNumericValue(summaryRes.data?.likeCount || summaryRes.data?.LikeCount),
-          LoveCount: ensureNumericValue(summaryRes.data?.loveCount || summaryRes.data?.LoveCount),
-          HahaCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.HahaCount),
-          WowCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.WowCount),
-          SadCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.SadCount),
-          AngryCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.AngryCount)
+          JaimeCount: ensureNumericValue(summaryRes.data?.JaimeCount || summaryRes.data?.JaimeCount),
+          JadoreCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.JadoreCount),
+          BravoCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.BravoCount),
+          YoupiCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.YoupiCount),
+          BrillantCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.BrillantCount),
         };
         setReactionSummary(validatedSummary);
         setReactedUsers(reactionsRes.data || []);
         setUserReaction(userRes?.data?.type || null);
+        setUserInfoMap(userInfoMap);
       } catch (error) {
         console.error('Error refreshing reactions', error);
       }
     };
 
+    const debouncedRefresh = debounce(refreshReactionData, 300);
+
     const onNewReaction = (reaction) => {
       if (reaction.postId === postId) {
-        setTimeout(() => refreshReactionData(), 0);
+        debouncedRefresh();
       }
     };
 
     const onUpdatedReaction = (reaction) => {
       if (reaction.postId === postId) {
-        setTimeout(() => refreshReactionData(), 0);
+        debouncedRefresh();
       }
     };
 
     const onDeletedReaction = (reactionId) => {
-      setTimeout(() => refreshReactionData(), 0);
+      debouncedRefresh();
     };
 
     const onReactionSummary = (receivedPostId, summary) => {
       if (receivedPostId === postId) {
         const validatedSummary = {
           Total: ensureNumericValue(summary.total || summary.Total),
-          LikeCount: ensureNumericValue(summary.likeCount || summary.LikeCount),
-          LoveCount: ensureNumericValue(summary.loveCount || summary.LoveCount),
-          HahaCount: ensureNumericValue(summary.hahaCount || summary.HahaCount),
-          WowCount: ensureNumericValue(summary.wowCount || summary.WowCount),
-          SadCount: ensureNumericValue(summary.sadCount || summary.SadCount),
-          AngryCount: ensureNumericValue(summary.angryCount || summary.AngryCount)
+          JaimeCount: ensureNumericValue(summary.JaimeCount || summary.JaimeCount),
+          JadoreCount: ensureNumericValue(summary.hahaCount || summary.JadoreCount),
+          BravoCount: ensureNumericValue(summary.wowCount || summary.BravoCount),
+          YoupiCount: ensureNumericValue(summary.sadCount || summary.YoupiCount),
+          BrillantCount: ensureNumericValue(summary.angryCount || summary.BrillantCount),
         };
         setReactionSummary(validatedSummary);
-        setTimeout(() => refreshReactionData(), 100);
+        debouncedRefresh();
       }
     };
 
@@ -138,19 +171,19 @@ function Reaction({ postId, employeeId }) {
   useEffect(() => {
     const loadReactionData = async () => {
       try {
-        const { summaryRes, reactionsRes, userRes } = await fetchReactionData(postId, employeeId);
+        const { summaryRes, reactionsRes, userRes, userInfoMap } = await fetchReactionData(postId, employeeId);
         const validatedSummary = {
           Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-          LikeCount: ensureNumericValue(summaryRes.data?.likeCount || summaryRes.data?.LikeCount),
-          LoveCount: ensureNumericValue(summaryRes.data?.loveCount || summaryRes.data?.LoveCount),
-          HahaCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.HahaCount),
-          WowCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.WowCount),
-          SadCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.SadCount),
-          AngryCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.AngryCount)
+          JaimeCount: ensureNumericValue(summaryRes.data?.JaimeCount || summaryRes.data?.JaimeCount),
+          JadoreCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.JadoreCount),
+          BravoCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.BravoCount),
+          YoupiCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.YoupiCount),
+          BrillantCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.BrillantCount),
         };
         setReactionSummary(validatedSummary);
         setReactedUsers(reactionsRes.data || []);
         setUserReaction(userRes?.data?.type || null);
+        setUserInfoMap(userInfoMap);
       } catch (error) {
         setError('Failed to load reactions. Please try again later.');
         console.error('Error loading reactions', error);
@@ -170,29 +203,29 @@ function Reaction({ postId, employeeId }) {
 
       if (isTogglingOff) {
         setUserReaction(null);
-        setReactionSummary(prev => ({
+        setReactionSummary((prev) => ({
           ...prev,
           [`${type}Count`]: Math.max(0, prev[`${type}Count`] - 1),
-          Total: Math.max(0, prev.Total - 1)
+          Total: Math.max(0, prev.Total - 1),
         }));
 
-        const userReactionObj = reactedUsers.find(r => r.employeeId === employeeId && r.type === type);
+        const userReactionObj = reactedUsers.find((r) => r.employeeId === employeeId && r.type === type);
         if (userReactionObj) {
           await reactionsAPI.deleteReaction(userReactionObj.id);
         }
       } else {
         if (prevReaction) {
-          const prevReactionObj = reactedUsers.find(r => r.employeeId === employeeId && r.type === prevReaction);
+          const prevReactionObj = reactedUsers.find((r) => r.employeeId === employeeId && r.type === prevReaction);
           if (prevReactionObj) {
             await reactionsAPI.deleteReaction(prevReactionObj.id);
           }
         }
 
-        setReactionSummary(prev => ({
+        setReactionSummary((prev) => ({
           ...prev,
           [`${prevReaction}Count`]: prevReaction ? Math.max(0, prev[`${prevReaction}Count`] - 1) : prev[`${prevReaction}Count`],
           [`${type}Count`]: prev[`${type}Count`] + 1,
-          Total: prevReaction ? prev.Total : prev.Total + 1
+          Total: prevReaction ? prev.Total : prev.Total + 1,
         }));
         setUserReaction(type);
         await reactionsAPI.addReaction({ postId, type, employeeId });
@@ -203,12 +236,11 @@ function Reaction({ postId, employeeId }) {
       const { summaryRes, reactionsRes, userRes } = await fetchReactionData(postId, employeeId);
       const validatedSummary = {
         Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-        LikeCount: ensureNumericValue(summaryRes.data?.likeCount || summaryRes.data?.LikeCount),
-        LoveCount: ensureNumericValue(summaryRes.data?.loveCount || summaryRes.data?.LoveCount),
-        HahaCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.HahaCount),
-        WowCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.WowCount),
-        SadCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.SadCount),
-        AngryCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.AngryCount)
+        JaimeCount: ensureNumericValue(summaryRes.data?.JaimeCount || summaryRes.data?.JaimeCount),
+        JadoreCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.JadoreCount),
+        BravoCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.BravoCount),
+        YoupiCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.YoupiCount),
+        BrillantCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.BrillantCount),
       };
       setReactionSummary(validatedSummary);
       setReactedUsers(reactionsRes.data || []);
@@ -217,50 +249,68 @@ function Reaction({ postId, employeeId }) {
   };
 
   if (loading) return <div className="loading">Loading reactions...</div>;
-  if (error) return <div className="error">{error}</div>;
-
-  return (
-    <div className="reaction-container">
-      {/* Reaction Count on Top */}
-      <div className="reaction-count-container">
-        <span
-          className="reaction-total"
-          onClick={() => setShowPopover(!showPopover)}
-          onMouseEnter={() => setShowPopover(true)}
-          onMouseLeave={() => setShowPopover(false)}
-        >
-          {ensureNumericValue(reactionSummary.Total)} Réactions
-        </span>
-        {showPopover && reactedUsers.length > 0 && (
-          <div className={`reaction-details-popover ${showPopover ? 'visible' : ''}`}>
-            <ReactedUsers users={reactedUsers} />
-          </div>
-        )}
+  if (error)
+    return (
+      <div className="error">
+        {error}
+        <button onClick={() => window.location.reload()}>Retry</button>
       </div>
-  
-      {/* Reaction Button */}
-      <div
-        className="reaction-trigger"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+    );
+// Find the current reaction object based on userReaction
+const currentReaction = reactionTypes.find(r => r.type === userReaction);
+
+return (
+  <div className="reaction-container">
+    <div className="reaction-count-container">
+      <span
+        className="reaction-total"
+        onClick={() => setShowPopover(!showPopover)}
+        onMouseEnter={() => setShowPopover(true)}
+        onMouseLeave={() => setShowPopover(false)}
       >
-        <button className="reaction-trigger-button">
-          {userReaction ? `Reacted with ${userReaction}` : 'Like' }
-        </button>
-        <div className={`reaction-buttons ${isHovered ? 'visible' : ''}`}>
-          {reactionTypes.map((type) => (
-            <ReactionButton
-              key={type}
-              type={type}
-              count={ensureNumericValue(reactionSummary[`${type}Count`])}
-              isActive={userReaction === type}
-              onClick={() => handleReaction(type)}
-            />
-          ))}
+        {ensureNumericValue(reactionSummary.Total)} Réactions
+      </span>
+      {showPopover && reactedUsers.length > 0 && (
+        <div className={`reaction-details-popover ${showPopover ? 'visible' : ''}`}>
+          <ReactedUsers users={reactedUsers} userInfoMap={userInfoMap} />
         </div>
+      )}
+    </div>
+
+    <div
+      className="reaction-trigger"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button className="reaction-trigger-button">
+        {userReaction ? (
+          <>
+            {currentReaction?.icon}
+          </>
+        ) : (
+          'Jaime'
+        )}
+      </button>
+      <div className={`reaction-buttons ${isHovered ? 'visible' : ''}`}>
+        {reactionTypes.map(({ type, icon }) => (
+          <ReactionButton
+            key={type}
+            type={type}
+            icon={icon}
+            count={ensureNumericValue(reactionSummary[`${type}Count`])}
+            isActive={userReaction === type}
+            onClick={() => handleReaction(type)}
+          />
+        ))}
       </div>
     </div>
-  );
+  </div>
+);
 }
+
+Reaction.propTypes = {
+  postId: PropTypes.string.isRequired,
+  employeeId: PropTypes.string.isRequired,
+};
 
 export default Reaction;
