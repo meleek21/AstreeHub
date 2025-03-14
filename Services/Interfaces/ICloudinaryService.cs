@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Http;
 using System.Threading.Tasks;
+using CloudinaryDotNet.Actions;
 
 namespace ASTREE_PFE.Services.Interfaces
 {
     public interface ICloudinaryService
     {
-        Task<string?> UploadImageAsync(IFormFile file);
-        Task<string?> UploadFileAsync(IFormFile file);
-        Task DeleteFileAsync(string publicId);
+        Task<ImageUploadResult> UploadImageAsync(IFormFile file);
+        Task<VideoUploadResult> UploadFileAsync(IFormFile file);
+        Task<bool> DeleteFileAsync(string publicId);
     }
 }

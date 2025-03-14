@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { Mention, MentionsInput } from "react-mentions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { postsAPI } from "../services/apiServices"; // Import postsAPI
+import toast from "react-hot-toast"; // Import toast for error handling
 import "../assets/Css/CreatePost.css";
 
 // Fetch users for mentions
@@ -25,6 +27,7 @@ const PostEditorModal = ({
   content,
   setContent,
   isSubmitting,
+  setIsSubmitting,
   scheduledTime,
   setScheduledTime,
   saveDraft,
@@ -36,10 +39,89 @@ const PostEditorModal = ({
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
     setFiles((prevFiles) => [...prevFiles, ...uploadedFiles]);
+    console.log("Files selected:", uploadedFiles); // Log selected files
   };
 
   const removeFile = (index) => {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    console.log("File removed at index:", index); // Log removed file
+  };
+
+  const uploadFilesToCloudinary = async () => {
+    const uploadedFiles = [];
+    console.log("Starting file upload process..."); // Log start of upload process
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('files', file); // Ensure the key matches the backend expectation
+      console.log("Prepared form data for file:", file.name); // Log file being processed
+
+      try {
+        console.log("Uploading file to Cloudinary..."); // Log file upload attempt
+        const response = await postsAPI.uploadFile(formData);
+        console.log("Upload response:", response.data); // Log the response from the backend
+
+        // Check if the response is an array and has at least one item
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const fileData = response.data[0]; // Extract the first file's data
+          console.log("File data from response:", fileData); // Log file data
+
+          if (fileData.id && fileData.fileUrl) {
+            uploadedFiles.push({
+              fileUrl: fileData.fileUrl, // File URL from the response
+              fileId: fileData.id, // File ID from the response
+            });
+            console.log("File added to uploadedFiles:", fileData); // Log added file
+          } else {
+            console.error("File data is missing required fields (id or fileUrl):", fileData);
+          }
+        } else {
+          console.error("Invalid response format:", response.data);
+        }
+      } catch (error) {
+        console.error("Error uploading file:", error); // Log upload error
+        toast.error("Failed to upload file.");
+        throw error;
+      }
+    }
+
+    console.log("All files uploaded successfully. Uploaded files:", uploadedFiles); // Log final uploaded files
+    return uploadedFiles;
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    console.log("Starting post submission process..."); // Log start of submission process
+
+    try {
+      // Upload files to Cloudinary and get response with file URLs and IDs
+      console.log("Uploading files to Cloudinary..."); // Log file upload attempt
+      const uploadedFiles = await uploadFilesToCloudinary();
+      console.log("Uploaded files:", uploadedFiles); // Log uploaded files
+
+      if (uploadedFiles.length === 0) {
+        console.error("No files were uploaded successfully."); // Log if no files were uploaded
+        toast.error("No files were uploaded successfully.");
+        return;
+      }
+
+      // Call the parent onSubmit function with file URLs and file IDs
+      const postData = {
+        content,
+        fileUrls: uploadedFiles.map(file => file.fileUrl),
+        fileIds: uploadedFiles.map(file => file.fileId), // Pass file IDs
+      };
+      console.log("Post data prepared:", postData); // Log post data
+
+      onSubmit(postData);
+      console.log("Post submitted successfully."); // Log successful submission
+    } catch (error) {
+      console.error("Error submitting post:", error); // Log submission error
+      toast.error("Failed to upload files.");
+    } finally {
+      setIsSubmitting(false);
+      console.log("Submission process completed."); // Log completion of submission process
+    }
   };
 
   useEffect(() => {
@@ -67,7 +149,7 @@ const PostEditorModal = ({
     <div className="post-editor-overlay">
       <div className="post-editor-content" ref={modalRef}>
         <div className="post-editor-header">
-          <h1 >Créer une Publication</h1>
+          <h1>Créer une Publication</h1>
           <FontAwesomeIcon
             icon={faTimes}
             className="close-icon"
@@ -192,7 +274,7 @@ const PostEditorModal = ({
           {/* Submit Button */}
           <button
             type="button"
-            onClick={onSubmit}
+            onClick={handleSubmit}
             disabled={isSubmitting || !content.trim()}
             className="submit-button"
           >

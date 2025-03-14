@@ -15,13 +15,53 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     setIsMenuOpen(false);
   };
 
+  // Helper to format file size
+  const formatFileSize = (bytes) => {
+    if (!bytes) return 'N/A';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Render files based on type
+  const renderFile = (file) => {
+    const { fileUrl, fileName, fileType, fileSize } = file;
+
+    if (fileType?.startsWith('image/')) {
+      return (
+        <div className="file-item">
+          <img src={fileUrl} alt={fileName} className="post-image" />
+          <p>{fileName} ({formatFileSize(fileSize)})</p>
+        </div>
+      );
+    } else if (fileType === 'application/pdf') {
+      return (
+        <div className="file-item">
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+            {fileName} ({formatFileSize(fileSize)})
+          </a>
+        </div>
+      );
+    } else {
+      return (
+        <div className="file-item">
+          <a href={fileUrl} download={fileName}>
+            {fileName} ({formatFileSize(fileSize)})
+          </a>
+        </div>
+      );
+    }
+  };
+
   return (
     <div key={post.id || post._id} className="post-card">
       {/* Post Header with Author, Date, and 3-Dot Menu */}
       <div className="post-header">
         <div className="post-meta">
           <span className="post-author">Publié par : {post.authorName || 'Inconnu'}</span>
-          <span className="post-date">Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}</span>
+          <span className="post-date">
+            Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}
+          </span>
         </div>
         {/* 3-Dot Menu for Posts by the Logged-In User */}
         {post.authorId === userId && (
@@ -32,7 +72,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
                 aria-label="Options"
                 onClick={toggleMenu} // Toggle menu on click
               >
-                &#8942;
+                ⋮
               </button>
               {/* Conditionally render the dropdown menu */}
               {isMenuOpen && (
@@ -45,11 +85,23 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
           </div>
         )}
       </div>
+
       {/* Post Content */}
       <p className="post-content">{post.content}</p>
+
+      {/* Attached Files */}
+      {post.files && post.files.length > 0 && (
+        <div className="post-files">
+          <h4>Fichiers joints :</h4>
+          {post.files.map((file) => (
+            <div key={file.id}>{renderFile(file)}</div>
+          ))}
+        </div>
+      )}
+
       {/* Reaction and Comment Buttons */}
       <div className="post-interaction-buttons">
-      <button className="view-comments-button" onClick={() => openCommentsModal(post.id)}>
+        <button className="view-comments-button" onClick={() => openCommentsModal(post.id)}>
           Commentaires
         </button>
         <Reaction postId={post.id} employeeId={userId} />

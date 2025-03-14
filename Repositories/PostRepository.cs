@@ -1,5 +1,5 @@
 using ASTREE_PFE.Models;
-using ASTREE_PFE.Repositories.Interfaces;  // Add this line
+using ASTREE_PFE.Repositories.Interfaces;
 using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,8 +8,9 @@ namespace ASTREE_PFE.Repositories
 {
     public class PostRepository : IPostRepository
     {
+        private readonly IMongoCollection<Post> _posts;
+
         public IMongoCollection<Post> Collection => _posts;
-    private readonly IMongoCollection<Post> _posts;
 
         public PostRepository(IMongoDatabase database)
         {
@@ -70,9 +71,23 @@ namespace ASTREE_PFE.Repositories
         public async Task<IEnumerable<Post>> GetRecentPostsAsync(int count)
         {
             return await _posts.Find(_ => true)
-                                .SortByDescending(p => p.Timestamp)
-                                .Limit(count)
-                                .ToListAsync();
+                               .SortByDescending(p => p.Timestamp)
+                               .Limit(count)
+                               .ToListAsync();
+        }
+
+        public async Task AddFileIdsAsync(string postId, List<string> fileIds)
+        {
+            var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
+            var update = Builders<Post>.Update.PushEach(p => p.FileIds, fileIds);
+            await _posts.UpdateOneAsync(filter, update);
+        }
+
+        public async Task RemoveFileIdsAsync(string postId, List<string> fileIds)
+        {
+            var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
+            var update = Builders<Post>.Update.PullAll(p => p.FileIds, fileIds);
+            await _posts.UpdateOneAsync(filter, update);
         }
     }
 }

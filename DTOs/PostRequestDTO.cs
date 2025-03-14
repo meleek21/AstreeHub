@@ -20,8 +20,7 @@ namespace ASTREE_PFE.DTOs
 
         public string[] Tags { get; set; } = Array.Empty<string>();
 
-        public List<Document> Documents { get; set; } = new List<Document>();
-
+        public List<string> FileIds { get; set; } = new List<string>(); // IDs of uploaded files
 
     }
 }

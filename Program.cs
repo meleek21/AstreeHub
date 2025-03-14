@@ -17,7 +17,9 @@ using ASTREE_PFE.Hubs;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure Cloudinary
-var cloudinarySettings = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>();
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+var cloudinarySettings = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>() ?? 
+    throw new InvalidOperationException("Cloudinary settings are missing in configuration");
 var cloudinary = new Cloudinary(new Account(
     cloudinarySettings.CloudName,
     cloudinarySettings.ApiKey,
@@ -41,7 +43,8 @@ builder.Services.AddScoped<IMongoRepository<Notification>>(sp =>
     new MongoRepository<Notification>(sp.GetRequiredService<IMongoDatabase>(), "Notifications"));
 builder.Services.AddScoped<IMongoRepository<Reaction>>(sp => 
     new MongoRepository<Reaction>(sp.GetRequiredService<IMongoDatabase>(), "Reactions"));
-
+builder.Services.AddScoped<IMongoRepository<ASTREE_PFE.Models.File>>(sp => 
+    new MongoRepository<ASTREE_PFE.Models.File>(sp.GetRequiredService<IMongoDatabase>(), "Files"));
 // Register Repositories
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -186,6 +189,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
+builder.Services.AddScoped<ASTREE_PFE.Services.Interfaces.IFileService, FileService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
