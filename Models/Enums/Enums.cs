@@ -8,17 +8,15 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.String)]
         None,
         [BsonRepresentation(BsonType.String)]
-        Like,
+        Jaime,
         [BsonRepresentation(BsonType.String)]
-        Love,
+        Jadore,
         [BsonRepresentation(BsonType.String)]
-        Haha,
+        Brillant,
         [BsonRepresentation(BsonType.String)]
-        Wow,
+        Bravo,
         [BsonRepresentation(BsonType.String)]
-        Sad,
-        [BsonRepresentation(BsonType.String)]
-        Angry
+        Youpi
     }
 
     public enum RoleType

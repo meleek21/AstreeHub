@@ -24,5 +24,7 @@ namespace ASTREE_PFE.DTOs
 
         // Optional channel ID, null by default
         public string? ChannelId { get; set; } = null;
+        public List<string> FileIds { get; set; } = new List<string>(); // IDs of uploaded files
+
     }
 }
