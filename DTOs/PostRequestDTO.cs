@@ -10,7 +10,7 @@ namespace ASTREE_PFE.DTOs
 {
     public class PostRequestDTO
     {
-        [Required]
+        
         public string Content { get; set; } = null!;
 
         [Required]

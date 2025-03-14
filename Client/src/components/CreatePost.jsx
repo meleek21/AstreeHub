@@ -45,13 +45,15 @@ const CreatePost = () => {
     try {
       // Create the post with file URLs and IDs
       const requestBody = {
-        content: postData.content,
-        authorId: userId,
-        isPublic: true,
-        scheduledTime: scheduledTime || null,
-        fileUrls: postData.fileUrls,
-        fileIds: postData.fileIds // Include file IDs in the request
+        content: postData.content || "", // Allow empty content
+        authorId: userId, // Required field
+        isPublic: true, // Required field
+        scheduledTime: scheduledTime || null, // Optional field
+        fileUrls: postData.fileUrls || [], // Ensure fileUrls is an array
+        fileIds: postData.fileIds || [], // Ensure fileIds is an array
       };
+
+      console.log("Request Body:", requestBody); // Log the request body for debugging
 
       const response = await postsAPI.createPost(requestBody);
       console.log("Publication créée :", response.data);
@@ -63,6 +65,9 @@ const CreatePost = () => {
       setIsModalOpen(false);
     } catch (error) {
       console.error("Erreur lors de la création de la publication :", error.response?.data || error.message);
+      if (error.response?.data?.errors) {
+        console.error("Validation Errors:", error.response.data.errors);
+      }
       toast.error(error.response?.data?.message || "Une erreur s'est produite.");
     } finally {
       setIsSubmitting(false);
@@ -94,7 +99,7 @@ const CreatePost = () => {
         saveDraft={saveDraft}
         deleteDraft={deleteDraft}
         files={files}
-        setFiles={setFiles} // Pass files and setFiles to the modal
+        setFiles={setFiles} 
       />
     </>
   );

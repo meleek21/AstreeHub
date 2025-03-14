@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { Mention, MentionsInput } from "react-mentions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { postsAPI } from "../services/apiServices"; // Import postsAPI
-import toast from "react-hot-toast"; // Import toast for error handling
+import { postsAPI } from "../services/apiServices";
+import toast from "react-hot-toast";
 import "../assets/Css/CreatePost.css";
 
 // Fetch users for mentions
@@ -32,46 +32,46 @@ const PostEditorModal = ({
   setScheduledTime,
   saveDraft,
   deleteDraft,
+  files,
+  setFiles,
 }) => {
   const modalRef = useRef(null);
-  const [files, setFiles] = useState([]);
 
   const handleFileUpload = (event) => {
     const uploadedFiles = Array.from(event.target.files);
     setFiles((prevFiles) => [...prevFiles, ...uploadedFiles]);
-    console.log("Files selected:", uploadedFiles); // Log selected files
+    console.log("Files selected:", uploadedFiles);
   };
 
   const removeFile = (index) => {
     setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-    console.log("File removed at index:", index); // Log removed file
+    console.log("File removed at index:", index);
   };
 
   const uploadFilesToCloudinary = async () => {
     const uploadedFiles = [];
-    console.log("Starting file upload process..."); // Log start of upload process
+    console.log("Starting file upload process...");
 
     for (const file of files) {
       const formData = new FormData();
-      formData.append('files', file); // Ensure the key matches the backend expectation
-      console.log("Prepared form data for file:", file.name); // Log file being processed
+      formData.append("files", file);
+      console.log("Prepared form data for file:", file.name);
 
       try {
-        console.log("Uploading file to Cloudinary..."); // Log file upload attempt
+        console.log("Uploading file to Cloudinary...");
         const response = await postsAPI.uploadFile(formData);
-        console.log("Upload response:", response.data); // Log the response from the backend
+        console.log("Upload response:", response.data);
 
-        // Check if the response is an array and has at least one item
         if (Array.isArray(response.data) && response.data.length > 0) {
-          const fileData = response.data[0]; // Extract the first file's data
-          console.log("File data from response:", fileData); // Log file data
+          const fileData = response.data[0];
+          console.log("File data from response:", fileData);
 
           if (fileData.id && fileData.fileUrl) {
             uploadedFiles.push({
-              fileUrl: fileData.fileUrl, // File URL from the response
-              fileId: fileData.id, // File ID from the response
+              fileUrl: fileData.fileUrl,
+              fileId: fileData.id,
             });
-            console.log("File added to uploadedFiles:", fileData); // Log added file
+            console.log("File added to uploadedFiles:", fileData);
           } else {
             console.error("File data is missing required fields (id or fileUrl):", fileData);
           }
@@ -79,48 +79,48 @@ const PostEditorModal = ({
           console.error("Invalid response format:", response.data);
         }
       } catch (error) {
-        console.error("Error uploading file:", error); // Log upload error
+        console.error("Error uploading file:", error);
         toast.error("Failed to upload file.");
         throw error;
       }
     }
 
-    console.log("All files uploaded successfully. Uploaded files:", uploadedFiles); // Log final uploaded files
+    console.log("All files uploaded successfully. Uploaded files:", uploadedFiles);
     return uploadedFiles;
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    console.log("Starting post submission process..."); // Log start of submission process
+    console.log("Starting post submission process...");
 
     try {
-      // Upload files to Cloudinary and get response with file URLs and IDs
-      console.log("Uploading files to Cloudinary..."); // Log file upload attempt
-      const uploadedFiles = await uploadFilesToCloudinary();
-      console.log("Uploaded files:", uploadedFiles); // Log uploaded files
-
-      if (uploadedFiles.length === 0) {
-        console.error("No files were uploaded successfully."); // Log if no files were uploaded
-        toast.error("No files were uploaded successfully.");
-        return;
+      let uploadedFiles = [];
+      if (files.length > 0) {
+        console.log("Uploading files to Cloudinary...");
+        uploadedFiles = await uploadFilesToCloudinary();
+        console.log("Uploaded files:", uploadedFiles);
       }
 
-      // Call the parent onSubmit function with file URLs and file IDs
       const postData = {
-        content,
-        fileUrls: uploadedFiles.map(file => file.fileUrl),
-        fileIds: uploadedFiles.map(file => file.fileId), // Pass file IDs
+        content: content || "", // Ensure content is always included, even if empty
+        fileUrls: uploadedFiles.map((file) => file.fileUrl),
+        fileIds: uploadedFiles.map((file) => file.fileId),
       };
-      console.log("Post data prepared:", postData); // Log post data
+      console.log("Post data prepared:", postData);
 
-      onSubmit(postData);
-      console.log("Post submitted successfully."); // Log successful submission
+      // Submit if either content or files are present
+      if (content.trim() || uploadedFiles.length > 0) {
+        onSubmit(postData);
+        console.log("Post submitted successfully.");
+      } else {
+        toast.error("Veuillez ajouter du texte ou des fichiers.");
+      }
     } catch (error) {
-      console.error("Error submitting post:", error); // Log submission error
-      toast.error("Failed to upload files.");
+      console.error("Error submitting post:", error);
+      toast.error("Failed to submit post.");
     } finally {
       setIsSubmitting(false);
-      console.log("Submission process completed."); // Log completion of submission process
+      console.log("Submission process completed.");
     }
   };
 
@@ -187,7 +187,6 @@ const PostEditorModal = ({
 
         {/* Date Picker and File Upload Section */}
         <div className="date-file-container">
-          {/* Date Picker */}
           <input
             type="datetime-local"
             value={scheduledTime || ""}
@@ -197,7 +196,6 @@ const PostEditorModal = ({
             className="datetime-input"
           />
 
-          {/* File Upload Section */}
           <div className="file-upload-section">
             <input
               type="file"
@@ -211,12 +209,12 @@ const PostEditorModal = ({
                 src="https://cdn.lordicon.com/xtzwzauj.json"
                 trigger="morph"
                 state="morph-sea"
-                style={{ width: '35px', height: '35px' }}
+                style={{ width: "35px", height: "35px" }}
               ></lord-icon>
               <lord-icon
                 src="https://cdn.lordicon.com/wsbmifnf.json"
                 trigger="morph"
-                style={{ width: '35px', height: '35px' }}
+                style={{ width: "35px", height: "35px" }}
               ></lord-icon>
             </label>
           </div>
@@ -233,7 +231,7 @@ const PostEditorModal = ({
                     src="https://cdn.lordicon.com/skkahier.json"
                     trigger="hover"
                     colors="primary:#c71f16"
-                    style={{ width: '20px', height: '20px' }}
+                    style={{ width: "20px", height: "20px" }}
                   ></lord-icon>
                 </button>
               </div>
@@ -243,7 +241,6 @@ const PostEditorModal = ({
 
         {/* Buttons */}
         <div className="post-editor-actions">
-          {/* Delete Draft Button */}
           <button
             type="button"
             onClick={deleteDraft}
@@ -255,13 +252,12 @@ const PostEditorModal = ({
               trigger="hover"
               state="morph-trash-full"
               colors="primary:#c71f16;secondary:#ffffff"
-              style={{ width: '25px', height: '25px' }}
+              style={{ width: "25px", height: "25px" }}
               className="trash-icon"
             ></lord-icon>
             Supprimer
           </button>
 
-          {/* Save Draft Button */}
           <button
             type="button"
             onClick={saveDraft}
@@ -271,11 +267,10 @@ const PostEditorModal = ({
             Enregistrer
           </button>
 
-          {/* Submit Button */}
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || !content.trim()}
+            disabled={isSubmitting || (!content.trim() && files.length === 0)} // Disable if both content and files are empty
             className="submit-button"
           >
             {isSubmitting ? "Envoi en cours..." : scheduledTime ? "Planifier" : "Publier"}
