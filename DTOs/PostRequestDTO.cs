@@ -18,9 +18,9 @@ namespace ASTREE_PFE.DTOs
 
         public bool IsPublic { get; set; }
 
-        public string[] Tags { get; set; } = Array.Empty<string>();
 
-        public List<Document> Documents { get; set; } = new List<Document>();
+
+
 
         // Optional channel ID, null by default
         public string? ChannelId { get; set; } = null;

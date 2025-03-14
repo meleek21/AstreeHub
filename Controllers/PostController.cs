@@ -206,7 +206,6 @@ namespace ASTREE_PFE.Controllers
                 Content = postRequest.Content,
                 AuthorId = postRequest.AuthorId,
                 IsPublic = postRequest.IsPublic,
-                Tags = postRequest.Tags,
                 FileIds = postRequest.FileIds, // Include file IDs
                 Timestamp = DateTime.UtcNow
             };
@@ -234,7 +233,6 @@ namespace ASTREE_PFE.Controllers
             // Update post fields
             existingPost.Content = postRequest.Content;
             existingPost.IsPublic = postRequest.IsPublic;
-            existingPost.Tags = postRequest.Tags;
             existingPost.FileIds = postRequest.FileIds; // Update file IDs
             existingPost.UpdatedAt = DateTime.UtcNow;
 
@@ -394,8 +392,6 @@ namespace ASTREE_PFE.Controllers
                 Content = postRequest.Content,
                 AuthorId = userId, // Use current user ID instead of the one from DTO
                 IsPublic = postRequest.IsPublic,
-                Tags = postRequest.Tags,
-                Documents = postRequest.Documents,
                 ChannelId = channelId
             };
 

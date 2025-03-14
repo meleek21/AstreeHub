@@ -19,7 +19,12 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<IEnumerable<Post>> GetAllAsync()
         {
-            return await _posts.Find(_ => true).ToListAsync();
+            return await _posts.Find(p => p.ChannelId == null).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Post>> GetPostsByChannelIdAsync(string channelId)
+        {
+            return await _posts.Find(p => p.ChannelId == channelId).ToListAsync();
         }
 
         public async Task<Post> GetByIdAsync(string id)
@@ -64,7 +69,7 @@ namespace ASTREE_PFE.Repositories
         public async Task UpdateReactionsAsync(string postId, Dictionary<ReactionType, int> reactions)
         {
             var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
-            var update = Builders<Post>.Update.Set(p => p.Reactions, reactions);
+            var update = Builders<Post>.Update.Set(p => p.ReactionCounts, reactions);
             await _posts.UpdateOneAsync(filter, update);
         }
 

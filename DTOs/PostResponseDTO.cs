@@ -30,7 +30,6 @@ namespace ASTREE_PFE.DTOs
 
         public List<FileResponseDTO> Files { get; set; } = new List<FileResponseDTO>();
 
-        public List<Document> Documents { get; set; } = new List<Document>();
 
         public List<CommentResponseDTO> Comments { get; set; } = new List<CommentResponseDTO>();
 
