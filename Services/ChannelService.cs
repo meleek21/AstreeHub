@@ -168,10 +168,8 @@ namespace ASTREE_PFE.Services
                 throw new KeyNotFoundException($"Channel with ID {channelId} not found");
             }
 
-            // Get all posts for this channel - using repository method instead of direct MongoDB access
-            // We'll need to implement a method in the PostRepository to get posts by channelId
-            // For now, we'll return an empty list
-            return new List<Post>();
+            // Get all posts for this channel using the repository method
+            return await _postRepository.GetPostsByChannelIdAsync(channelId);
         }
     }
 }

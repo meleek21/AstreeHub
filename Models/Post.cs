@@ -19,16 +19,12 @@ namespace ASTREE_PFE.Models
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         
         [Required]
-        // Removed BsonRepresentation to allow GUIDs
         public string AuthorId { get; set; } = null!;
 
         public bool IsPublic { get; set; }
         public List<Comment> Comments { get; set; } = new List<Comment>();
         
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
-        public Dictionary<ReactionType, int> Reactions { get; set; } = new Dictionary<ReactionType, int>();
         
-        public string[] Tags { get; set; } = Array.Empty<string>();
         public DateTime? UpdatedAt { get; set; }
         public List<string> FileIds { get; set; } = new List<string>();
         
@@ -40,7 +36,7 @@ namespace ASTREE_PFE.Models
         
         [BsonIgnore]
         public virtual Channel Channel { get; set; }
-        public List<Document> Documents { get; set; } = new List<Document>();
+
         
         [BsonElement("Files")]
         public List<File> Files { get; set; } = new List<File>();

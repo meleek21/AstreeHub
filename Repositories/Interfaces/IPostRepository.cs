@@ -9,6 +9,9 @@ namespace ASTREE_PFE.Repositories.Interfaces
         // Get all posts
         Task<IEnumerable<Post>> GetAllAsync();
 
+        // Get all posts by channel ID
+        Task<IEnumerable<Post>> GetPostsByChannelIdAsync(string channelId);
+
         // Get a post by its ID
         Task<Post> GetByIdAsync(string id);
 
