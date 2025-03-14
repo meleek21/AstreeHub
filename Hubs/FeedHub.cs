@@ -85,10 +85,20 @@ namespace ASTREE_PFE.Hubs
             await Clients.All.SendAsync("ReceiveDeletedReaction", reactionId);
         }
 
-        // Method to broadcast to a specific group (e.g., department-specific feeds)
-        public async Task BroadcastToGroup(string groupName, string methodName, object data)
+        // Methods for broadcasting file events
+        public async Task BroadcastNewFile(ASTREE_PFE.Models.File file)
         {
-            await Clients.Group(groupName).SendAsync(methodName, data);
+            await Clients.All.SendAsync("ReceiveNewFile", file);
+        }
+        
+        public async Task BroadcastUpdatedFile(ASTREE_PFE.Models.File file)
+        {
+            await Clients.All.SendAsync("ReceiveUpdatedFile", file);
+        }
+        
+        public async Task BroadcastDeletedFile(string fileId)
+        {
+            await Clients.All.SendAsync("ReceiveDeletedFile", fileId);
         }
     }
 }

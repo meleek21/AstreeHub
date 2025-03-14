@@ -26,6 +26,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   // Render files based on type
   const renderFile = (file) => {
     const { fileUrl, fileName, fileType, fileSize } = file;
+    console.log('Rendering file:', file);
 
     if (fileType?.startsWith('image/')) {
       return (
@@ -90,10 +91,10 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       <p className="post-content">{post.content}</p>
 
       {/* Attached Files */}
-      {post.files && post.files.length > 0 && (
+      {(post.files?.length > 0 || post.Files?.length > 0) && (
         <div className="post-files">
           <h4>Fichiers joints :</h4>
-          {post.files.map((file) => (
+          {(post.files || post.Files || []).map((file) => (
             <div key={file.id}>{renderFile(file)}</div>
           ))}
         </div>

@@ -58,9 +58,6 @@ namespace ASTREE_PFE.Services
 
         public async Task<Reaction> AddReactionAsync(ReactionRequest request)
         {
-            // No need to validate EmployeeId format since we're accepting UUID
-
-            // Check if we're dealing with a post or comment reaction
             if (!string.IsNullOrEmpty(request.PostId))
             {
                 var reaction = new Reaction

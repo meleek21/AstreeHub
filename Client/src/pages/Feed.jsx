@@ -157,6 +157,70 @@ function Feed() {
             .catch(err => console.error('Error fetching posts after reaction deletion:', err));
         });
         
+        // Add handlers for file events
+        signalRService.onNewFile((file) => {
+          console.log('New file received via SignalR in Feed component:', file);
+          // Refresh the post that received the new file
+          if (file.postId) {
+            console.log('Fetching updated post with new file, postId:', file.postId);
+            postsAPI.getPostById(file.postId)
+              .then(response => {
+                console.log('Updated post data received:', response.data);
+                setPosts(prevPosts => 
+                  prevPosts.map(post => 
+                    post.id === file.postId ? response.data : post
+                  )
+                );
+                toast.success('Nouveau fichier ajouté!');
+              })
+              .catch(err => console.error('Error fetching updated post after new file:', err));
+          } else {
+            // If we don't know which post the file belongs to, refresh all posts
+            console.log('File has no postId, refreshing all posts');
+            postsAPI.getAllPosts()
+              .then(response => {
+                setPosts(response.data);
+              })
+              .catch(err => console.error('Error fetching posts after new file:', err));
+          }
+        });
+        
+        signalRService.onUpdatedFile((file) => {
+          console.log('Updated file received via SignalR:', file);
+          // Refresh the post that contains the updated file
+          if (file.postId) {
+            postsAPI.getPostById(file.postId)
+              .then(response => {
+                setPosts(prevPosts => 
+                  prevPosts.map(post => 
+                    post.id === file.postId ? response.data : post
+                  )
+                );
+              })
+              .catch(err => console.error('Error fetching updated post after file update:', err));
+          } else {
+            // If we don't know which post the file belongs to, refresh all posts
+            postsAPI.getAllPosts()
+              .then(response => {
+                setPosts(response.data);
+              })
+              .catch(err => console.error('Error fetching posts after file update:', err));
+          }
+        });
+        
+        signalRService.onDeletedFile((fileId) => {
+          console.log('Deleted file received via SignalR in Feed component:', fileId);
+          // We need to refresh all posts since we don't know which post the file belonged to
+          console.log('Refreshing all posts after file deletion');
+          postsAPI.getAllPosts()
+            .then(response => {
+              console.log('Updated posts received after file deletion:', response.data.length);
+              setPosts(response.data);
+              toast.info('Un fichier a été supprimé');
+            })
+            .catch(err => console.error('Error fetching posts after file deletion:', err));
+        });
+        
         // Start the connection
         await signalRService.start();
       } catch (err) {
@@ -180,7 +244,7 @@ function Feed() {
         const token = localStorage.getItem('token');
         if (!token || !isAuthenticated) {
           console.log('Pas de token ou non authentifié, redirection vers la page de connexion');
-          navigate('/authen');
+          navigate('/Authen');
           return;
         }
 

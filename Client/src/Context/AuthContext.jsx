@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/authen');
+    navigate('/Authen');
   };
 
   const value = {

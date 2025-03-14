@@ -28,5 +28,6 @@ namespace ASTREE_PFE.Models
         public string FileType { get; set; } // e.g., "image/jpeg", "application/pdf"
         public long FileSize { get; set; } // File size in bytes
         public string Description { get; set; } // Optional description for the file
+        public string? PostId { get; set; } // ID of the post this file is attached to
     }
 }

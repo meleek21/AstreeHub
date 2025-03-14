@@ -27,6 +27,20 @@ namespace ASTREE_PFE.Services
         {
             _files = database.GetCollection<FileModel>("Files"); // Changed to FileModel
 
+            // Validate Cloudinary settings
+            if (string.IsNullOrEmpty(cloudinarySettings.Value.CloudName))
+            {
+                throw new ArgumentException("Cloudinary CloudName is not configured in appsettings.json");
+            }
+            if (string.IsNullOrEmpty(cloudinarySettings.Value.ApiKey))
+            {
+                throw new ArgumentException("Cloudinary ApiKey is not configured in appsettings.json");
+            }
+            if (string.IsNullOrEmpty(cloudinarySettings.Value.ApiSecret))
+            {
+                throw new ArgumentException("Cloudinary ApiSecret is not configured in appsettings.json");
+            }
+
             var account = new Account(
                 cloudinarySettings.Value.CloudName,
                 cloudinarySettings.Value.ApiKey,
