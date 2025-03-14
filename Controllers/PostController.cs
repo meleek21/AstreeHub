@@ -22,12 +22,6 @@ namespace ASTREE_PFE.Controllers
         private readonly IPostService _postService;
         private readonly IEmployeeService _employeeService;
         private readonly IChannelService _channelService;
-
-        public PostController(IPostService postService, IEmployeeService employeeService, IChannelService channelService)
-        {
-            _postService = postService;
-            _employeeService = employeeService;
-            _channelService = channelService;
         private readonly IFileService _fileService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<PostController> _logger;
@@ -35,12 +29,14 @@ namespace ASTREE_PFE.Controllers
         public PostController(
             IPostService postService,
             IEmployeeService employeeService,
+            IChannelService channelService,
             IFileService fileService,
             ICloudinaryService cloudinaryService,
             ILogger<PostController> logger)
         {
             _postService = postService ?? throw new ArgumentNullException(nameof(postService));
             _employeeService = employeeService ?? throw new ArgumentNullException(nameof(employeeService));
+            _channelService = channelService ?? throw new ArgumentNullException(nameof(channelService));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
             _cloudinaryService = cloudinaryService ?? throw new ArgumentNullException(nameof(cloudinaryService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -89,7 +85,7 @@ namespace ASTREE_PFE.Controllers
                         UpdatedAt = c.UpdatedAt
                     }).ToList(),
                     ReactionCounts = post.ReactionCounts,
-                    UserReaction = post.UserReaction
+
                 };
                 postDtos.Add(postDto);
             }
@@ -139,7 +135,7 @@ namespace ASTREE_PFE.Controllers
                     UpdatedAt = c.UpdatedAt
                 }).ToList(),
                 ReactionCounts = post.ReactionCounts,
-                UserReaction = post.UserReaction
+
             };
 
             return Ok(postDto);
@@ -188,7 +184,7 @@ namespace ASTREE_PFE.Controllers
                         UpdatedAt = c.UpdatedAt
                     }).ToList(),
                     ReactionCounts = post.ReactionCounts,
-                    UserReaction = post.UserReaction
+
                 };
                 postDtos.Add(postDto);
             }

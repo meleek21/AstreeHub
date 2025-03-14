@@ -18,10 +18,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure Cloudinary
 var cloudinarySettings = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>();
+// Register CloudinarySettings for dependency injection
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 var cloudinary = new Cloudinary(new Account(
-    cloudinarySettings.CloudName,
-    cloudinarySettings.ApiKey,
-    cloudinarySettings.ApiSecret
+    cloudinarySettings?.CloudName,
+    cloudinarySettings?.ApiKey,
+    cloudinarySettings?.ApiSecret
 ));
 builder.Services.AddSingleton(cloudinary);
 
@@ -190,6 +192,7 @@ builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 // Add SignalR
 builder.Services.AddSignalR();

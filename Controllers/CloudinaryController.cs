@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging;
 using System.Linq;
 using MongoDB.Bson;
 using FileModel = ASTREE_PFE.Models.File;
+using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -19,15 +21,18 @@ namespace ASTREE_PFE.Controllers
         private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<CloudinaryController> _logger;
         private readonly IFileService _fileService; // Service to manage File collection
+        private readonly IHubContext<FeedHub> _feedHub; // Add SignalR hub context
 
         public CloudinaryController(
             ICloudinaryService cloudinaryService,
             ILogger<CloudinaryController> logger,
-            IFileService fileService)
+            IFileService fileService,
+            IHubContext<FeedHub> feedHub) // Inject SignalR hub context
         {
             _cloudinaryService = cloudinaryService;
             _logger = logger;
             _fileService = fileService;
+            _feedHub = feedHub;
         }
 
         /// <summary>
@@ -71,6 +76,12 @@ namespace ASTREE_PFE.Controllers
 
                 // Save file metadata to the database
                 var fileId = await _fileService.CreateFileAsync(fileModel);
+                
+                // Set the ID from the database
+                fileModel.Id = fileId;
+                
+                // Broadcast the new file upload to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveNewFile", fileModel);
 
                 return Ok(new { FileId = fileId, FileUrl = fileModel.FileUrl });
             }
@@ -115,6 +126,12 @@ public async Task<IActionResult> UploadFile(IFormFile file)
 
         // Save file metadata to the database
         var fileId = await _fileService.CreateFileAsync(fileModel);
+        
+        // Set the ID from the database
+        fileModel.Id = fileId;
+        
+        // Broadcast the new file upload to all connected clients
+        await _feedHub.Clients.All.SendAsync("ReceiveNewFile", fileModel);
 
         // Return file ID and URL in the response
         return Ok(new { FileId = fileId, FileUrl = fileModel.FileUrl });
@@ -150,6 +167,9 @@ public async Task<IActionResult> UploadFile(IFormFile file)
 
                 // Delete file metadata from the database
                 await _fileService.DeleteFileAsync(fileId);
+                
+                // Broadcast the file deletion to all connected clients
+                await _feedHub.Clients.All.SendAsync("ReceiveFileDeleted", fileId);
 
                 return Ok(new { message = "File deleted successfully." });
             }

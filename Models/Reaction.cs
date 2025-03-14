@@ -20,8 +20,7 @@ namespace ASTREE_PFE.Models
         // Changed to regular string to support UUID/GUID format if needed
                 
         public ReactionType Type { get; set; }
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
-        public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         public DateTime? UpdatedAt { get; set; }

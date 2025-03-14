@@ -109,6 +109,20 @@ namespace ASTREE_PFE.Services
         {
             await _postRepository.CreateAsync(post);
 
+            // Load file details for the post before broadcasting
+            if (post.FileIds != null && post.FileIds.Any())
+            {
+                post.Files = new List<ASTREE_PFE.Models.File>();
+                foreach (var fileId in post.FileIds)
+                {
+                    var file = await _fileService.GetFileByIdAsync(fileId);
+                    if (file != null)
+                    {
+                        post.Files.Add(file);
+                    }
+                }
+            }
+
             // Broadcast the new post to all connected clients
             await _feedHub.Clients.All.SendAsync("ReceiveNewPost", post);
 
@@ -118,6 +132,20 @@ namespace ASTREE_PFE.Services
         public async Task UpdatePostAsync(string id, Post post)
         {
             await _postRepository.UpdateAsync(id, post);
+
+            // Load file details for the post before broadcasting
+            if (post.FileIds != null && post.FileIds.Any())
+            {
+                post.Files = new List<ASTREE_PFE.Models.File>();
+                foreach (var fileId in post.FileIds)
+                {
+                    var file = await _fileService.GetFileByIdAsync(fileId);
+                    if (file != null)
+                    {
+                        post.Files.Add(file);
+                    }
+                }
+            }
 
             // Broadcast the updated post to all connected clients
             await _feedHub.Clients.All.SendAsync("ReceiveUpdatedPost", post);

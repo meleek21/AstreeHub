@@ -22,6 +22,10 @@ class SignalRService {
       onUpdatedReaction: null,
       onDeletedReaction: null,
       onReactionSummary: null,
+      // Add callbacks for files
+      onNewFile: null,
+      onUpdatedFile: null,
+      onDeletedFile: null,
     };
   }
 
@@ -164,6 +168,30 @@ class SignalRService {
       }
     });
 
+    // Handle new file uploads
+    this.connection.on('ReceiveNewFile', (file) => {
+      console.log('New file received via SignalR:', file);
+      if (this.callbacks.onNewFile) {
+        this.callbacks.onNewFile(file);
+      }
+    });
+
+    // Handle updated files
+    this.connection.on('ReceiveUpdatedFile', (file) => {
+      console.log('Updated file received via SignalR:', file);
+      if (this.callbacks.onUpdatedFile) {
+        this.callbacks.onUpdatedFile(file);
+      }
+    });
+
+    // Handle deleted files
+    this.connection.on('ReceiveDeletedFile', (fileId) => {
+      console.log('Deleted file received via SignalR:', fileId);
+      if (this.callbacks.onDeletedFile) {
+        this.callbacks.onDeletedFile(fileId);
+      }
+    });
+
     // Handle reconnection
     this.connection.onreconnecting((error) => {
       console.log('SignalR attempting to reconnect:', error);
@@ -300,6 +328,19 @@ class SignalRService {
   // Register callback for reaction summary updates
   onReactionSummary(callback) {
     this.callbacks.onReactionSummary = callback;
+  }
+
+  // Register callbacks for file events
+  onNewFile(callback) {
+    this.callbacks.onNewFile = callback;
+  }
+
+  onUpdatedFile(callback) {
+    this.callbacks.onUpdatedFile = callback;
+  }
+
+  onDeletedFile(callback) {
+    this.callbacks.onDeletedFile = callback;
   }
 
   // Check if the connection is active
