@@ -15,15 +15,21 @@ namespace ASTREE_PFE.Services
         private readonly IPostRepository _postRepository;
         private readonly IFileService _fileService;
         private readonly IHubContext<FeedHub> _feedHub;
+        private readonly IReactionRepository _reactionRepository;
+        private readonly ICommentRepository _commentRepository;
 
         public PostService(
             IPostRepository postRepository,
             IFileService fileService,
-            IHubContext<FeedHub> feedHub)
+            IHubContext<FeedHub> feedHub,
+            IReactionRepository reactionRepository,
+            ICommentRepository commentRepository)
         {
             _postRepository = postRepository;
             _fileService = fileService;
             _feedHub = feedHub;
+            _reactionRepository = reactionRepository;
+            _commentRepository = commentRepository;
         }
 
         public async Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType)
@@ -160,6 +166,20 @@ namespace ASTREE_PFE.Services
                 foreach (var fileId in post.FileIds)
                 {
                     await _fileService.DeleteFileAsync(fileId);
+                }
+
+                // Delete associated reactions
+                var reactions = await _reactionRepository.GetReactionsByPostAsync(id);
+                foreach (var reaction in reactions)
+                {
+                    await _reactionRepository.DeleteAsync(reaction.Id);
+                }
+
+                // Delete associated comments
+                var comments = await _commentRepository.GetByPostIdAsync(id);
+                foreach (var comment in comments)
+                {
+                    await _commentRepository.DeleteAsync(comment.Id);
                 }
 
                 await _postRepository.DeleteAsync(id);
