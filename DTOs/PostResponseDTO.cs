@@ -12,7 +12,6 @@ namespace ASTREE_PFE.DTOs
     {
         public string Id { get; set; }
 
-        [Required]
         public string Content { get; set; }
 
         [Required]
