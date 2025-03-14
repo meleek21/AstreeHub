@@ -160,12 +160,11 @@ namespace ASTREE_PFE.Services
             var summary = new ReactionsSummary
             {
                 Total = reactions.Count(),
-                LikeCount = reactions.Count(r => r.Type == ReactionType.Like),
-                LoveCount = reactions.Count(r => r.Type == ReactionType.Love),
-                HahaCount = reactions.Count(r => r.Type == ReactionType.Haha),
-                WowCount = reactions.Count(r => r.Type == ReactionType.Wow),
-                SadCount = reactions.Count(r => r.Type == ReactionType.Sad),
-                AngryCount = reactions.Count(r => r.Type == ReactionType.Angry)
+                JaimeCount = reactions.Count(r => r.Type == ReactionType.Jaime),
+                JadoreCount = reactions.Count(r => r.Type == ReactionType.Jadore),
+                BravoCount = reactions.Count(r => r.Type == ReactionType.Bravo),
+                YoupiCount = reactions.Count(r => r.Type == ReactionType.Youpi),
+                BrillantCount = reactions.Count(r => r.Type == ReactionType.Brillant)
             };
 
             return summary;

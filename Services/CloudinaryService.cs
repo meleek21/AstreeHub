@@ -18,79 +18,67 @@ namespace ASTREE_PFE.Services
             _cloudinary = cloudinary;
         }
 
-        public async Task<string?> UploadImageAsync(IFormFile file)
+        public async Task<ImageUploadResult> UploadImageAsync(IFormFile file)
         {
             try
             {
-                // Validate file type and size
-                if (file.Length == 0)
-                {
-                    throw new ArgumentException("File is empty.");
-                }
-
-                var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!allowedExtensions.Contains(fileExtension))
-                {
-                    throw new ArgumentException("Invalid file type. Only images are allowed.");
-                }
-
-                if (file.Length > 5 * 1024 * 1024) // 5 MB
-                {
-                    throw new ArgumentException("File size exceeds the limit.");
-                }
-
                 using var stream = file.OpenReadStream();
                 var uploadParams = new ImageUploadParams
                 {
-                    File = new FileDescription(file.FileName, stream),
-                    Transformation = new Transformation().Width(1000).Height(1000).Crop("limit")
+                    File = new FileDescription(file.FileName, stream)
                 };
 
-                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-                return uploadResult.SecureUrl.ToString();
+                return await _cloudinary.UploadAsync(uploadParams);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error uploading image: {ex.Message}");
-                return null;
+                throw;
             }
         }
 
-        public async Task<string?> UploadFileAsync(IFormFile file)
+        public async Task<VideoUploadResult> UploadFileAsync(IFormFile file)
         {
             try
             {
-                if (file.Length > 0)
-                {
-                    using var stream = file.OpenReadStream();
-                    var uploadParams = new RawUploadParams
-                    {
-                        File = new FileDescription(file.FileName, stream)
-                    };
+                if (file == null)
+                    throw new ArgumentNullException(nameof(file));
 
-                    var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-                    return uploadResult.SecureUrl.ToString();
-                }
-                return null;
+                using var stream = file.OpenReadStream();
+                var uploadParams = new RawUploadParams
+                {
+                    File = new FileDescription(file.FileName, stream)
+                };
+
+                var result = await _cloudinary.UploadAsync(uploadParams);
+                return new VideoUploadResult
+                {
+                    PublicId = result.PublicId,
+                    SecureUrl = result.SecureUrl,
+                    Url = result.Url,
+                    Format = result.Format,
+                    CreatedAt = result.CreatedAt
+                };
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error uploading file: {ex.Message}");
-                return null;
+                throw;
             }
         }
 
-        public async Task DeleteFileAsync(string publicId)
+        public async Task<bool> DeleteFileAsync(string publicId)
         {
             try
             {
                 var deletionParams = new DeletionParams(publicId);
-                await _cloudinary.DestroyAsync(deletionParams);
+                var result = await _cloudinary.DestroyAsync(deletionParams);
+                return result.Result == "ok";
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error deleting file: {ex.Message}");
+                return false;
             }
         }
     }

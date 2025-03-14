@@ -1,7 +1,7 @@
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
-using MongoDB.Driver;
 using ASTREE_PFE.Services.Interfaces;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,13 +12,17 @@ namespace ASTREE_PFE.Services
 {
     public class PostService : IPostService
     {
-        public IMongoCollection<Post> Collection => _postRepository.Collection;
         private readonly IPostRepository _postRepository;
+        private readonly IFileService _fileService;
         private readonly IHubContext<FeedHub> _feedHub;
 
-        public PostService(IPostRepository postRepository, IHubContext<FeedHub> feedHub)
+        public PostService(
+            IPostRepository postRepository,
+            IFileService fileService,
+            IHubContext<FeedHub> feedHub)
         {
             _postRepository = postRepository;
+            _fileService = fileService;
             _feedHub = feedHub;
         }
 
@@ -58,16 +62,16 @@ namespace ASTREE_PFE.Services
             // First get the post to check if ReactionCounts is properly initialized
             var post = await _postRepository.GetByIdAsync(postId);
             if (post == null) return;
-            
+
             // Initialize ReactionCounts if it's null or not properly set up
             if (post.ReactionCounts == null)
             {
                 post.ReactionCounts = new Dictionary<ReactionType, int>();
             }
-            
+
             // Update the reaction count in memory
             post.ReactionCounts[type] = post.ReactionCounts.GetValueOrDefault(type, 0) + 1;
-            
+
             // Update the post with the new reaction counts
             await _postRepository.UpdateAsync(postId, post);
         }
@@ -104,17 +108,17 @@ namespace ASTREE_PFE.Services
         public async Task<Post> CreatePostAsync(Post post)
         {
             await _postRepository.CreateAsync(post);
-            
+
             // Broadcast the new post to all connected clients
             await _feedHub.Clients.All.SendAsync("ReceiveNewPost", post);
-            
+
             return post;
         }
 
         public async Task UpdatePostAsync(string id, Post post)
         {
             await _postRepository.UpdateAsync(id, post);
-            
+
             // Broadcast the updated post to all connected clients
             await _feedHub.Clients.All.SendAsync("ReceiveUpdatedPost", post);
         }
@@ -124,8 +128,14 @@ namespace ASTREE_PFE.Services
             var post = await _postRepository.GetByIdAsync(id);
             if (post != null)
             {
+                // Delete associated files
+                foreach (var fileId in post.FileIds)
+                {
+                    await _fileService.DeleteFileAsync(fileId);
+                }
+
                 await _postRepository.DeleteAsync(id);
-                
+
                 // Broadcast the deleted post ID to all connected clients
                 await _feedHub.Clients.All.SendAsync("ReceiveDeletedPost", id);
             }

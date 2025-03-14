@@ -54,6 +54,11 @@ export const postsAPI = {
   createPost: (postData) => api.post('/post', postData),
   updatePost: (id, postData) => api.put(`/post/${id}`, postData),
   deletePost: (id) => api.delete(`/post/${id}`),
+  uploadFile: (formData) => api.post('/post/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
 };
 
 // Reactions API service
@@ -66,3 +71,7 @@ export const reactionsAPI = {
   deleteReaction: (id) => api.delete(`/reaction/${id}`),
 };
 
+// User info API service
+export const userAPI = {
+  getUserInfo: (employeeId) => api.get(`/employee/user-info/${employeeId}`)
+};
