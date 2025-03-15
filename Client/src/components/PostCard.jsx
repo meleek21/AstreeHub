@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Reaction from './Reaction';
 import '../assets/Css/PostCard.css';
 
 const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for 3-dot menu
+  const [isEditing, setIsEditing] = useState(false); // State for edit mode
+  const [updatedContent, setUpdatedContent] = useState(post.content); // State for updated content
+  const textareaRef = useRef(null); // Ref for auto-focusing the textarea
 
   // Toggle the dropdown menu
   const toggleMenu = () => {
@@ -13,6 +16,33 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   // Close the dropdown menu
   const closeMenu = () => {
     setIsMenuOpen(false);
+  };
+
+  // Auto-focus the textarea when entering edit mode
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditing]);
+
+  // Handle saving the updated post
+  const handleSave = async () => {
+    if (!updatedContent.trim()) {
+      toast.error('Le contenu ne peut pas être vide.');
+      return;
+    }
+  
+    try {
+      await onUpdatePost(post.id, {
+        content: updatedContent,
+        authorId: post.authorId, // Pass the authorId
+        isPublic: post.isPublic,
+        fileIds: post.fileIds || [],
+      });
+      setIsEditing(false); // Exit edit mode after successful update
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du post :', err);
+    }
   };
 
   // Helper to format file size
@@ -78,8 +108,22 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
               {/* Conditionally render the dropdown menu */}
               {isMenuOpen && (
                 <div className="post-edit-options custom-post-edit-options">
-                  <button onClick={() => { onUpdatePost(post.id); closeMenu(); }}>Modifier</button>
-                  <button onClick={() => { onDeletePost(post.id); closeMenu(); }}>Supprimer</button>
+                  <button
+                    onClick={() => {
+                      setIsEditing(true); // Enter edit mode
+                      closeMenu(); // Close the dropdown menu
+                    }}
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDeletePost(post.id);
+                      closeMenu();
+                    }}
+                  >
+                    Supprimer
+                  </button>
                 </div>
               )}
             </div>
@@ -88,7 +132,23 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       </div>
 
       {/* Post Content */}
-      <p className="post-content">{post.content}</p>
+      {isEditing ? (
+        <div className="edit-mode">
+          <textarea
+            ref={textareaRef}
+            value={updatedContent}
+            onChange={(e) => setUpdatedContent(e.target.value)}
+            placeholder="Modifiez votre post..."
+            className="edit-textarea"
+          />
+          <div className="edit-actions">
+            <button onClick={handleSave}>Enregistrer</button>
+            <button onClick={() => setIsEditing(false)}>Annuler</button>
+          </div>
+        </div>
+      ) : (
+        <p className="post-content">{post.content}</p>
+      )}
 
       {/* Attached Files */}
       {(post.files?.length > 0 || post.Files?.length > 0) && (
