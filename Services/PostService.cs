@@ -96,9 +96,9 @@ namespace ASTREE_PFE.Services
             }
         }
 
-        public async Task<IEnumerable<Post>> GetAllPostsAsync()
+        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllPostsAsync(string lastItemId = null, int limit = 10)
         {
-            return await _postRepository.GetAllAsync();
+            return await _postRepository.GetAllAsync(lastItemId, limit);
         }
 
         public async Task<Post> GetPostByIdAsync(string id)
