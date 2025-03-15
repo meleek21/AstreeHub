@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion'; // Import AnimatePresence for exit animations
 import Reaction from './Reaction';
 import '../assets/Css/PostCard.css';
 
@@ -6,6 +7,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for 3-dot menu
   const [isEditing, setIsEditing] = useState(false); // State for edit mode
   const [updatedContent, setUpdatedContent] = useState(post.content); // State for updated content
+  const [expandedImage, setExpandedImage] = useState(null); // State for expanded image
   const textareaRef = useRef(null); // Ref for auto-focusing the textarea
 
   // Toggle the dropdown menu
@@ -60,10 +62,22 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
 
     if (fileType?.startsWith('image/')) {
       return (
-        <div className="file-item">
-          <img src={fileUrl} alt={fileName} className="post-image" />
+        <motion.div
+          className="file-item"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          onClick={() => setExpandedImage(fileUrl)} // Set the expanded image on click
+        >
+          <motion.img
+            src={fileUrl}
+            alt={fileName}
+            className="post-image"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.3 }}
+          />
           <p>{fileName} ({formatFileSize(fileSize)})</p>
-        </div>
+        </motion.div>
       );
     } else if (fileType === 'application/pdf') {
       return (
@@ -167,6 +181,29 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
         </button>
         <Reaction postId={post.id} employeeId={userId} />
       </div>
+
+      {/* Expanded Image Modal */}
+      <AnimatePresence>
+        {expandedImage && (
+          <motion.div
+            className="expanded-image-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedImage(null)} // Close the modal when clicking outside
+          >
+            <motion.img
+              src={expandedImage}
+              alt="Expanded"
+              className="expanded-image"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              transition={{ duration: 0.3 }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

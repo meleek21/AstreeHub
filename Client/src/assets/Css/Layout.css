@@ -206,6 +206,11 @@
   padding: 0.75rem 0.5rem; /* Enhanced padding */
   transition: all 0.3s ease;
 }
+.sidebar-links li a.active{
+  border-radius: 10px;
+  padding: 0.75rem 0.5rem;
+  border-left: 3px solid var(--accent);
+}
 
 .sidebar-links li a span {
   opacity: 0; /* Hide text by default */
@@ -229,9 +234,10 @@
 }
 
 .sidebar-links li a.active span {
-  color: var(--primary-color);
-  background-color: var(--background-color);
+  color: var(--background-color);
+  background-color: var(--primary-color);
   font-weight: bold;
+ 
 }
 
 /* Ensure icons are always visible and properly aligned */

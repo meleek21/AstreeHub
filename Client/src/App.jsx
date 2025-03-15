@@ -9,9 +9,8 @@ import Feed from './pages/Feed';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './Context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import './App.css';
-import { useEffect } from 'react';
+
 
 function App() {
   return (
