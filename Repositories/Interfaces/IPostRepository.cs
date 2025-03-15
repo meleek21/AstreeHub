@@ -6,8 +6,8 @@ namespace ASTREE_PFE.Repositories.Interfaces
 {
     public interface IPostRepository
     {
-        // Get all posts
-        Task<IEnumerable<Post>> GetAllAsync();
+        // Get all posts with cursor-based pagination
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(string lastItemId = null, int limit = 10);
 
         // Get all posts by channel ID
         Task<IEnumerable<Post>> GetPostsByChannelIdAsync(string channelId);

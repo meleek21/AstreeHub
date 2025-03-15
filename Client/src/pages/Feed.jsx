@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
@@ -19,6 +19,12 @@ function Feed() {
   const userId = user?.id; 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const observerTarget = useRef(null);
+
+  // State for infinite scroll
+  const [lastItemId, setLastItemId] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // State for comments modal
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
@@ -36,6 +42,70 @@ function Feed() {
     setSelectedPostId(null);
   };
 
+  // Fetch posts with pagination
+  const fetchPosts = async (isInitial = true) => {
+    try {
+      if (isInitial) {
+        setLoading(true);
+        setError(null);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const currentLastItemId = isInitial ? null : lastItemId;
+      const response = await postsAPI.getAllPosts(currentLastItemId);
+
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
+      // Extract paginated data with correct property names
+      const { posts = [], nextLastItemId, hasMore } = response.data;
+      if (!Array.isArray(posts)) {
+        console.error('Posts data is not an array:', posts);
+        setPosts([]);
+        return;
+      }
+
+      setPosts(prevPosts => isInitial ? posts : [...prevPosts, ...posts]);
+      setLastItemId(nextLastItemId);
+      setHasMore(hasMore);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+      setError('Failed to load posts. Please try again later.');
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Initialize SignalR connection and fetch initial posts
+  useEffect(() => {
+    fetchPosts(true);
+  }, []);
+
+  // Setup infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          fetchPosts(false);
+        }
+      },
+      { threshold: 0.5 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, loadingMore, loading]);
+
   // Initialize SignalR connection
   useEffect(() => {
     const initializeSignalR = async () => {
@@ -43,10 +113,25 @@ function Feed() {
         // Register event handlers
         signalRService.onConnectionChange(setSignalRConnected);
         
-        signalRService.onNewPost((newPost) => {
+        signalRService.onNewPost(async (newPost) => {
           console.log('New post received via SignalR:', newPost);
-          setPosts(prevPosts => [newPost, ...prevPosts]);
-          toast.success('Nouvelle publication reçue!');
+          try {
+            // Fetch author information for the new post
+            const authorResponse = await postsAPI.getPostById(newPost.id);
+            const postWithAuthor = authorResponse.data;
+            if (postWithAuthor && postWithAuthor.authorName) {
+              setPosts(prevPosts => [postWithAuthor, ...prevPosts]);
+              toast.success('Nouvelle publication reçue!');
+            } else {
+              console.error('Post received without author information');
+              toast.error('Erreur lors de la récupération des détails de la publication');
+            }
+          } catch (error) {
+            console.error('Error fetching post details:', error);
+            toast.error('Erreur lors de la récupération des détails de la publication');
+            // Do not add the post until we have complete information
+            console.log('Skipping post addition due to missing author information');
+          }
         });
         
         signalRService.onUpdatedPost((updatedPost) => {
@@ -254,9 +339,12 @@ function Feed() {
         const response = await postsAPI.getAllPosts();
 
         console.log('Statut de la réponse API :', response.status);
-        console.log('Publications reçues :', response.data.length);
         console.log('Réponse API :', response.data);
-        setPosts(response.data);
+        
+        // Extract posts from the paginated response
+        const posts = response.data?.posts || [];
+        console.log('Publications reçues :', posts.length);
+        setPosts(posts);
       } catch (err) {
         console.error('Erreur lors de la récupération des publications :', err);
 
@@ -318,7 +406,7 @@ function Feed() {
     <div className="feed-container">
       <CreatePost />
       {!loading && (!posts || posts.length === 0) ? (
-        <div className="no-posts">Soyez le premier à publier !</div>
+        <div className="no-posts">Soyez le premier à publier !</div>
       ) : (
         <div className="posts-list">
           {posts.map((post) => (
@@ -330,9 +418,10 @@ function Feed() {
               token={token}
               onDeletePost={handleDeletePost}
               onUpdatePost={handleUpdatePost}
-              openCommentsModal={openCommentsModal} // Pass the open modal function
+              openCommentsModal={openCommentsModal}
             />
           ))}
+          {hasMore && <div ref={observerTarget} className="loading-more">Chargement en cours...</div>}
         </div>
       )}
 

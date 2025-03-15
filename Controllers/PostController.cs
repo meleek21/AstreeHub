@@ -46,9 +46,9 @@ namespace ASTREE_PFE.Controllers
         /// Get all posts with file metadata.
         /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PostResponseDTO>>> GetAllPosts()
+        public async Task<ActionResult<PaginatedPostsDTO>> GetAllPosts([FromQuery] string lastItemId = null, [FromQuery] int limit = 10)
         {
-            var posts = await _postService.GetAllPostsAsync();
+            var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(lastItemId, limit);
             var postDtos = new List<PostResponseDTO>();
 
             foreach (var post in posts)
@@ -85,12 +85,18 @@ namespace ASTREE_PFE.Controllers
                         UpdatedAt = c.UpdatedAt
                     }).ToList(),
                     ReactionCounts = post.ReactionCounts,
-
                 };
                 postDtos.Add(postDto);
             }
 
-            return Ok(postDtos);
+            var paginatedResponse = new PaginatedPostsDTO
+            {
+                Posts = postDtos,
+                NextLastItemId = nextLastItemId,
+                HasMore = hasMore
+            };
+
+            return Ok(paginatedResponse);
         }
 
         /// <summary>

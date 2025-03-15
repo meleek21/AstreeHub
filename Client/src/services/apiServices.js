@@ -49,7 +49,7 @@ export const authAPI = {
 
 // Posts API service
 export const postsAPI = {
-  getAllPosts: () => api.get('/post'),
+  getAllPosts: (lastItemId, limit = 10) => api.get(`/post?lastItemId=${lastItemId || ''}&limit=${limit}`),
   getPostById: (id) => api.get(`/post/${id}`),
   createPost: (postData) => api.post('/post', postData),
   updatePost: (id, postData) => api.put(`/post/${id}`, postData),

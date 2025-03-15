@@ -9,7 +9,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task DecrementReactionCountAsync(string postId, ReactionType reactionType);
         Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType);
         Task IncrementReactionCountAsync(string postId, ReactionType type);
-        Task<IEnumerable<Post>> GetAllPostsAsync();
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllPostsAsync(string lastItemId = null, int limit = 10);
         Task<Post> GetPostByIdAsync(string id);
         Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId);
         Task<Post> CreatePostAsync(Post post);

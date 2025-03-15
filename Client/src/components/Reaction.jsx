@@ -104,14 +104,13 @@ function Reaction({ postId, employeeId }) {
     const refreshReactionData = async () => {
       try {
         const { summaryRes, reactionsRes, userRes, userInfoMap } = await fetchReactionData(postId, employeeId);
-        // ... existing summary validation ...
         const validatedSummary = {
           Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-          JaimeCount: ensureNumericValue(summaryRes.data?.JaimeCount || summaryRes.data?.JaimeCount),
-          JadoreCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.JadoreCount),
-          BravoCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.BravoCount),
-          YoupiCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.YoupiCount),
-          BrillantCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.BrillantCount),
+          JaimeCount: ensureNumericValue(summaryRes.data?.jaimeCount || summaryRes.data?.JaimeCount),
+          JadoreCount: ensureNumericValue(summaryRes.data?.jadoreCount || summaryRes.data?.JadoreCount),
+          BravoCount: ensureNumericValue(summaryRes.data?.bravoCount || summaryRes.data?.BravoCount),
+          YoupiCount: ensureNumericValue(summaryRes.data?.youpiCount || summaryRes.data?.YoupiCount),
+          BrillantCount: ensureNumericValue(summaryRes.data?.brillantCount || summaryRes.data?.BrillantCount),
         };
         setReactionSummary(validatedSummary);
         setReactedUsers(reactionsRes.data || []);
@@ -136,19 +135,22 @@ function Reaction({ postId, employeeId }) {
       }
     };
 
-    const onDeletedReaction = (reactionId) => {
-      debouncedRefresh();
+    const onDeletedReaction = (reactionId, receivedPostId) => {
+      if (receivedPostId === postId) {
+        debouncedRefresh();
+      }
     };
 
     const onReactionSummary = (receivedPostId, summary) => {
       if (receivedPostId === postId) {
+        console.log('Processing reaction summary:', summary);
         const validatedSummary = {
           Total: ensureNumericValue(summary.total || summary.Total),
-          JaimeCount: ensureNumericValue(summary.JaimeCount || summary.JaimeCount),
-          JadoreCount: ensureNumericValue(summary.hahaCount || summary.JadoreCount),
-          BravoCount: ensureNumericValue(summary.wowCount || summary.BravoCount),
-          YoupiCount: ensureNumericValue(summary.sadCount || summary.YoupiCount),
-          BrillantCount: ensureNumericValue(summary.angryCount || summary.BrillantCount),
+          JaimeCount: ensureNumericValue(summary.jaimeCount || summary.JaimeCount),
+          JadoreCount: ensureNumericValue(summary.jadoreCount || summary.JadoreCount),
+          BravoCount: ensureNumericValue(summary.bravoCount || summary.BravoCount),
+          YoupiCount: ensureNumericValue(summary.youpiCount || summary.YoupiCount),
+          BrillantCount: ensureNumericValue(summary.brillantCount || summary.BrillantCount),
         };
         setReactionSummary(validatedSummary);
         debouncedRefresh();
@@ -174,11 +176,11 @@ function Reaction({ postId, employeeId }) {
         const { summaryRes, reactionsRes, userRes, userInfoMap } = await fetchReactionData(postId, employeeId);
         const validatedSummary = {
           Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-          JaimeCount: ensureNumericValue(summaryRes.data?.JaimeCount || summaryRes.data?.JaimeCount),
-          JadoreCount: ensureNumericValue(summaryRes.data?.hahaCount || summaryRes.data?.JadoreCount),
-          BravoCount: ensureNumericValue(summaryRes.data?.wowCount || summaryRes.data?.BravoCount),
-          YoupiCount: ensureNumericValue(summaryRes.data?.sadCount || summaryRes.data?.YoupiCount),
-          BrillantCount: ensureNumericValue(summaryRes.data?.angryCount || summaryRes.data?.BrillantCount),
+          JaimeCount: ensureNumericValue(summaryRes.data?.jaimeCount || summaryRes.data?.JaimeCount),
+          JadoreCount: ensureNumericValue(summaryRes.data?.jadoreCount || summaryRes.data?.JadoreCount),
+          BravoCount: ensureNumericValue(summaryRes.data?.bravoCount || summaryRes.data?.BravoCount),
+          YoupiCount: ensureNumericValue(summaryRes.data?.youpiCount || summaryRes.data?.YoupiCount),
+          BrillantCount: ensureNumericValue(summaryRes.data?.brillantCount || summaryRes.data?.BrillantCount),
         };
         setReactionSummary(validatedSummary);
         setReactedUsers(reactionsRes.data || []);

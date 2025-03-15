@@ -153,10 +153,15 @@ class SignalRService {
     });
 
     // Handle deleted reactions
-    this.connection.on('ReceiveDeletedReaction', (reactionId) => {
-      console.log('Deleted reaction received:', reactionId);
+    this.connection.on('ReceiveReactionDeleted', (reactionInfo) => {
+      console.log('Deleted reaction received:', reactionInfo);
       if (this.callbacks.onDeletedReaction) {
-        this.callbacks.onDeletedReaction(reactionId);
+        // Extract the reaction ID, handling different possible formats
+        const reactionId = reactionInfo.reactionId || reactionInfo.ReactionId;
+        const postId = reactionInfo.postId || reactionInfo.PostId;
+        
+        // Pass both the reaction ID and post ID to the callback
+        this.callbacks.onDeletedReaction(reactionId, postId);
       }
     });
 

@@ -17,9 +17,33 @@ namespace ASTREE_PFE.Repositories
             _posts = database.GetCollection<Post>("Posts");
         }
 
-        public async Task<IEnumerable<Post>> GetAllAsync()
+        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(string lastItemId = null, int limit = 10)
         {
-            return await _posts.Find(p => p.ChannelId == null).ToListAsync();
+            var filterBuilder = Builders<Post>.Filter;
+            var filter = filterBuilder.Eq(p => p.ChannelId, null);
+            
+            if (!string.IsNullOrEmpty(lastItemId))
+            {
+                var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
+                if (lastPost != null)
+                {
+                    filter = filterBuilder.And(
+                        filter,
+                        filterBuilder.Lt(p => p.Timestamp, lastPost.Timestamp)
+                    );
+                }
+            }
+            
+            var query = _posts.Find(filter);
+
+            var sortedQuery = query.SortByDescending(p => p.Timestamp);
+            var posts = await sortedQuery.Limit(limit + 1).ToListAsync();
+
+            bool hasMore = posts.Count > limit;
+            var resultPosts = hasMore ? posts.Take(limit) : posts;
+            string nextLastItemId = hasMore ? posts[limit - 1].Id : null;
+
+            return (resultPosts, nextLastItemId, hasMore);
         }
 
         public async Task<IEnumerable<Post>> GetPostsByChannelIdAsync(string channelId)
