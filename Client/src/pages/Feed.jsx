@@ -4,14 +4,14 @@ import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
 import signalRService from '../services/signalRService';
 import CreatePost from '../components/CreatePost';
-import PostCard from '../components/PostCard'; // Import the PostCard component
-import Comment from '../components/Comment'; // Import the Comment component
+import PostCard from '../components/PostCard';
+import Comment from '../components/Comment';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
 
 // Main Feed component
 function Feed() {
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [signalRConnected, setSignalRConnected] = useState(false);
@@ -59,17 +59,17 @@ function Feed() {
         throw new Error('No data received from server');
       }
 
-      // Extract paginated data with correct property names
-      const { posts = [], nextLastItemId, hasMore } = response.data;
-      if (!Array.isArray(posts)) {
-        console.error('Posts data is not an array:', posts);
-        setPosts([]);
+      // Ensure posts is always an array
+      const { posts: fetchedPosts = [], nextLastItemId, hasMore: hasMorePosts } = response.data;
+      if (!Array.isArray(fetchedPosts)) {
+        console.error('Posts data is not an array:', fetchedPosts);
+        setPosts([]); // Fallback to an empty array
         return;
       }
 
-      setPosts((prevPosts) => (isInitial ? posts : [...prevPosts, ...posts]));
+      setPosts((prevPosts) => (isInitial ? fetchedPosts : [...prevPosts, ...fetchedPosts]));
       setLastItemId(nextLastItemId);
-      setHasMore(hasMore);
+      setHasMore(hasMorePosts);
     } catch (err) {
       console.error('Error fetching posts:', err);
       setError('Failed to load posts. Please try again later.');
@@ -199,7 +199,7 @@ function Feed() {
           postsAPI
             .getAllPosts()
             .then((response) => {
-              setPosts(response.data);
+              setPosts(response.data?.posts || []); // Ensure posts is an array
             })
             .catch((err) =>
               console.error('Error fetching posts after comment deletion:', err)
@@ -264,7 +264,7 @@ function Feed() {
           postsAPI
             .getAllPosts()
             .then((response) => {
-              setPosts(response.data);
+              setPosts(response.data?.posts || []); // Ensure posts is an array
             })
             .catch((err) =>
               console.error('Error fetching posts after reaction deletion:', err)
@@ -297,7 +297,7 @@ function Feed() {
             postsAPI
               .getAllPosts()
               .then((response) => {
-                setPosts(response.data);
+                setPosts(response.data?.posts || []); // Ensure posts is an array
               })
               .catch((err) =>
                 console.error('Error fetching posts after new file:', err)
@@ -326,7 +326,7 @@ function Feed() {
             postsAPI
               .getAllPosts()
               .then((response) => {
-                setPosts(response.data);
+                setPosts(response.data?.posts || []); // Ensure posts is an array
               })
               .catch((err) =>
                 console.error('Error fetching posts after file update:', err)
@@ -342,7 +342,7 @@ function Feed() {
             .getAllPosts()
             .then((response) => {
               console.log('Updated posts received after file deletion:', response.data.length);
-              setPosts(response.data);
+              setPosts(response.data?.posts || []); // Ensure posts is an array
               toast.info('Un fichier a été supprimé');
             })
             .catch((err) =>
@@ -367,64 +367,6 @@ function Feed() {
     };
   }, [isAuthenticated]);
 
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token || !isAuthenticated) {
-          console.log('Pas de token ou non authentifié, redirection vers la page de connexion');
-          navigate('/Authen');
-          return;
-        }
-
-        console.log('Récupération des publications - Début de la requête');
-
-        // Utiliser le service postsAPI au lieu d'un appel axios direct
-        const response = await postsAPI.getAllPosts();
-
-        console.log('Statut de la réponse API :', response.status);
-        console.log('Réponse API :', response.data);
-
-        // Extract posts from the paginated response
-        const posts = response.data?.posts || [];
-        console.log('Publications reçues :', posts.length);
-        setPosts(posts);
-      } catch (err) {
-        console.error('Erreur lors de la récupération des publications :', err);
-
-        // Vérifier si l'erreur est liée à l'authentification
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          console.error('Erreur d\'authentification :', err.response.data);
-
-          // Être plus spécifique sur quand déconnecter - uniquement pour les erreurs de token
-          const errorMessage = JSON.stringify(err.response.data || '').toLowerCase();
-          const isTokenError =
-            errorMessage.includes('invalid token') ||
-            errorMessage.includes('expired token') ||
-            errorMessage.includes('malformed token');
-
-          if (isTokenError) {
-            console.log('Erreur d\'authentification liée au token, déconnexion');
-            setError('Erreur d\'authentification. Veuillez vous reconnecter.');
-            logout();
-            return;
-          } else {
-            // Pour les erreurs 401/403 générales qui ne sont pas spécifiquement liées au token
-            // Afficher simplement une erreur mais ne pas déconnecter
-            setError('Accès refusé. Vous n\'avez peut-être pas la permission de voir ces publications.');
-            return;
-          }
-        }
-
-        setError('Échec de la récupération des publications. Veuillez réessayer plus tard.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, [isAuthenticated, navigate, logout]);
-
   // Function to handle post deletion
   const handleDeletePost = async (postId) => {
     try {
@@ -446,10 +388,10 @@ function Feed() {
         IsPublic: updatedData.isPublic || true, // Default to true if not provided
         FileIds: updatedData.fileIds || [], // Default to an empty array if not provided
       };
-  
+
       await postsAPI.updatePost(postId, postData);
       toast.success('Publication mise à jour avec succès !');
-  
+
       // Update the local state to reflect the changes
       setPosts((prevPosts) =>
         prevPosts.map((post) =>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import signalRService from '../services/signalRService';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faReply } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faReply, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import toast, { Toaster } from 'react-hot-toast';
 import '../assets/Css/Comment.css';
 
@@ -45,9 +44,10 @@ const fetchAuthorInfo = async (authorId, token) => {
 };
 
 // Composant CommentItem
-const CommentItem = ({ comment, authors, userId, onAddReply }) => {
+const CommentItem = ({ comment, authors, userId, onAddReply, onEditComment, onDeleteComment }) => {
     const [newReply, setNewReply] = useState('');
     const [showReplies, setShowReplies] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
 
     const handleReplyChange = (e) => {
         setNewReply(e.target.value);
@@ -58,13 +58,36 @@ const CommentItem = ({ comment, authors, userId, onAddReply }) => {
         setNewReply('');
     };
 
+    const handleEdit = () => {
+        onEditComment(comment.id, comment.content);
+    };
+
+    const handleDelete = () => {
+        onDeleteComment(comment.id);
+    };
+
     return (
-        <li key={comment.id} className="comment-item">
+        <li
+            key={comment.id}
+            className="comment-item"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <div className="comment-content">
                 <p>{comment.content}</p>
                 <small>
                     Par {authors[comment.authorId] ? `${authors[comment.authorId].firstName} ${authors[comment.authorId].lastName}` : "Utilisateur inconnu"} le {new Date(comment.createdAt || comment.timestamp).toLocaleString()}
                 </small>
+                {comment.authorId === userId && isHovered && (
+                    <div className="comment-actions">
+                        <button onClick={handleEdit} className="action-button">
+                            <FontAwesomeIcon icon={faEdit} style={{color:'#FF6600'}} />
+                        </button>
+                        <button onClick={handleDelete} className="action-button">
+                            <FontAwesomeIcon icon={faTrash} style={{ color: '#D32F2F' }} />
+                        </button>
+                    </div>
+                )}
             </div>
             
             {/* Formulaire de réponse */}
@@ -88,11 +111,26 @@ const CommentItem = ({ comment, authors, userId, onAddReply }) => {
                     </button>
                     <ul className={`replies-list ${showReplies ? 'visible' : ''}`}>
                         {comment.replies.map((reply) => (
-                            <li key={reply.id} className="reply-item fade-in">
+                            <li
+                                key={reply.id}
+                                className="reply-item fade-in"
+                                onMouseEnter={() => setIsHovered(true)}
+                                onMouseLeave={() => setIsHovered(false)}
+                            >
                                 <p>{reply.content}</p>
                                 <small>
                                     Par {authors[reply.authorId] ? `${authors[reply.authorId].firstName} ${authors[reply.authorId].lastName}` : "Utilisateur inconnu"} le {new Date(reply.createdAt || reply.timestamp).toLocaleString()}
                                 </small>
+                                {reply.authorId === userId && isHovered && (
+                                    <div className="comment-actions">
+                                        <button onClick={() => onEditComment(reply.id, reply.content)} className="action-button">
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
+                                        <button onClick={() => onDeleteComment(reply.id)} className="action-button">
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
+                                )}
                             </li>
                         ))}
                     </ul>
@@ -108,6 +146,8 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
     const [loading, setLoading] = useState(true);
     const [authors, setAuthors] = useState({});
     const [newComment, setNewComment] = useState('');
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editingCommentContent, setEditingCommentContent] = useState('');
 
     useEffect(() => {
         if (!postId || !isAuthenticated) return;
@@ -154,16 +194,12 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
-            // Get current user's info from the authors cache if available
-            const currentUserInfo = authors[userId] || null;
-            
             const optimisticComment = {
                 id: `temp-${Date.now()}`,
                 content: newComment,
                 authorId: userId,
                 postId: postId,
                 createdAt: new Date().toISOString(),
-                authorName: currentUserInfo ? `${currentUserInfo.firstName} ${currentUserInfo.lastName}` : "Utilisateur inconnu",
                 replies: []
             };
 
@@ -177,7 +213,6 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             }, token);
 
             toast.success("Commentaire publié avec succès !");
-            // Refresh comments to get the server-generated ID and ensure data consistency
             fetchComments();
         } catch (err) {
             console.error("Erreur lors de la création du commentaire :", err);
@@ -193,10 +228,7 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
-            // Get current user's info from the authors cache if available
-            const currentUserInfo = authors[userId] || null;
-            
-            setComments(prevComments => 
+            setComments(prevComments =>
                 prevComments.map(comment => {
                     if (comment.id === commentId) {
                         return {
@@ -207,7 +239,6 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                                     id: `temp-reply-${Date.now()}`,
                                     content: replyContent,
                                     authorId: userId,
-                                    authorName: currentUserInfo ? `${currentUserInfo.firstName} ${currentUserInfo.lastName}` : "Utilisateur inconnu",
                                     createdAt: new Date().toISOString()
                                 }
                             ]
@@ -224,12 +255,59 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             }, token);
 
             toast.success("Réponse publiée avec succès !");
-            // Refresh comments to get the server-generated ID and ensure data consistency
             fetchComments();
         } catch (err) {
             console.error("Erreur lors de la création de la réponse :", err);
             toast.error(`Échec de la publication de la réponse : ${err.message}`);
             fetchComments();
+        }
+    };
+
+    const handleEditComment = async (commentId, content) => {
+        setEditingCommentId(commentId);
+        setEditingCommentContent(content);
+    };
+
+    const handleUpdateComment = async () => {
+        if (!editingCommentContent.trim()) {
+            toast.error("Le contenu du commentaire ne peut pas être vide");
+            return;
+        }
+
+        try {
+            await authRequest(`/comment/${editingCommentId}`, 'put', {
+                content: editingCommentContent
+            }, token);
+
+            setComments(prevComments =>
+                prevComments.map(comment =>
+                    comment.id === editingCommentId
+                        ? { ...comment, content: editingCommentContent }
+                        : comment
+                )
+            );
+
+            setEditingCommentId(null);
+            setEditingCommentContent('');
+            toast.success("Commentaire mis à jour avec succès !");
+        } catch (err) {
+            console.error("Erreur lors de la mise à jour du commentaire :", err);
+            toast.error(`Échec de la mise à jour du commentaire : ${err.message}`);
+        }
+    };
+
+    const handleDeleteComment = async (commentId) => {
+        try {
+            await authRequest(`/comment/${commentId}`, 'delete', null, token);
+
+            setComments(prevComments =>
+                prevComments.filter(comment => comment.id !== commentId)
+            );
+
+            toast.success("Commentaire supprimé avec succès !");
+        } catch (err) {
+            console.error("Erreur lors de la suppression du commentaire :", err);
+            toast.error(`Échec de la suppression du commentaire : ${err.message}`);
         }
     };
 
@@ -249,6 +327,8 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                             authors={authors}
                             userId={userId}
                             onAddReply={handleAddReply}
+                            onEditComment={handleEditComment}
+                            onDeleteComment={handleDeleteComment}
                         />
                     ))}
                 </ul>
@@ -266,6 +346,19 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                     <FontAwesomeIcon icon={faPaperPlane} />
                 </button>
             </div>
+
+            {editingCommentId && (
+                <div className="edit-comment-form">
+                    <textarea
+                        value={editingCommentContent}
+                        onChange={(e) => setEditingCommentContent(e.target.value)}
+                        placeholder="Modifier le commentaire..."
+                    />
+                    <button onClick={handleUpdateComment} className="icon-button">
+                        <FontAwesomeIcon icon={faPaperPlane} />
+                    </button>
+                </div>
+            )}
         </div>
     );
 };

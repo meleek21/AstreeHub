@@ -1,4 +1,3 @@
-/* Comment.css */
 .comment-section {
   width: 100%;
   max-width: 600px;
@@ -115,4 +114,76 @@
 
 .toggle-replies:hover {
   text-decoration: underline;
+}
+
+.comment-item {
+  position: relative;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.3s ease;
+}
+
+.comment-item:hover {
+  background-color: #f9f9f9;
+}
+
+.comment-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.comment-item:hover .comment-actions {
+  opacity: 1;
+}
+
+.action-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.3s ease; /* Add transform to the transition */
+}
+
+.action-button:hover {
+  transform: scale(1.1); /* Slightly increase the size on hover */
+}
+
+.edit-comment-form {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-comment-form textarea {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9em;
+  resize: vertical;
+  background-color: #fff;
+  color: #333;
+  transition: border-color 0.3s ease;
+}
+
+.edit-comment-form textarea:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.edit-comment-form .icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  
+  transition: color 0.3s ease;
+}
+
+.edit-comment-form .icon-button:hover {
+  color: #0056b3;
 }
