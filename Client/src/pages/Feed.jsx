@@ -136,11 +136,19 @@ function Feed() {
 
         signalRService.onUpdatedPost((updatedPost) => {
           console.log('Updated post received via SignalR:', updatedPost);
-          setPosts((prevPosts) =>
-            prevPosts.map((post) =>
-              post.id === updatedPost.id ? updatedPost : post
-            )
-          );
+          // Fetch the complete post data with author information
+          postsAPI
+            .getPostById(updatedPost.id)
+            .then((response) => {
+              setPosts((prevPosts) =>
+                prevPosts.map((post) =>
+                  post.id === updatedPost.id ? response.data : post
+                )
+              );
+            })
+            .catch((err) =>
+              console.error('Error fetching updated post details:', err)
+            );
         });
 
         signalRService.onDeletedPost((deletedPostId) => {

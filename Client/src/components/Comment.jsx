@@ -154,12 +154,16 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
+            // Get current user's info from the authors cache if available
+            const currentUserInfo = authors[userId] || null;
+            
             const optimisticComment = {
                 id: `temp-${Date.now()}`,
                 content: newComment,
                 authorId: userId,
                 postId: postId,
                 createdAt: new Date().toISOString(),
+                authorName: currentUserInfo ? `${currentUserInfo.firstName} ${currentUserInfo.lastName}` : "Utilisateur inconnu",
                 replies: []
             };
 
@@ -173,6 +177,8 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             }, token);
 
             toast.success("Commentaire publié avec succès !");
+            // Refresh comments to get the server-generated ID and ensure data consistency
+            fetchComments();
         } catch (err) {
             console.error("Erreur lors de la création du commentaire :", err);
             toast.error(`Échec de la publication du commentaire : ${err.message}`);
@@ -187,6 +193,9 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
+            // Get current user's info from the authors cache if available
+            const currentUserInfo = authors[userId] || null;
+            
             setComments(prevComments => 
                 prevComments.map(comment => {
                     if (comment.id === commentId) {
@@ -198,7 +207,7 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                                     id: `temp-reply-${Date.now()}`,
                                     content: replyContent,
                                     authorId: userId,
-                                    postId: postId,
+                                    authorName: currentUserInfo ? `${currentUserInfo.firstName} ${currentUserInfo.lastName}` : "Utilisateur inconnu",
                                     createdAt: new Date().toISOString()
                                 }
                             ]
@@ -211,12 +220,14 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             await authRequest(`/comment/${commentId}/reply`, 'post', {
                 content: replyContent,
                 authorId: userId,
-                postId: postId
+                postId: comment.postId
             }, token);
 
             toast.success("Réponse publiée avec succès !");
+            // Refresh comments to get the server-generated ID and ensure data consistency
+            fetchComments();
         } catch (err) {
-            console.error("Erreur lors de l'ajout de la réponse :", err);
+            console.error("Erreur lors de la création de la réponse :", err);
             toast.error(`Échec de la publication de la réponse : ${err.message}`);
             fetchComments();
         }
