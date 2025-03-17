@@ -83,11 +83,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate('/Authen');
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error('Logout error:', error.message);
+    } finally {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      setUser(null);
+      navigate('/Authen');
+    }
   };
 
   const value = {

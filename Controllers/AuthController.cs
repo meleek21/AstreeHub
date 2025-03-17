@@ -16,12 +16,14 @@ namespace ASTREE_PFE.Controllers
         private readonly IAuthService _authService;
         private readonly SignInManager<Employee> _signInManager;
         private readonly UserManager<Employee> _userManager;
+        private readonly IUserOnlineStatusService _userOnlineStatusService;
 
-        public AuthController(IAuthService authService, SignInManager<Employee> signInManager, UserManager<Employee> userManager)
+        public AuthController(IAuthService authService, SignInManager<Employee> signInManager, UserManager<Employee> userManager, IUserOnlineStatusService userOnlineStatusService)
         {
             _authService = authService;
             _signInManager = signInManager;
             _userManager = userManager;
+            _userOnlineStatusService = userOnlineStatusService;
         }
 
         [HttpPost("login")]
@@ -33,6 +35,15 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(new { message });
 
             var user = await _userManager.FindByEmailAsync(model.Email);
+            try
+            {
+                await _userOnlineStatusService.UpdateUserStatusAsync(user.Id, true);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't prevent login
+                Console.WriteLine($"Failed to update user online status: {ex.Message}");
+            }
             return Ok(new
             {
                 token,
@@ -62,10 +73,26 @@ namespace ASTREE_PFE.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User ID not found in token" });
+
             var (success, message) = await _authService.LogoutAsync();
+            Console.WriteLine($"Logout success: {success}, Message: {message}");
             if (!success)
                 return BadRequest(new { message });
 
+            try
+            {
+                Console.WriteLine($"Attempting to update online status for user {userId} to offline");
+                await _userOnlineStatusService.UpdateUserStatusAsync(userId, false);
+                Console.WriteLine($"Successfully updated online status for user {userId} to offline");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to update user online status during logout: {ex.Message}");
+                Console.WriteLine($"Exception details: {ex}");
+            }
             return Ok(new { message });
         }
 
