@@ -193,6 +193,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<IUserOnlineStatusService, UserOnlineStatusService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
