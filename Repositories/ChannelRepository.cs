@@ -34,7 +34,8 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<IEnumerable<Channel>> GetGeneralChannelsAsync()
         {
-            return await _channels.Find(c => c.IsGeneral == true).ToListAsync();
+            var filter = Builders<Channel>.Filter.Eq(c => c.IsGeneral, true);
+            return await _channels.Find(filter).ToListAsync();
         }
 
         public async Task CreateAsync(Channel channel)

@@ -6,6 +6,8 @@ import Authen from './pages/Authen';
 import Layout from './pages/Layout';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
+import Channels from './pages/Channels';
+import ChannelFeed from './pages/ChannelFeed';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
@@ -31,6 +33,8 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/feed" element={<ErrorBoundary><Feed /></ErrorBoundary>} />
+              <Route path="/channels" element={<Channels />} />
+              <Route path="/channel/:channelId" element={<ErrorBoundary><ChannelFeed /></ErrorBoundary>} />
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
               {/* Add more private routes here */}

@@ -13,7 +13,7 @@ const placeholderPhrases = [
   "Dites quelque chose d'inspirant !",
 ];
 
-const CreatePost = () => {
+const CreatePost = ({ channelId }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scheduledTime, setScheduledTime] = useState(null);
@@ -21,6 +21,8 @@ const CreatePost = () => {
   const [files, setFiles] = useState([]); // State to store selected files
   const { user } = useAuth();
   const userId = user?.id;
+  const isDirector = user?.role === "DIRECTOR";
+  const isChannelPost = Boolean(channelId);
 
   const [placeholder, setPlaceholder] = useState("");
 
@@ -55,7 +57,9 @@ const CreatePost = () => {
 
       console.log("Request Body:", requestBody); // Log the request body for debugging
 
-      const response = await postsAPI.createPost(requestBody);
+      const response = isChannelPost
+        ? await postsAPI.createChannelPost(channelId, requestBody)
+        : await postsAPI.createPost(requestBody);
       console.log("Publication créée :", response.data);
       toast.success(scheduledTime ? "Publication planifiée !" : "Publication créée avec succès !");
       setContent("");
@@ -74,12 +78,23 @@ const CreatePost = () => {
     }
   };
 
+  // Only show create post UI if it's not a channel post, or if user is a director for channel posts
+  if (isChannelPost && !isDirector) {
+    return (
+      <div className="create-post-container">
+        <div className="create-post-restricted">
+          <p>BIENVENUE DANS LE CANAL OFFICIEL DU DEPARTEMENT</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="create-post-container">
         <input
           type="text"
-          placeholder={placeholder}
+          placeholder={isChannelPost ? "Créer une annonce officielle..." : placeholder}
           onClick={() => setIsModalOpen(true)}
           readOnly
           className="create-post-input"
@@ -99,7 +114,8 @@ const CreatePost = () => {
         saveDraft={saveDraft}
         deleteDraft={deleteDraft}
         files={files}
-        setFiles={setFiles} 
+        setFiles={setFiles}
+        channelId={channelId}
       />
     </>
   );

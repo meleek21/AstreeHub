@@ -46,7 +46,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
@@ -68,7 +68,7 @@ namespace ASTREE_PFE.Controllers
         }
         
         [HttpGet("{id}")]
-        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -95,7 +95,7 @@ namespace ASTREE_PFE.Controllers
         }
         
         [HttpGet("department/{departmentId}")]
-        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(int departmentId)
         {
             var employees = await _employeeService.GetEmployeesByDepartmentAsync(departmentId);
@@ -117,7 +117,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> CreateEmployee([FromBody] EmployeeCreateDto employeeDto)
         {
             if (!ModelState.IsValid)
@@ -241,7 +241,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
 }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> DeleteEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -267,7 +267,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
         }
 
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> ChangeEmployeeStatus(string id, [FromBody] StatusUpdateDto statusDto)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
@@ -286,7 +286,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
         }
 
         [HttpPatch("{id}/department")]
-        [Authorize(Roles = "DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult> AssignEmployeeToDepartment(string id, [FromBody] DepartmentAssignDto departmentDto)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);

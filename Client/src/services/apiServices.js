@@ -8,6 +8,9 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Export the api instance
+export { api };
+
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
@@ -51,6 +54,7 @@ export const authAPI = {
 // Posts API service
 export const postsAPI = {
   getAllPosts: (lastItemId, limit = 10) => api.get(`/post?lastItemId=${lastItemId || ''}&limit=${limit}`),
+  getChannelPosts: (channelId, lastItemId, limit = 10) => api.get(`/post/channel/${channelId}?lastItemId=${lastItemId || ''}&limit=${limit}`),
   getPostById: (id) => api.get(`/post/${id}`),
   createPost: (postData) => api.post('/post', postData),
   updatePost: (id, postData) => api.put(`/post/${id}`, postData),
@@ -60,6 +64,10 @@ export const postsAPI = {
       'Content-Type': 'multipart/form-data'
     }
   }),
+  // Channel-specific post endpoints
+  createChannelPost: (channelId, postData) => api.post(`/post/channel/${channelId}`, postData),
+  updateChannelPost: (channelId, postId, postData) => api.put(`/post/channel/${channelId}/post/${postId}`, postData),
+  deleteChannelPost: (channelId, postId) => api.delete(`/post/channel/${channelId}/${postId}`),
 };
 
 // Reactions API service
@@ -89,4 +97,23 @@ export const userStatusAPI = {
   getLastSeen: (userId) => api.get(`/useronlinestatus/${userId}/last-seen`),
   updateUserStatus: (userId, isOnline) => api.post(`/useronlinestatus/${userId}/status`, isOnline),
   updateLastActivity: (userId) => api.post(`/useronlinestatus/${userId}/activity`)
+};
+
+// Channels API service
+export const channelsAPI = {
+  getAllChannels: () => api.get('/Channel'),
+  getUserChannels: (departmentId) => api.get(`/Channel/user${departmentId ? `?departmentId=${departmentId}` : ''}`),
+  getChannelById: (id) => api.get(`/Channel/${id}`),
+  createChannel: (channelData) => api.post('/Channel', channelData),
+  updateChannel: (id, channelData) => api.put(`/Channel/${id}`, channelData),
+  deleteChannel: (id) => api.delete(`/Channel/${id}`)
+};
+
+// Comments API service
+export const commentsAPI = {
+  getPostComments: (postId) => api.get(`/comment/post/${postId}`),
+  createComment: (commentData) => api.post('/comment', commentData),
+  addReply: (commentId, replyData) => api.post(`/comment/${commentId}/reply`, replyData),
+  updateComment: (commentId, content) => api.put(`/comment/${commentId}`, { content }),
+  deleteComment: (commentId) => api.delete(`/comment/${commentId}`)
 };

@@ -1,43 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { commentsAPI, userAPI } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faReply, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import toast, { Toaster } from 'react-hot-toast';
 import '../assets/Css/Comment.css';
 import UserBadge from './UserBadge';
 
-const API_BASE_URL = 'http://localhost:5126/api';
 
-// Fonction pour récupérer le token d'authentification
-const getAuthToken = (token) => {
-    return token || localStorage.getItem('token');
-};
-
-// Fonction pour les requêtes API avec authentification
-const authRequest = async (url, method = 'get', data = null, token) => {
-    const authToken = getAuthToken(token);
-    
-    if (!authToken) {
-        throw new Error("Aucun token d'authentification disponible");
-    }
-    
-    return axios({
-        method,
-        url: `${API_BASE_URL}${url}`,
-        headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-        },
-        data,
-        withCredentials: true
-    });
-};
 
 // Récupérer les informations de l'auteur
-const fetchAuthorInfo = async (authorId, token) => {
+const fetchAuthorInfo = async (authorId) => {
     try {
-        const response = await authRequest(`/employee/user-info/${authorId}`, 'get', null, token);
-        return response.data;
+        const response = await userAPI.getUserInfo(authorId);
+        return response;
     } catch (err) {
         console.error(`Erreur lors de la récupération des informations de l'auteur ${authorId}:`, err);
         return null;
@@ -168,7 +143,7 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
     const fetchComments = async () => {
         try {
             setLoading(true);
-            const response = await authRequest(`/comment/post/${postId}`, 'get', null, token);
+            const response = await commentsAPI.getPostComments(postId);
             const fetchedComments = Array.isArray(response.data) ? response.data : [];
             setComments(fetchedComments);
 
@@ -176,19 +151,24 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             const authorIds = new Set();
             fetchedComments.forEach(comment => {
                 authorIds.add(comment.authorId);
-                if (comment.replies) {
+                if (comment.replies && Array.isArray(comment.replies)) {
                     comment.replies.forEach(reply => authorIds.add(reply.authorId));
                 }
             });
 
             const authorsInfo = {};
-            for (const authorId of authorIds) {
-                const authorInfo = await fetchAuthorInfo(authorId, token);
-                if (authorInfo) {
-                    authorsInfo[authorId] = authorInfo;
+            const authorPromises = Array.from(authorIds).map(async authorId => {
+                try {
+                    const authorInfo = await userAPI.getUserInfo(authorId);
+                    if (authorInfo && authorInfo.data) {
+                        authorsInfo[authorId] = authorInfo.data;
+                    }
+                } catch (error) {
+                    console.error(`Error fetching author info for ID ${authorId}:`, error);
                 }
-            }
+            });
 
+            await Promise.all(authorPromises);
             setAuthors(authorsInfo);
             setLoading(false);
         } catch (err) {
@@ -205,6 +185,16 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
+            const userInfo = await userAPI.getUserInfo(userId);
+            if (!userInfo) {
+                throw new Error('Failed to fetch user information');
+            }
+
+            setAuthors(prevAuthors => ({
+                ...prevAuthors,
+                [userId]: userInfo
+            }));
+
             const optimisticComment = {
                 id: `temp-${Date.now()}`,
                 content: newComment,
@@ -217,11 +207,11 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             setComments(prevComments => [optimisticComment, ...prevComments]);
             setNewComment('');
 
-            await authRequest('/comment', 'post', {
+            await commentsAPI.createComment({
                 content: newComment,
                 authorId: userId,
                 postId: postId
-            }, token);
+            });
 
             toast.success("Commentaire publié avec succès !");
             fetchComments();
@@ -264,9 +254,44 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
                 authorId: userId,
                 postId: postId
             }, token);
+            const userInfo = await userAPI.getUserInfo(userId);
+            if (!userInfo) {
+                throw new Error('Failed to fetch user information');
+            }
 
-            toast.success("Réponse publiée avec succès !");
-            fetchComments();
+            const response = await commentsAPI.addReply(commentId, {
+                content: replyContent,
+                authorId: userId,
+                postId: postId
+            });
+
+            if (response.data) {
+                setAuthors(prevAuthors => ({
+                    ...prevAuthors,
+                    [userId]: userInfo
+                }));
+
+                const newReply = {
+                    id: response.data.id || `temp-reply-${Date.now()}`,
+                    content: replyContent,
+                    authorId: userId,
+                    createdAt: response.data.createdAt || new Date().toISOString()
+                };
+
+                setComments(prevComments =>
+                    prevComments.map(comment => {
+                        if (comment.id === commentId) {
+                            return {
+                                ...comment,
+                                replies: [...(comment.replies || []), newReply]
+                            };
+                        }
+                        return comment;
+                    })
+                );
+
+                toast.success("Réponse publiée avec succès !");
+            }
         } catch (err) {
             console.error("Erreur lors de la création de la réponse :", err);
             toast.error(`Échec de la publication de la réponse : ${err.message}`);
@@ -286,39 +311,84 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         }
 
         try {
-            await authRequest(`/comment/${editingCommentId}`, 'put', {
-                content: editingCommentContent
-            }, token);
+            // Find the comment in the current comments list to ensure it exists
+            const commentToUpdate = comments.find(c => c.id === editingCommentId) ||
+                comments.find(c => c.replies?.some(r => r.id === editingCommentId));
 
-            setComments(prevComments =>
-                prevComments.map(comment =>
-                    comment.id === editingCommentId
-                        ? { ...comment, content: editingCommentContent }
-                        : comment
-                )
-            );
+            if (!commentToUpdate) {
+                throw new Error('Comment not found');
+            }
 
-            setEditingCommentId(null);
-            setEditingCommentContent('');
-            toast.success("Commentaire mis à jour avec succès !");
+            const response = await commentsAPI.updateComment(editingCommentId, editingCommentContent);
+
+            if (response.data) {
+                setComments(prevComments =>
+                    prevComments.map(comment => {
+                        if (comment.id === editingCommentId) {
+                            return { ...comment, content: editingCommentContent };
+                        }
+                        if (comment.replies) {
+                            return {
+                                ...comment,
+                                replies: comment.replies.map(reply =>
+                                    reply.id === editingCommentId
+                                        ? { ...reply, content: editingCommentContent }
+                                        : reply
+                                )
+                            };
+                        }
+                        return comment;
+                    })
+                );
+
+                setEditingCommentId(null);
+                setEditingCommentContent('');
+                toast.success("Commentaire mis à jour avec succès !");
+            } else {
+                throw new Error('Failed to update comment');
+            }
         } catch (err) {
             console.error("Erreur lors de la mise à jour du commentaire :", err);
             toast.error(`Échec de la mise à jour du commentaire : ${err.message}`);
+            fetchComments(); // Refresh comments on error
         }
     };
 
     const handleDeleteComment = async (commentId) => {
         try {
-            await authRequest(`/comment/${commentId}`, 'delete', null, token);
+            // Find the comment in the current comments list to ensure it exists
+            const commentToDelete = comments.find(c => c.id === commentId) ||
+                comments.find(c => c.replies?.some(r => r.id === commentId));
 
-            setComments(prevComments =>
-                prevComments.filter(comment => comment.id !== commentId)
-            );
+            if (!commentToDelete) {
+                throw new Error('Comment not found');
+            }
 
-            toast.success("Commentaire supprimé avec succès !");
+            const response = await commentsAPI.deleteComment(commentId);
+
+            if (response.status === 200 || response.status === 204) {
+                setComments(prevComments =>
+                    prevComments.map(comment => {
+                        if (comment.id === commentId) {
+                            return null; // Remove the comment
+                        }
+                        if (comment.replies) {
+                            return {
+                                ...comment,
+                                replies: comment.replies.filter(reply => reply.id !== commentId)
+                            };
+                        }
+                        return comment;
+                    }).filter(Boolean) // Remove null values
+                );
+                toast.success("Commentaire supprimé avec succès !");
+            } else {
+                throw new Error('Failed to delete comment');
+            }
         } catch (err) {
             console.error("Erreur lors de la suppression du commentaire :", err);
             toast.error(`Échec de la suppression du commentaire : ${err.message}`);
+            fetchComments(); // Refresh comments on error
         }
     };
 

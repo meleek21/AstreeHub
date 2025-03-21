@@ -15,6 +15,6 @@ namespace ASTREE_PFE.Services.Interfaces
         Task DeleteChannelAsync(string id);
         Task<bool> ChannelExistsAsync(string id);
         Task<bool> DepartmentHasChannelAsync(int departmentId);
-        Task<IEnumerable<Post>> GetChannelPostsAsync(string channelId);
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetChannelPostsAsync(string channelId, string lastItemId = null, int limit = 10);
     }
 }

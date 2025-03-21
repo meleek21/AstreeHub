@@ -9,6 +9,17 @@ function Sidebar() {
       <ul className="sidebar-links">
         {/* First Group */}
         <li>
+          <Link to="/channels" className={`sidebar-link ${location.pathname === '/channels' ? 'active' : ''}`}>
+            <lord-icon
+              src="https://cdn.lordicon.com/wxhtpnnk.json"
+              trigger="hover"
+              colors="primary:#0047AB"
+              style={{ width: '30px', height: '30px' }}
+            ></lord-icon>
+            <span>Channels</span>
+          </Link>
+        </li>
+        <li>
           <Link to="/bibliotheque" className={`sidebar-link ${location.pathname === '/bibliotheque' ? 'active' : ''}`}>
             <lord-icon
               src="https://cdn.lordicon.com/fkaukecx.json"
