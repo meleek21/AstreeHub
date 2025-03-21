@@ -42,6 +42,18 @@ namespace ASTREE_PFE.Repositories
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(employee, employee.Role.ToString());
+                
+                // If the employee is a Director and has a department assigned, update the department's DirectorId
+                if (employee.Role == RoleType.DIRECTOR && employee.DepartmentId.HasValue)
+                {
+                    var department = await _context.Departments.FindAsync(employee.DepartmentId.Value);
+                    if (department != null)
+                    {
+                        department.DirectorId = employee.Id;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                
                 return true;
             }
             return false;
@@ -66,7 +78,30 @@ namespace ASTREE_PFE.Repositories
                 var currentRoles = await _userManager.GetRolesAsync(employee);
                 await _userManager.RemoveFromRolesAsync(employee, currentRoles);
                 await _userManager.AddToRoleAsync(employee, employeeUpdate.Role.ToString());
+
+                // If the employee was a Director, remove their DirectorId from the department
+                if (employee.Role == RoleType.DIRECTOR && employee.DepartmentId.HasValue)
+                {
+                    var oldDepartment = await _context.Departments.FindAsync(employee.DepartmentId.Value);
+                    if (oldDepartment != null && oldDepartment.DirectorId == employee.Id)
+                    {
+                        oldDepartment.DirectorId = null;
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
                 employee.Role = employeeUpdate.Role;
+
+                // If the employee is becoming a Director and has a department assigned, update the department's DirectorId
+                if (employeeUpdate.Role == RoleType.DIRECTOR && employeeUpdate.DepartmentId.HasValue)
+                {
+                    var department = await _context.Departments.FindAsync(employeeUpdate.DepartmentId.Value);
+                    if (department != null)
+                    {
+                        department.DirectorId = employee.Id;
+                        await _context.SaveChangesAsync();
+                    }
+                }
             }
 
             var result = await _userManager.UpdateAsync(employee);

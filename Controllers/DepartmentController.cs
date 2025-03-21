@@ -26,7 +26,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
+        [Authorize(Roles = "ADMIN,DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult<IEnumerable<DepartmentResponseDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
@@ -55,7 +55,6 @@ namespace ASTREE_PFE.Controllers
             return departmentDtos;
         }
         [HttpGet("{id}")]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<DepartmentResponseDto>> GetDepartment(int id)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
@@ -91,7 +90,6 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("{id}/employees")]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPER_ADMIN")]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesInDepartment(int id)
         {
             var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
@@ -114,7 +112,7 @@ namespace ASTREE_PFE.Controllers
 
         // For the CreateDepartment method
         [HttpPost]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult<DepartmentResponseDto>> CreateDepartment([FromBody] DepartmentCreateDto departmentDto)
         {
             if (!ModelState.IsValid)
@@ -155,7 +153,7 @@ namespace ASTREE_PFE.Controllers
 
         // For the UpdateDepartment method
         [HttpPut("{id}")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpdateDto departmentDto)
         {
             if (!ModelState.IsValid)
@@ -193,7 +191,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> DeleteDepartment(int id)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
@@ -212,7 +210,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPatch("{id}/director")]
-        [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> AssignDirector(int id, [FromBody] DirectorAssignDto directorDto)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);

@@ -6,6 +6,8 @@ import Authen from './pages/Authen';
 import Layout from './pages/Layout';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
+import Channels from './pages/Channels';
+import ChannelFeed from './pages/ChannelFeed';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider } from './Context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -29,6 +31,8 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/feed" element={<ErrorBoundary><Feed /></ErrorBoundary>} />
+              <Route path="/channels" element={<Channels />} />
+              <Route path="/channel/:channelId" element={<ErrorBoundary><ChannelFeed /></ErrorBoundary>} />
               {/* Add more private routes here */}
             </Route>
 

@@ -15,8 +15,8 @@ namespace ASTREE_PFE.Data{
         };
         ConventionRegistry.Register("EnumStringConvention", pack, t => true);
 
-        var client = new MongoClient(configuration["MongoDbSettings:ConnectionString"]);
-        _database = client.GetDatabase(configuration["MongoDbSettings:DatabaseName"]);
+        var client = new MongoClient(configuration.GetConnectionString("MongoConnection"));
+        _database = client.GetDatabase(configuration.GetConnectionString("MongoDatabase"));
     }
 
     public IMongoCollection<T> GetCollection<T>(string name)
