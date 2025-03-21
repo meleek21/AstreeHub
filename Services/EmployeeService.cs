@@ -10,10 +10,12 @@ namespace ASTREE_PFE.Services
     public class EmployeeService : IEmployeeService
     {
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly IDepartmentRepository _departmentRepository;
 
-        public EmployeeService(IEmployeeRepository employeeRepository)
+        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
         {
             _employeeRepository = employeeRepository;
+            _departmentRepository = departmentRepository;
         }
 
         public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
@@ -92,6 +94,23 @@ namespace ASTREE_PFE.Services
             // Convert string role name to RoleType enum
             if (Enum.TryParse<RoleType>(roleName, out var roleType))
             {
+                // If updating to Director role, handle the previous director
+                if (roleType == RoleType.DIRECTOR && employee.DepartmentId.HasValue)
+                {
+                    var department = await _departmentRepository.GetByIdAsync(employee.DepartmentId.Value);
+                    if (department?.DirectorId != null && department.DirectorId != employeeId)
+                    {
+                        // Get the previous director
+                        var previousDirector = await _employeeRepository.GetByIdAsync(department.DirectorId);
+                        if (previousDirector != null)
+                        {
+                            // Update previous director's role to Employee
+                            previousDirector.Role = RoleType.EMPLOYEE;
+                            await _employeeRepository.UpdateAsync(department.DirectorId, previousDirector);
+                        }
+                    }
+                }
+                
                 employee.Role = roleType;
                 return await _employeeRepository.UpdateAsync(employeeId, employee);
             }

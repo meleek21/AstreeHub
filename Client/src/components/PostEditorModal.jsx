@@ -34,6 +34,7 @@ const PostEditorModal = ({
   deleteDraft,
   files,
   setFiles,
+  channelId,
 }) => {
   const modalRef = useRef(null);
 
@@ -105,6 +106,7 @@ const PostEditorModal = ({
         content: content || "", // Ensure content is always included, even if empty
         fileUrls: uploadedFiles.map((file) => file.fileUrl),
         fileIds: uploadedFiles.map((file) => file.fileId),
+        channelId: channelId || null, // Use channelId from props
       };
       console.log("Post data prepared:", postData);
 

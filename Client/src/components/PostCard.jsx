@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // Import AnimatePresence for exit animations
+import { motion, AnimatePresence } from 'framer-motion';
 import Reaction from './Reaction';
+import toast from 'react-hot-toast';
 import '../assets/Css/PostCard.css';
 
-const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal }) => {
+const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick }) => {
+  // Use onCommentClick if provided, otherwise fall back to openCommentsModal for backward compatibility
+  const handleCommentClick = onCommentClick || openCommentsModal;
   const [isMenuOpen, setIsMenuOpen] = useState(false); // State for 3-dot menu
   const [isEditing, setIsEditing] = useState(false); // State for edit mode
   const [updatedContent, setUpdatedContent] = useState(post.content); // State for updated content
@@ -37,13 +40,19 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     try {
       await onUpdatePost(post.id, {
         content: updatedContent,
-        authorId: post.authorId, // Pass the authorId
+        authorId: post.authorId,
         isPublic: post.isPublic,
         fileIds: post.fileIds || [],
       });
-      setIsEditing(false); // Exit edit mode after successful update
+      setIsEditing(false);
+
     } catch (err) {
       console.error('Erreur lors de la mise à jour du post :', err);
+      if (err.message === 'Network Error') {
+        toast.error('Erreur de connexion. Veuillez vérifier votre connexion internet.');
+      } else {
+        toast.error(err.response?.data?.message || 'Erreur lors de la mise à jour de la publication.');
+      }
     }
   };
 
@@ -176,7 +185,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
 
       {/* Reaction and Comment Buttons */}
       <div className="post-interaction-buttons">
-        <button className="view-comments-button" onClick={() => openCommentsModal(post.id)}>
+        <button className="view-comments-button" onClick={() => handleCommentClick(post.id)}>
           Commentaires
         </button>
         <Reaction postId={post.id} employeeId={userId} />

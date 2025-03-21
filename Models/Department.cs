@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace ASTREE_PFE.Models
 {
@@ -19,9 +20,11 @@ namespace ASTREE_PFE.Models
         public string? DirectorId { get; set; }
         
         // Navigation property for Director
+        [JsonIgnore]
         public virtual Employee? Director { get; set; }
         
         // Navigation property for Employees in this department
+        [JsonIgnore]
         public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
         
         // Reference to department's channel - stores the MongoDB ObjectId as string

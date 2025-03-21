@@ -9,8 +9,8 @@ namespace ASTREE_PFE.Repositories.Interfaces
         // Get all posts with cursor-based pagination
         Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(string lastItemId = null, int limit = 10);
 
-        // Get all posts by channel ID
-        Task<IEnumerable<Post>> GetPostsByChannelIdAsync(string channelId);
+        // Get all posts by channel ID with pagination
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetPostsByChannelIdAsync(string channelId, string lastItemId = null, int limit = 10);
 
         // Get a post by its ID
         Task<Post> GetByIdAsync(string id);

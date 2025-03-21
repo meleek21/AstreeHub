@@ -48,33 +48,30 @@ namespace ASTREE_PFE.Services
             // Validate business rules
             if (!channel.IsGeneral && channel.DepartmentId.HasValue)
             {
-                // Ensure department doesn't already have a channel
-                bool hasChannel = await _channelRepository.DepartmentHasChannelAsync(channel.DepartmentId.Value);
-                if (hasChannel)
-                {
-                    throw new InvalidOperationException($"Department with ID {channel.DepartmentId} already has a channel");
-                }
-
                 // Verify department exists
                 var department = await _departmentRepository.GetByIdAsync(channel.DepartmentId.Value);
                 if (department == null)
                 {
                     throw new KeyNotFoundException($"Department with ID {channel.DepartmentId} not found");
                 }
-            }
 
-            await _channelRepository.CreateAsync(channel);
-
-            // If this is a department channel, update the department with the channel reference
-            if (!channel.IsGeneral && channel.DepartmentId.HasValue)
-            {
-                var department = await _departmentRepository.GetByIdAsync(channel.DepartmentId.Value);
-                if (department != null)
+                // Create channel if department doesn't have one
+                if (string.IsNullOrEmpty(department.ChannelId))
                 {
+                    await _channelRepository.CreateAsync(channel);
                     department.ChannelId = channel.Id;
                     await _departmentRepository.UpdateAsync(department.Id, department);
+                    return channel;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Department with ID {channel.DepartmentId} already has a channel");
                 }
             }
+
+            // For general channels
+            await _channelRepository.CreateAsync(channel);
+            return channel;
 
             return channel;
         }
@@ -159,7 +156,7 @@ namespace ASTREE_PFE.Services
             return await _channelRepository.DepartmentHasChannelAsync(departmentId);
         }
 
-        public async Task<IEnumerable<Post>> GetChannelPostsAsync(string channelId)
+        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetChannelPostsAsync(string channelId, string lastItemId = null, int limit = 10)
         {
             // Ensure channel exists
             var channel = await _channelRepository.GetByIdAsync(channelId);
@@ -168,8 +165,8 @@ namespace ASTREE_PFE.Services
                 throw new KeyNotFoundException($"Channel with ID {channelId} not found");
             }
 
-            // Get all posts for this channel using the repository method
-            return await _postRepository.GetPostsByChannelIdAsync(channelId);
+            // Get all posts for this channel using the repository method with pagination
+            return await _postRepository.GetPostsByChannelIdAsync(channelId, lastItemId, limit);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System;
+using System.Text.Json.Serialization;
 
 namespace ASTREE_PFE.Models
 {
@@ -18,6 +19,7 @@ namespace ASTREE_PFE.Models
         public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         
         // Navigation property for Department
+        [JsonIgnore]
         public virtual Department? Department { get; set; }
     }
 }

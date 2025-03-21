@@ -99,7 +99,7 @@ namespace ASTREE_PFE.Services
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("FirstName", user.FirstName),
                 new Claim("LastName", user.LastName),
-                new Claim("DepartmentId", user.DepartmentId.ToString())
+                new Claim("DepartmentId", user.DepartmentId?.ToString() ?? "0")
             };
 
             // Add roles as claims
