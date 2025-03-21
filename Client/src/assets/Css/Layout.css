@@ -68,8 +68,8 @@
 .navbar-links {
   display: flex;
   list-style: none;
-  gap: 2rem; /* Increased gap between links */
-  margin: 0 1.5rem; /* Added margin for spacing */
+  gap: 2rem; 
+  margin: 0 1.5rem; 
 }
 
 .navbar-links li a {
@@ -91,7 +91,6 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
-
 /* User Dropdown */
 .user-dropdown {
   display: flex;
@@ -101,22 +100,32 @@
   margin-right: 1.5rem; /* Added margin for spacing */
 }
 
-.dropdown-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--primary-color);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+.welcome-text {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #0047AB; /* Custom color */
+  margin-right: 10px; /* Spacing between the text and the profile picture */
 }
 
-.dropdown-toggle:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
+.user-avatar-container {
+  display: flex;
+  align-items: center; /* Align items vertically in the center */
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease; /* Smooth transition for scaling and border */
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid transparent; 
+  transition: transform 0.2s ease, border 0.2s ease;
+}
+
+.user-avatar-container:hover .user-avatar {
+  transform: scale(1.1); /* Scale up the image by 10% */
+  border: 2px solid var(--accent); /* Add a border on hover */
 }
 
 .dropdown-content {
@@ -144,11 +153,12 @@
   background-color: rgba(9, 179, 85, 0.384);
 }
 
-.user-dropdown:hover .dropdown-content {
+.dropdown-content {
   display: block;
   opacity: 1;
   transform: translateY(0);
 }
+
 .logout-button {
   all: unset; 
   background: none;

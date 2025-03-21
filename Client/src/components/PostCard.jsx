@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // Import AnimatePresence for exit animations
+import { motion, AnimatePresence } from 'framer-motion';
 import Reaction from './Reaction';
+import UserBadge from './UserBadge';
 import '../assets/Css/PostCard.css';
 
 const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal }) => {
@@ -103,7 +104,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       {/* Post Header with Author, Date, and 3-Dot Menu */}
       <div className="post-header">
         <div className="post-meta">
-          <span className="post-author">Publié par : {post.authorName || 'Inconnu'}</span>
+          <UserBadge userId={post.authorId} />
           <span className="post-date">
             Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}
           </span>

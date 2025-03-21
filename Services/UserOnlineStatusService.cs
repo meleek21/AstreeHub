@@ -9,76 +9,46 @@ namespace ASTREE_PFE.Services
 {
     public class UserOnlineStatusService : IUserOnlineStatusService
     {
-        private readonly IMongoCollection<UserOnlineStatus> _userStatusCollection;
+        private readonly IMongoCollection<UserOnlineStatus> _userOnlineStatusCollection;
 
         public UserOnlineStatusService(IMongoDatabase database)
         {
-            _userStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatus");
-        }
-
-        public async Task<UserOnlineStatus> GetUserStatusAsync(string userId)
-        {
-            return await _userStatusCollection.Find(x => x.UserId == userId).FirstOrDefaultAsync();
+            _userOnlineStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatus");
         }
 
         public async Task<IEnumerable<UserOnlineStatus>> GetAllOnlineUsersAsync()
         {
-            return await _userStatusCollection.Find(x => x.IsOnline).ToListAsync();
+            return await _userOnlineStatusCollection.Find(u => u.IsOnline).ToListAsync();
         }
 
-        public async Task UpdateUserStatusAsync(string userId, bool isOnline)
+        public async Task<UserOnlineStatus> GetUserStatusAsync(string userId)
         {
-            try
-            {
-                var status = await GetUserStatusAsync(userId);
-                var currentTime = DateTime.UtcNow;
-
-                if (status == null)
-                {
-                    status = new UserOnlineStatus
-                    {
-                        UserId = userId,
-                        IsOnline = isOnline,
-                        LastActivityTime = currentTime,
-                        LastSeenTime = currentTime
-                    };
-                    await _userStatusCollection.InsertOneAsync(status);
-                    Console.WriteLine($"Created new online status for user {userId}");
-                }
-                else
-                {
-                    var update = Builders<UserOnlineStatus>.Update
-                        .Set(x => x.IsOnline, isOnline)
-                        .Set(x => x.LastActivityTime, currentTime);
-
-                    if (!isOnline)
-                    {
-                        update = update.Set(x => x.LastSeenTime, currentTime);
-                    }
-
-                    var result = await _userStatusCollection.UpdateOneAsync(x => x.UserId == userId, update);
-                    Console.WriteLine($"Updated online status for user {userId}. Modified: {result.ModifiedCount}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error updating user online status: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task UpdateLastActivityAsync(string userId)
-        {
-            var update = Builders<UserOnlineStatus>.Update
-                .Set(x => x.LastActivityTime, DateTime.UtcNow);
-
-            await _userStatusCollection.UpdateOneAsync(x => x.UserId == userId, update);
+            return await _userOnlineStatusCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
         }
 
         public async Task<DateTime?> GetLastSeenTimeAsync(string userId)
         {
-            var status = await GetUserStatusAsync(userId);
-            return status?.LastSeenTime;
+            var userStatus = await _userOnlineStatusCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+            return userStatus?.LastSeenTime;
+        }
+
+        public async Task UpdateUserStatusAsync(string userId, bool isOnline)
+        {
+            var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
+            var update = Builders<UserOnlineStatus>.Update
+                .Set(u => u.IsOnline, isOnline)
+                .Set(u => u.LastSeenTime, DateTime.UtcNow);
+
+            await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+        }
+
+        public async Task UpdateLastActivityAsync(string userId)
+        {
+            var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
+            var update = Builders<UserOnlineStatus>.Update
+                .Set(u => u.LastActivityTime, DateTime.UtcNow);
+
+            await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
         }
     }
 }

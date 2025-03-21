@@ -17,13 +17,15 @@ namespace ASTREE_PFE.DTOs
     
     public class EmployeeUpdateDto
     {
-        public string FirstName { get; set; } = string.Empty;
-        public string LastName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
-        public DateTime DateOfBirth { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public DateTime? DateOfBirth { get; set; }
         public int? DepartmentId { get; set; }
-        public RoleType Role { get; set; }
+        public RoleType? Role { get; set; } // Use nullable enum
+        public IFormFile? File { get; set; } // For profile picture
     }
     
     public class StatusUpdateDto

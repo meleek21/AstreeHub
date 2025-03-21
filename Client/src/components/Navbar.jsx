@@ -1,27 +1,57 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../Context/AuthContext';
+import { userAPI, userStatusAPI } from '../services/apiServices';
 
 function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  
-  const loggedInUser = {
-    name: user?.firstName ? `${user.firstName} ${user.lastName}` : 'User',
-    avatar: 'https://via.placeholder.com/40',
-  };
+  const userId = user?.id;
+
+  // Default profile picture URL
+  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1742278756/blueAvatar_mezaen.jpg';
+
+  const [userInfo, setUserInfo] = useState({
+    firstName: '',
+    lastName: '',
+    profilePicture: defaultProfilePicture,
+    isOnline: false,
+  });
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Fetch user info
+  const fetchUserInfo = async () => {
+    if (!userId) return;
+
+    try {
+      const [userInfoResponse, userStatusResponse] = await Promise.all([
+        userAPI.getUserInfo(userId),
+        userStatusAPI.getUserStatus(userId),
+      ]);
+      setUserInfo({
+        firstName: userInfoResponse.data.firstName,
+        lastName: userInfoResponse.data.lastName,
+        profilePicture: userInfoResponse.data.profilePictureUrl || defaultProfilePicture,
+        isOnline: userStatusResponse.data.isOnline,
+      });
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, [userId]);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
   const handleLogout = () => {
-    // Use the logout function from AuthContext which properly handles token removal
     logout();
-    // No need to navigate here as the logout function in AuthContext already handles navigation
+    navigate('/login');
   };
 
   return (
@@ -40,7 +70,6 @@ function Navbar() {
             colors="primary:#0047AB,secondary:#00CED1"
             style={{ width: '30px', height: '30px' }}
           ></lord-icon>
-          
         </Link>
       </div>
 
@@ -53,7 +82,6 @@ function Navbar() {
             colors="primary:#0047AB,secondary:#00CED1"
             style={{ width: '30px', height: '30px' }}
           ></lord-icon>
-          
         </Link>
       </div>
 
@@ -70,25 +98,28 @@ function Navbar() {
 
       {/* User Dropdown */}
       <div className="user-dropdown">
-        <span className="welcome-text">Bienvenue, {loggedInUser.name}</span>
+        <span className="welcome-text">Bienvenue, {userInfo.firstName} {userInfo.lastName}</span>
         <div className="dropdown">
-          <button
-            className="dropdown-toggle"
-            onClick={toggleDropdown}
-            onMouseEnter={() => setIsDropdownOpen(false)}
-            title="Compte"
-          >
+          {/* Clickable Profile Picture */}
+          <div className="user-avatar-container" onClick={toggleDropdown}>
+            <img
+              src={userInfo.profilePicture}
+              alt={`${userInfo.firstName} ${userInfo.lastName}`}
+              className="user-avatar"
+            />
             <lord-icon
-              src="https://cdn.lordicon.com/hrjifpbq.json"
-              trigger="hover"
-              colors="primary:#FF6600,secondary:#FF9933"
-              style={{ width: '30px', height: '30px' }}
-            ></lord-icon>
-          </button>
+              src="https://cdn.lordicon.com/xcrjfuzb.json"
+              trigger="morph"
+              state="hover-arrow-down-2"
+              colors="primary:#6ED3CF"
+              style={{width:'25px',height:'25px',position:'absolute',right:'0',bottom:'0',marginBottom:'-5px',marginRight:'-6px'}}>
+            </lord-icon>
+          </div>
 
+          {/* Dropdown Content */}
           {isDropdownOpen && (
             <div className="dropdown-content">
-              <Link to="/settings" className="dropdown-link">
+              <Link to={`/profile/edit/${userId}`} className="dropdown-link">
                 <FaCog /> Paramètres
               </Link>
               <button onClick={handleLogout} className="logout-button">

@@ -19,5 +19,8 @@ namespace ASTREE_PFE.Models
         
         // Navigation property for Department
         public virtual Department? Department { get; set; }
+
+        // Profile picture URL from Cloudinary
+        public string? ProfilePictureUrl { get; set; }
     }
 }

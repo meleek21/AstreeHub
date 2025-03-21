@@ -1,0 +1,217 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --primary-color: #0047AB;
+  --secondary-color: #FF6600;
+  --background-color: #F5F5F5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent: #6ED3CF;
+  --error-color: #D32F2F;
+  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
+  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+}
+
+/* Base Styles */
+.profile-container {
+  font-family: 'Nunito', sans-serif;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Profile Picture */
+.profile-picture-container {
+  flex-shrink: 0;
+}
+
+.profile-picture-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.profile-picture {
+  width: 180px;
+  height: 180px;
+  border-radius: var(--border-radius);
+  object-fit: cover;
+  border: 2px solid var(--accent);
+  transition: all var(--transition-speed) ease-in-out;
+}
+
+.profile-picture:hover {
+  transform: scale(1.1); /* Scale up by 10% */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Add a subtle shadow */
+}
+
+.upload-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--accent);
+  color: white;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  transition: background-color var(--transition-speed) ease-in-out;
+}
+
+.upload-button:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Form Styles */
+.profile-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 20px;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.form-group input {
+  padding: 10px;
+  border: 1px solid var(--text-secondary);
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  transition: all var(--transition-speed) ease-in-out;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  transform: scale(1.02);
+  box-shadow: 0 0 8px rgba(0, 71, 171, 0.2);
+}
+
+/* Button Styles */
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-button {
+  padding: 10px 20px;
+  background: white;
+  color: var(--primary-color);
+  font-weight: 600;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition-speed) ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.save-button:hover {
+  background: var(--gradient-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.save-button:active {
+  transform: translateY(0);
+}
+
+.save-button.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.save-button.success {
+  animation: successPulse 0.5s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.cancel-button {
+  padding: 10px 20px;
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 16px;
+  transition: all var(--transition-speed) ease-in-out;
+}
+
+.cancel-button:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.cancel-button:active {
+  transform: translateY(0);
+}
