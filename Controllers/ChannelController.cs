@@ -3,6 +3,8 @@ using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
 
@@ -27,6 +29,50 @@ namespace ASTREE_PFE.Controllers
             var channels = await _channelService.GetAllChannelsAsync();
             return Ok(channels);
         }
+
+        // GET: api/channels/user
+        // GET: api/channels/user
+[HttpGet("user")]
+public async Task<ActionResult<IEnumerable<Channel>>> GetUserChannels([FromQuery] int? departmentId = null)
+{
+    try
+    {
+        var userChannels = new List<Channel>();
+
+        // If no departmentId is provided, return all channels
+        if (!departmentId.HasValue)
+        {
+            return Ok(await _channelService.GetAllChannelsAsync());
+        }
+
+        // Get general channels
+        var generalChannels = await _channelService.GetGeneralChannelsAsync();
+        if (generalChannels != null && generalChannels.Any())
+        {
+            userChannels.AddRange(generalChannels);
+        }
+
+        // Get department channel if departmentId is provided
+        try
+        {
+            var departmentChannel = await _channelService.GetChannelByDepartmentIdAsync(departmentId.Value);
+            if (departmentChannel != null)
+            {
+                userChannels.Add(departmentChannel);
+            }
+        }
+        catch (KeyNotFoundException)
+        {
+            // Continue without department channel if not found
+        }
+
+        return Ok(userChannels);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"An error occurred while fetching channels: {ex.Message}");
+    }
+}
 
         // GET: api/channels/{id}
         [HttpGet("{id}")]

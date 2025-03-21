@@ -1,4 +1,4 @@
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 
 class SignalRService {
   constructor() {
@@ -41,9 +41,17 @@ class SignalRService {
 
     try {
       // Create the connection
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
       this.connection = new HubConnectionBuilder()
         .withUrl('http://localhost:5126/hubs/feed', {
-          accessTokenFactory: () => localStorage.getItem('token'),
+          accessTokenFactory: () => token,
+          withCredentials: false,
+          skipNegotiation: true,
+          transport: HttpTransportType.WebSockets
         })
         .withAutomaticReconnect([
           0, 2000, 5000, 10000, 15000, 30000 // Reconnect intervals in milliseconds

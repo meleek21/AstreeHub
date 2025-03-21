@@ -213,7 +213,8 @@ namespace ASTREE_PFE.Controllers
                 AuthorId = postRequest.AuthorId,
                 IsPublic = postRequest.IsPublic,
                 FileIds = postRequest.FileIds, // Include file IDs
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                ChannelId = postRequest.ChannelId // Set the channelId from the request
             };
 
             var createdPost = await _postService.CreatePostAsync(post);
@@ -223,6 +224,31 @@ namespace ASTREE_PFE.Controllers
         /// <summary>
         /// Update an existing post with file IDs.
         /// </summary>
+        [HttpPut("channel/{channelId}/post/{postId}")]
+        public async Task<ActionResult<Post>> UpdateChannelPost(string channelId, string postId, [FromBody] PostRequestDTO postRequest)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!ObjectId.TryParse(postId, out _))
+                return BadRequest("Invalid post ID format");
+
+            var existingPost = await _postService.GetPostByIdAsync(postId);
+            if (existingPost == null)
+                return NotFound();
+
+            if (existingPost.ChannelId != channelId)
+                return BadRequest("Post does not belong to this channel");
+
+            existingPost.Content = postRequest.Content;
+            existingPost.IsPublic = postRequest.IsPublic;
+            existingPost.FileIds = postRequest.FileIds;
+            existingPost.UpdatedAt = DateTime.UtcNow;
+
+            await _postService.UpdatePostAsync(postId, existingPost);
+            return Ok(existingPost);
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult<Post>> UpdatePost(string id, [FromBody] PostRequestDTO postRequest)
         {
@@ -346,12 +372,59 @@ namespace ASTREE_PFE.Controllers
 
         // GET: api/post/channel/{channelId}
         [HttpGet("channel/{channelId}")]
-        public async Task<ActionResult<IEnumerable<Post>>> GetChannelPosts(string channelId)
+        public async Task<ActionResult<PaginatedPostsDTO>> GetChannelPosts(string channelId, [FromQuery] string lastItemId = null, [FromQuery] int limit = 10)
         {
             try
             {
-                var posts = await _channelService.GetChannelPostsAsync(channelId);
-                return Ok(posts);
+                var (posts, nextLastItemId, hasMore) = await _channelService.GetChannelPostsAsync(channelId, lastItemId, limit);
+                var postDtos = new List<PostResponseDTO>();
+
+                foreach (var post in posts)
+                {
+                    var userInfo = await _employeeService.GetUserInfoAsync(post.AuthorId);
+                    var files = await _fileService.GetFilesByIdsAsync(post.FileIds);
+
+                    var postDto = new PostResponseDTO
+                    {
+                        Id = post.Id,
+                        Content = post.Content,
+                        AuthorId = post.AuthorId,
+                        AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                        AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                        CreatedAt = post.Timestamp,
+                        UpdatedAt = post.UpdatedAt,
+                        Files = files.Select(f => new FileResponseDTO
+                        {
+                            Id = f.Id,
+                            FileName = f.FileName,
+                            FileUrl = f.FileUrl,
+                            FileType = f.FileType,
+                            FileSize = f.FileSize,
+                            UploadedAt = f.UploadedAt
+                        }).ToList(),
+                        Comments = post.Comments?.Select(c => new CommentResponseDTO
+                        {
+                            Id = c.Id,
+                            Content = c.Content,
+                            AuthorId = c.AuthorId,
+                            AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                            AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                            CreatedAt = c.Timestamp,
+                            UpdatedAt = c.UpdatedAt
+                        }).ToList(),
+                        ReactionCounts = post.ReactionCounts,
+                    };
+                    postDtos.Add(postDto);
+                }
+
+                var paginatedResponse = new PaginatedPostsDTO
+                {
+                    Posts = postDtos,
+                    NextLastItemId = nextLastItemId,
+                    HasMore = hasMore
+                };
+
+                return Ok(paginatedResponse);
             }
             catch (KeyNotFoundException ex)
             {
@@ -361,6 +434,7 @@ namespace ASTREE_PFE.Controllers
 
         // POST: api/post/channel/{channelId}
         [HttpPost("channel/{channelId}")]
+        [Authorize(Roles = "DIRECTOR")]
         public async Task<ActionResult<Post>> CreateChannelPost(string channelId, PostRequestDTO postRequest)
         {
             // Get current user
@@ -408,6 +482,7 @@ namespace ASTREE_PFE.Controllers
 
         // DELETE: api/post/channel/{channelId}/posts/{postId}
         [HttpDelete("channel/{channelId}/posts/{postId}")]
+        [Authorize(Roles = "DIRECTOR")]
         public async Task<IActionResult> DeleteChannelPost(string channelId, string postId)
         {
             // Get current user

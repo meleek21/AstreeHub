@@ -121,7 +121,6 @@ function Feed() {
             const postWithAuthor = authorResponse.data;
             if (postWithAuthor && postWithAuthor.authorName) {
               setPosts((prevPosts) => [postWithAuthor, ...prevPosts]);
-              toast.success('Nouvelle publication reçue!');
             } else {
               console.error('Post received without author information');
               toast.error('Erreur lors de la récupération des détails de la publication');
