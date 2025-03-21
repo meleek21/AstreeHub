@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faReply, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import toast, { Toaster } from 'react-hot-toast';
 import '../assets/Css/Comment.css';
+import UserBadge from './UserBadge';
 
 const API_BASE_URL = 'http://localhost:5126/api';
 
@@ -74,6 +75,10 @@ const CommentItem = ({ comment, authors, userId, onAddReply, onEditComment, onDe
             onMouseLeave={() => setIsHovered(false)}
         >
             <div className="comment-content">
+                <div className="comment-header">
+                    <UserBadge userId={comment.authorId} />
+                    <small>le {new Date(comment.createdAt || comment.timestamp).toLocaleString()}</small>
+                </div>
                 <p>{comment.content}</p>
                 <small>
                     Par {authors[comment.authorId] ? `${authors[comment.authorId].firstName} ${authors[comment.authorId].lastName}` : "Utilisateur inconnu"} le {new Date(comment.createdAt || comment.timestamp).toLocaleString()}
@@ -117,7 +122,13 @@ const CommentItem = ({ comment, authors, userId, onAddReply, onEditComment, onDe
                                 onMouseEnter={() => setIsHovered(true)}
                                 onMouseLeave={() => setIsHovered(false)}
                             >
-                                <p>{reply.content}</p>
+                                <div className="reply-content">
+                                    <div className="reply-header">
+                                        <UserBadge userId={reply.authorId} />
+                                        <small>le {new Date(reply.createdAt || reply.timestamp).toLocaleString()}</small>
+                                    </div>
+                                    <p>{reply.content}</p>
+                                </div>
                                 <small>
                                     Par {authors[reply.authorId] ? `${authors[reply.authorId].firstName} ${authors[reply.authorId].lastName}` : "Utilisateur inconnu"} le {new Date(reply.createdAt || reply.timestamp).toLocaleString()}
                                 </small>
@@ -251,7 +262,7 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
             await authRequest(`/comment/${commentId}/reply`, 'post', {
                 content: replyContent,
                 authorId: userId,
-                postId: comment.postId
+                postId: postId
             }, token);
 
             toast.success("Réponse publiée avec succès !");

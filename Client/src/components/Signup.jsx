@@ -213,7 +213,7 @@ const Signup = () => {
                 name="departmentId"
                 value={formData.departmentId}
                 onChange={handleChange}
-                required
+                
                 className="form-control select-dropdown"
               >
                 <option value="">Sélectionner un département</option>

@@ -74,5 +74,19 @@ export const reactionsAPI = {
 
 // User info API service
 export const userAPI = {
-  getUserInfo: (employeeId) => api.get(`/employee/user-info/${employeeId}`)
+  getUserInfo: (employeeId) => api.get(`/employee/user-info/${employeeId}`),
+  updateProfile: (userId, formData) => api.put(`/employee/${userId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+};
+
+// User online status API service
+export const userStatusAPI = {
+  getOnlineUsers: () => api.get('/useronlinestatus/online'),
+  getUserStatus: (userId) => api.get(`/useronlinestatus/${userId}/status`),
+  getLastSeen: (userId) => api.get(`/useronlinestatus/${userId}/last-seen`),
+  updateUserStatus: (userId, isOnline) => api.post(`/useronlinestatus/${userId}/status`, isOnline),
+  updateLastActivity: (userId) => api.post(`/useronlinestatus/${userId}/activity`)
 };

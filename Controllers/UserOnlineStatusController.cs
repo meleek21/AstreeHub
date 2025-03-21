@@ -38,13 +38,14 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("{userId}/last-seen")]
-        public async Task<ActionResult<DateTime?>> GetLastSeen(string userId)
+        public async Task<ActionResult<string>> GetLastSeen(string userId)
         {
             var lastSeen = await _userOnlineStatusService.GetLastSeenTimeAsync(userId);
             if (lastSeen == null)
                 return NotFound();
 
-            return Ok(lastSeen);
+            var duration = GetHumanReadableDuration(lastSeen.Value);
+            return Ok(duration);
         }
 
         [HttpPost("{userId}/status")]
@@ -59,6 +60,24 @@ namespace ASTREE_PFE.Controllers
         {
             await _userOnlineStatusService.UpdateLastActivityAsync(userId);
             return Ok();
+        }
+
+        private string GetHumanReadableDuration(DateTime lastSeenTime)
+        {
+            var timeDifference = DateTime.UtcNow - lastSeenTime;
+
+            if (timeDifference.TotalMinutes < 1)
+                return "Just now";
+            if (timeDifference.TotalMinutes < 60)
+                return $"{(int)timeDifference.TotalMinutes} minute(s) ago";
+            if (timeDifference.TotalHours < 24)
+                return $"{(int)timeDifference.TotalHours} hour(s) ago";
+            if (timeDifference.TotalDays < 30)
+                return $"{(int)timeDifference.TotalDays} day(s) ago";
+            if (timeDifference.TotalDays < 365)
+                return $"{(int)(timeDifference.TotalDays / 30)} month(s) ago";
+
+            return $"{(int)(timeDifference.TotalDays / 365)} year(s) ago";
         }
     }
 }

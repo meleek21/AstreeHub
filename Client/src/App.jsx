@@ -7,6 +7,8 @@ import Layout from './pages/Layout';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ErrorBoundary from './components/ErrorBoundary';
+import EditableProfile from './components/EditableProfile';
+import ProfileViewer from './components/ProfileViewer';
 import { AuthProvider } from './Context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -29,6 +31,8 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/home" element={<Home />} />
               <Route path="/feed" element={<ErrorBoundary><Feed /></ErrorBoundary>} />
+              <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
+              <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
               {/* Add more private routes here */}
             </Route>
 
