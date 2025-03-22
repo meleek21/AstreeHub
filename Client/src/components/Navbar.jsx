@@ -10,7 +10,7 @@ function Navbar() {
   const userId = user?.id;
 
   // Default profile picture URL
-  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1742278756/blueAvatar_mezaen.jpg';
+  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
   const [userInfo, setUserInfo] = useState({
     firstName: '',

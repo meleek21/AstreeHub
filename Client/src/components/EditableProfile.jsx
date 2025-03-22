@@ -3,12 +3,13 @@ import { userAPI } from '../services/apiServices';
 import { toast } from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import '../assets/Css/EditableProfile.css';
 
 
 const EditableProfile = () => {
   const { userId } = useParams();
-  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1742278756/blueAvatar_mezaen.jpg';
+  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -20,22 +21,40 @@ const EditableProfile = () => {
     departmentId: '',
   });
 
+  const [departments, setDepartments] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get('http://localhost:5126/api/department/public');
+        setDepartments(response.data);
+      } catch (error) {
+        console.error('Error fetching departments:', error);
+        toast.error('Failed to load departments');
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await userAPI.getUserInfo(userId);
         const userData = response.data;
+        console.log("user data: ", userData);
+        // Format the date string to yyyy-MM-dd
+        const formattedDate = userData.dateOfBirth ? userData.dateOfBirth.split('T')[0] : '';
         setFormData({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
           profilePicture: userData.profilePictureUrl || defaultProfilePicture,
           email: userData.email || '',
           phoneNumber: userData.phoneNumber || '',
-          dateOfBirth: userData.dateOfBirth || '',
+          dateOfBirth: formattedDate,
           departmentId: userData.departmentId || '',
         });
       } catch (error) {
@@ -196,7 +215,8 @@ const EditableProfile = () => {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleChange}
+              readOnly
+              className="form-control"
               placeholder="Email"
             />
           </div>
@@ -222,13 +242,13 @@ const EditableProfile = () => {
             />
           </div>
           <div className="form-group">
-            <label>ID du département:</label>
+            <label>Département:</label>
             <input
               type="text"
               name="departmentId"
-              value={formData.departmentId}
-              onChange={handleChange}
-              placeholder="ID du département"
+              value={departments.find(dept => dept.id === parseInt(formData.departmentId))?.name || 'Département non assigné'}
+              readOnly
+              className="form-control"
             />
           </div>
         </div>

@@ -237,9 +237,9 @@ const Signup = () => {
                 className="form-control select-dropdown"
               >
                 <option value="EMPLOYEE">Employé</option>
-                <option value="Admin">Administrateur</option>
-                <option value="Manager">Manager</option>
-              </select>
+                <option value="DIRECTOR">Directeur</option>
+                <option value="SUPERADMIN">Super Administrateur</option>
+                </select>
             </div>
           </div>
         </div>

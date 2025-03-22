@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Channel from '../components/Channel';
+import Channel from '../components/ChannelCard';
 import { useAuth } from '../Context/AuthContext';
 import { channelsAPI } from '../services/apiServices';
-import { CRow, CCol } from '@coreui/react';
+import '../assets/Css/Channel.css'; // Import your custom CSS file
 
-function Channels() {
+function ChannelsList() {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,7 +31,7 @@ function Channels() {
     };
 
     fetchChannels();
-  }, []);
+  }, [user?.departmentId]);
 
   if (loading) {
     return <div className="loading-container">Loading channels...</div>;
@@ -43,21 +43,19 @@ function Channels() {
 
   return (
     <div className="feed-container">
-      <CRow>
+      <div className="channels-grid">
         {!Array.isArray(channels) || channels.length === 0 ? (
-          <CCol>
-            <div className="no-posts">No channels available</div>
-          </CCol>
+          <div className="no-channels">No channels available</div>
         ) : (
           channels.map((channel) => (
-            <CCol sm={6} lg={4} key={channel.id}>
+            <div className="channel-item" key={channel.id}>
               <Channel channel={channel} />
-            </CCol>
+            </div>
           ))
         )}
-      </CRow>
+      </div>
     </div>
   );
 }
 
-export default Channels;
+export default ChannelsList;

@@ -16,7 +16,7 @@ function Sidebar() {
               colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
-            <span>Channels</span>
+            <span>Annonces</span>
           </Link>
         </li>
         <li>
@@ -41,17 +41,7 @@ function Sidebar() {
             <span>Événement</span>
           </Link>
         </li>
-        <li>
-          <Link to="/annonce" className={`sidebar-link ${location.pathname === '/annonce' ? 'active' : ''}`}>
-            <lord-icon
-              src="https://cdn.lordicon.com/lyrrgrsl.json"
-              trigger="hover"
-              colors="primary:#0047AB"
-              style={{ width: '30px', height: '30px' }}
-            ></lord-icon>
-            <span>Annonce</span>
-          </Link>
-        </li>
+        
         <li>
           <Link to="/feed" className={`sidebar-link ${location.pathname === '/feed' ? 'active' : ''}`}>
             <lord-icon
