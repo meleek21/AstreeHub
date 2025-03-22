@@ -62,6 +62,7 @@ namespace ASTREE_PFE.Services
             {
                 FirstName = employee.FirstName,
                 LastName = employee.LastName,
+                Email = employee.Email,
                 DateOfBirth = employee.DateOfBirth,
                 Role = employee.Role,
                 Status = employee.Status,

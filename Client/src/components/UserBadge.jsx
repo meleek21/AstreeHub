@@ -7,7 +7,7 @@ const UserBadge = ({ userId }) => {
   const { user } = useAuth();
   const loggedInUserId = user?.id;
 
-  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/w_1000,c_fill,ar_1:1,g_auto,r_max,bo_5px_solid_red,b_rgb:262c35/v1742278756/blueAvatar_mezaen.jpg';
+  const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
   const [userInfo, setUserInfo] = useState({
     firstName: '',
@@ -21,20 +21,24 @@ const UserBadge = ({ userId }) => {
     if (!userId) return;
 
     try {
-      const [userInfoResponse, userStatusResponse] = await Promise.all([
+      const [userInfoResponse, userStatusResponse, lastSeenResponse] = await Promise.all([
         userAPI.getUserInfo(userId),
         userStatusAPI.getUserStatus(userId),
+        userStatusAPI.getLastSeen(userId),
       ]);
 
-      const lastSeenResponse = await fetch(`/api/UserOnlineStatus/${userId}/last-seen`);
-      const lastSeen = await lastSeenResponse.text();
+      // Debugging: Log the lastSeenResponse
+      console.log('Last Seen Response:', lastSeenResponse);
+
+      // Extract lastSeen directly from the response
+      const lastSeen = lastSeenResponse.data; // Direct string response
 
       setUserInfo({
         firstName: userInfoResponse.data.firstName,
         lastName: userInfoResponse.data.lastName,
         profilePicture: userInfoResponse.data.profilePictureUrl || defaultProfilePicture,
         isOnline: userStatusResponse.data.isOnline,
-        lastSeen,
+        lastSeen: lastSeen || 'Unknown', // Fallback to 'Unknown' if lastSeen is undefined
       });
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -79,7 +83,7 @@ const UserBadge = ({ userId }) => {
           )}
         </div>
         <div>
-          <div style={{ fontWeight: 'bold', color:'#0047AB'}}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
+          <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
           <div style={{ color: '#666666', fontSize: '0.8em' }}>
             {userInfo.isOnline ? 'Online' : `Last seen ${userInfo.lastSeen}`}
           </div>

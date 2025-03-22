@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --primary-color: #0047AB;
+  --secondary-color: #FF6600;
+  --background-color: #F5F5F5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent: #6ED3CF;
+  --error-color: #D32F2F;
+  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
+  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
+  --border-radius: 8px;
+  --transition-speed: 0.5s;
+}
+
+.profile-viewer-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: var(--border-radius);
+  background-color: var(--background-color);
+  box-shadow: var(--box-shadow);
+  font-family: 'Nunito', sans-serif;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-picture-container {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 10px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--accent);
+  transition: transform var(--transition-speed) ease;
+}
+
+.profile-picture-container:hover {
+  transform: scale(1.1);
+}
+
+.profile-picture {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-name {
+  font-size: 24px;
+  margin: 10px 0;
+  color: var(--text-primary);
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: var(--border-radius);
+  transition: box-shadow var(--transition-speed) ease;
+}
+
+.detail-row:hover {
+  box-shadow: var(--box-shadow);
+}
+
+.detail-label {
+  font-weight: bold;
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  color: var(--text-primary);
+}

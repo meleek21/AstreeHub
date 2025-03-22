@@ -1,64 +1,186 @@
-/* Channel.css */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --primary-color: #0047AB;
+  --secondary-color: #FF6600;
+  --background-color: #F5F5F5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent: #6ED3CF;
+  --error-color: #D32F2F;
+  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
+  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
+  --box-shadow-hover: 0 8px 16px rgba(75, 100, 117, 0.7);
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+}
+
+/* Channel Card Container */
+.channel-card-container {
+  width: 300px; /* Fixed width for all cards */
+  height: 200px; /* Fixed height for all cards */
+  margin: 10px;
+  perspective: 1000px; /* For 3D effect */
+}
+
 .channel-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--border-radius);
+  background-color: var(--background-color);
+  box-shadow: var(--box-shadow);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
 }
 
 .channel-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: var(--box-shadow-hover);
+  background-color: white;
 }
 
-.channel-header {
+/* Channel Card Body */
+.channel-card-body {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.channel-name {
-  font-size: 1.25rem;
-  color: var(--primary-color);
+/* Channel Card Title */
+.channel-card-title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
+  font-size: 1.25rem;
+  transition: color var(--transition-speed);
 }
 
-.channel-badge {
-  padding: 4px 12px;
-  border-radius: 15px;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.channel-badge.general {
-  background-color: #e3f2fd;
-  color: #1976d2;
-}
-
-.channel-badge.department {
-  background-color: #e8f5e9;
-  color: #2e7d32;
-}
-
-.channel-actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.channel-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
+.channel-card:hover .channel-card-title {
   color: var(--primary-color);
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: background-color 0.3s ease;
 }
 
-.channel-link:hover {
-  background-color: rgba(0, 71, 171, 0.1);
+/* Channel Card Text */
+.channel-card-text {
+  font-family: 'Raleway', sans-serif;
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: var(--border-radius);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: transform var(--transition-speed), opacity var(--transition-speed);
+}
+
+.badge-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.badge-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.channel-card:hover .badge {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* Channel Card Button */
+.channel-card-button {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  color: white;
+  cursor: pointer;
+  transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+  align-self: flex-start;
+}
+
+.channel-card-button:hover {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow);
+}
+
+.channel-card-button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Channels Grid Layout */
+.channels-grid {
+  background-color: white;
+  display: grid;
+  border-radius: var(--border-radius);
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Channel Item */
+.channel-item {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Loading and Error States */
+.loading-container,
+.error-container,
+.no-channels {
+  font-family: 'Nunito', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px;
+  background-color: var(--background-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.error-container {
+  color: var(--error-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .channels-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .channel-card-container {
+    width: 100%;
+    height: auto;
+    margin: 0;
+  }
+
+  .channel-card {
+    height: auto;
+    padding: 12px;
+  }
 }
