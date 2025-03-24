@@ -17,5 +17,6 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> ChangeEmployeeStatusAsync(string id, UserStatus status);
         Task<bool> AssignEmployeeToDepartmentAsync(string employeeId, int departmentId);
         Task<UserInfoDTO> GetUserInfoAsync(string id);
+    Task<List<UserInfoDTO>> GetUserInfoBatchAsync(List<string> userIds);
     }
 }

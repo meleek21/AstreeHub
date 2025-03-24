@@ -2,6 +2,7 @@ using ASTREE_PFE.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ASTREE_PFE.DTOs;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -15,5 +16,6 @@ namespace ASTREE_PFE.Repositories
         Task<bool> DeleteAsync(string id);
         Task<bool> ChangeStatusAsync(string id, UserStatus status);
         Task<bool> AssignToDepartmentAsync(string employeeId, int departmentId);
+        Task<List<UserInfoDTO>> GetUserInfoBatchAsync(List<string> ids);
     }
 }

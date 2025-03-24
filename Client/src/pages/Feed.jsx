@@ -114,22 +114,19 @@ function Feed() {
         signalRService.onConnectionChange(setSignalRConnected);
 
         signalRService.onNewPost(async (newPost) => {
-          console.log('New post received via SignalR:', newPost);
           try {
-            // Fetch author information for the new post
-            const authorResponse = await postsAPI.getPostById(newPost.id);
-            const postWithAuthor = authorResponse.data;
-            if (postWithAuthor && postWithAuthor.authorName) {
-              setPosts((prevPosts) => [postWithAuthor, ...prevPosts]);
-            } else {
-              console.error('Post received without author information');
-              toast.error('Erreur lors de la récupération des détails de la publication');
-            }
+            console.log('New post received via SignalR, fetching details:', newPost.id);
+            // Fetch the complete post data with author information
+            const response = await postsAPI.getPostById(newPost.id);
+            const postWithAuthor = response.data;
+            
+            // Add the new post to the beginning of the posts array without checking for duplicates
+            // This ensures the post is always added immediately when received via SignalR
+            setPosts((prevPosts) => [postWithAuthor, ...prevPosts]);
+            console.log('Post added to feed:', postWithAuthor.id);
           } catch (error) {
-            console.error('Error fetching post details:', error);
+            console.error('Error fetching new post details:', error);
             toast.error('Erreur lors de la récupération des détails de la publication');
-            // Do not add the post until we have complete information
-            console.log('Skipping post addition due to missing author information');
           }
         });
 

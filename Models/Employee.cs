@@ -8,6 +8,8 @@ namespace ASTREE_PFE.Models
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
+        
+        public string FullName => $"{FirstName} {LastName}";
         public DateTime DateOfBirth { get; set; }
         public RoleType Role { get; set; }
         public UserStatus Status { get; set; }

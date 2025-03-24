@@ -80,6 +80,11 @@ namespace ASTREE_PFE.Services
             };
         }
 
+        public async Task<List<UserInfoDTO>> GetUserInfoBatchAsync(List<string> userIds)
+        {
+            return await _employeeRepository.GetUserInfoBatchAsync(userIds);
+        }
+
         public async Task<bool> AssignEmployeeToDepartmentAsync(string employeeId, int departmentId)
         {
             return await _employeeRepository.AssignToDepartmentAsync(employeeId, departmentId);
@@ -119,5 +124,7 @@ namespace ASTREE_PFE.Services
             
             return false;
         }
+
+
     }
 }

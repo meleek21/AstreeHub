@@ -41,7 +41,7 @@ public class CommentController : ControllerBase
         var userInfoDict = new Dictionary<string, UserInfoDTO>();
         foreach (var authorId in authorIds)
         {
-            var userInfo = await _employeeService.GetUserInfoAsync(authorId);
+            var userInfo = (await _employeeService.GetUserInfoBatchAsync(new List<string> { authorId })).FirstOrDefault();
             if (userInfo != null)
             {
                 userInfoDict[authorId] = userInfo;
@@ -82,7 +82,7 @@ public class CommentController : ControllerBase
             if (comment == null)
                 return NotFound();
 
-            var userInfo = await _employeeService.GetUserInfoAsync(comment.AuthorId);
+            var userInfo = (await _employeeService.GetUserInfoBatchAsync(new List<string> { comment.AuthorId })).FirstOrDefault();
             var commentDto = new CommentResponseDTO
             {
                 Id = comment.Id,

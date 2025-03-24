@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
-using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using ASTREE_PFE.Hubs; // Add this if you have a UserHub class
 
@@ -22,14 +21,11 @@ namespace ASTREE_PFE.Controllers
         private readonly IEmployeeService _employeeService;
         private readonly IDepartmentService _departmentService;
         private readonly ICloudinaryService _cloudinaryService;
-        private readonly IHubContext<UserHub> _hubContext;
-
-        public EmployeeController(IEmployeeService employeeService, IDepartmentService departmentService, ICloudinaryService cloudinaryService,IHubContext<UserHub> hubContext)
+        public EmployeeController(IEmployeeService employeeService, IDepartmentService departmentService, ICloudinaryService cloudinaryService)
         {
             _employeeService = employeeService;
             _departmentService = departmentService;
             _cloudinaryService = cloudinaryService;
-            _hubContext = hubContext;
         }
 
         [HttpGet("user-info/{id}")]
@@ -234,9 +230,6 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
         return BadRequest("Failed to update employee");
     }
 
-    // Notify all clients about the profile update
-    await _hubContext.Clients.All.SendAsync("ReceiveProfileUpdate", id);
-
     return NoContent();
 }
 
@@ -336,7 +329,6 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-            await _hubContext.Clients.All.SendAsync("ReceiveProfileUpdate", employee.Id);
             return Ok(new { profilePictureUrl = employee.ProfilePictureUrl });
         }
     }
