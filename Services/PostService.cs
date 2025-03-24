@@ -115,7 +115,7 @@ namespace ASTREE_PFE.Services
         {
             await _postRepository.CreateAsync(post);
 
-            // Load file details for the post before broadcasting
+            // Load file details for the post
             if (post.FileIds != null && post.FileIds.Any())
             {
                 post.Files = new List<ASTREE_PFE.Models.File>();

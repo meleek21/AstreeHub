@@ -5,42 +5,65 @@ class SignalRService {
     this.connection = null;
     this.connectionPromise = null;
     this.reconnectAttempts = 0;
-    this.maxReconnectAttempts = 5;
-    this.reconnectInterval = 2000; // Start with 2 seconds
-    // Add to callbacks object
+    this.maxReconnectAttempts = 3;
+    this.reconnectInterval = 1000;
+    this.connectionPool = new Map();
+    this.isInitialized = false;
+    this.connectionCache = new Map();
     this.callbacks = {
       onNewPost: null,
       onUpdatedPost: null,
       onDeletedPost: null,
       onConnectionChange: null,
-      // Add callbacks for comments
       onNewComment: null,
       onUpdatedComment: null,
       onDeletedComment: null,
       onNewReply: null,
-      // Add callbacks for reactions
       onNewReaction: null,
       onUpdatedReaction: null,
       onDeletedReaction: null,
       onReactionSummary: null,
-      // Add callbacks for files
       onNewFile: null,
       onUpdatedFile: null,
       onDeletedFile: null,
-      onProfileUpdate: null,
-      // Add callback for user status
       onUserStatusChange: null,
     };
+    this.eventHandlersRegistered = false;
   }
 
-  // Initialize the connection
-  async start() {
-    if (this.connection) {
+  async start(groupName = 'default') {
+    // Return existing promise if there's already a connection attempt in progress
+    if (this.connectionPromise) {
       return this.connectionPromise;
     }
 
+    // Check connection cache first
+    const cachedConnection = this.connectionCache.get(groupName);
+    if (cachedConnection && cachedConnection.state === 'Connected') {
+      this.connection = cachedConnection;
+      return Promise.resolve();
+    }
+
+    // Check if a connection exists in the pool
+    if (this.connectionPool.has(groupName) && this.connectionPool.get(groupName).state === 'Connected') {
+      this.connection = this.connectionPool.get(groupName);
+      this.connectionCache.set(groupName, this.connection);
+      return Promise.resolve();
+    }
+
+    // Try to find any connected connection in the pool
+    const existingConnection = Array.from(this.connectionPool.values())
+      .find(conn => conn.state === 'Connected');
+    
+    if (existingConnection) {
+      this.connection = existingConnection;
+      this.connectionPool.set(groupName, existingConnection);
+      this.connectionCache.set(groupName, existingConnection);
+      return Promise.resolve();
+    }
+
     try {
-      // Create the connection
+      // Create a new connection if none exists
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
@@ -51,16 +74,18 @@ class SignalRService {
           accessTokenFactory: () => token,
           withCredentials: false,
           skipNegotiation: true,
-          transport: HttpTransportType.WebSockets
+          transport: HttpTransportType.WebSockets,
+          timeout: 10000
         })
-        .withAutomaticReconnect([
-          0, 2000, 5000, 10000, 15000, 30000 // Reconnect intervals in milliseconds
-        ])
-        .configureLogging(LogLevel.Information)
+        .withAutomaticReconnect([0, 1000, 2000, 5000])
+        .configureLogging(LogLevel.Warning)
         .build();
 
-      // Set up event handlers
-      this.setupEventHandlers();
+      // Set up event handlers only once
+      if (!this.eventHandlersRegistered) {
+        this.setupEventHandlers();
+        this.eventHandlersRegistered = true;
+      }
 
       // Start the connection
       this.connectionPromise = this.connection.start();
@@ -68,6 +93,11 @@ class SignalRService {
       
       console.log('SignalR connected successfully');
       this.reconnectAttempts = 0;
+      
+      // Add the connection to the pool and cache
+      this.connectionPool.set(groupName, this.connection);
+      this.connectionCache.set(groupName, this.connection);
+      this.isInitialized = true;
       
       if (this.callbacks.onConnectionChange) {
         this.callbacks.onConnectionChange(true);
@@ -82,199 +112,224 @@ class SignalRService {
         this.callbacks.onConnectionChange(false);
       }
       
-      // Try to reconnect
-      this.attemptReconnect();
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        return this.attemptReconnect();
+      }
+      
       throw error;
+    } finally {
+      // Clear the connection promise to allow future connection attempts
+      this.connectionPromise = null;
     }
   }
 
-  // Set up event handlers for the connection
   setupEventHandlers() {
     if (!this.connection) return;
 
-    // Handle new posts
-    this.connection.on('ReceiveNewPost', (post) => {
-      console.log('New post received:', post);
-      if (this.callbacks.onNewPost) {
-        this.callbacks.onNewPost(post);
-      }
-    });
-
-    // Handle updated posts
-    this.connection.on('ReceiveUpdatedPost', (post) => {
-      console.log('Updated post received:', post);
-      if (this.callbacks.onUpdatedPost) {
-        this.callbacks.onUpdatedPost(post);
-      }
-    });
-
-    // Handle deleted posts
-    this.connection.on('ReceiveDeletedPost', (postId) => {
-      console.log('Deleted post received:', postId);
-      if (this.callbacks.onDeletedPost) {
-        this.callbacks.onDeletedPost(postId);
-      }
-    });
-
-    // Handle new comments
-    this.connection.on('ReceiveNewComment', (comment) => {
-      console.log('New comment received:', comment);
-      if (this.callbacks.onNewComment) {
-        this.callbacks.onNewComment(comment);
-      }
-    });
-
-    // Handle updated comments
-    this.connection.on('ReceiveUpdatedComment', (comment) => {
-      console.log('Updated comment received:', comment);
-      if (this.callbacks.onUpdatedComment) {
-        this.callbacks.onUpdatedComment(comment);
-      }
-    });
-
-    // Handle deleted comments
-    this.connection.on('ReceiveDeletedComment', (commentId) => {
-      console.log('Deleted comment received:', commentId);
-      if (this.callbacks.onDeletedComment) {
-        this.callbacks.onDeletedComment(commentId);
-      }
-    });
-
-    // Handle new replies
-    this.connection.on('ReceiveNewReply', (reply, parentCommentId) => {
-      console.log('New reply received:', reply, 'Parent comment ID:', parentCommentId);
-      if (this.callbacks.onNewReply) {
-        this.callbacks.onNewReply(reply, parentCommentId);
-      }
-    });
-
-    // Handle new reactions
-    this.connection.on('ReceiveNewReaction', (reaction) => {
-      console.log('New reaction received:', reaction);
-      if (this.callbacks.onNewReaction) {
-        this.callbacks.onNewReaction(reaction);
-      }
-    });
-
-    // Handle updated reactions
-    this.connection.on('ReceiveUpdatedReaction', (reaction) => {
-      console.log('Updated reaction received:', reaction);
-      if (this.callbacks.onUpdatedReaction) {
-        this.callbacks.onUpdatedReaction(reaction);
-      }
-    });
-
-    // Handle deleted reactions
-    this.connection.on('ReceiveReactionDeleted', (reactionInfo) => {
-      console.log('Deleted reaction received:', reactionInfo);
-      if (this.callbacks.onDeletedReaction) {
-        // Extract the reaction ID, handling different possible formats
-        const reactionId = reactionInfo.reactionId || reactionInfo.ReactionId;
-        const postId = reactionInfo.postId || reactionInfo.PostId;
-        
-        // Pass both the reaction ID and post ID to the callback
-        this.callbacks.onDeletedReaction(reactionId, postId);
-      }
-    });
-
-    // Handle reaction summary updates
-    this.connection.on('ReceiveReactionSummary', (postId, summary) => {
-      console.log('Reaction summary update received:', postId, summary);
-      if (this.callbacks.onReactionSummary) {
-        this.callbacks.onReactionSummary(postId, summary);
-      }
-    });
-
-    // Handle new file uploads
-    this.connection.on('ReceiveNewFile', (file) => {
-      console.log('New file received via SignalR:', file);
-      if (this.callbacks.onNewFile) {
-        this.callbacks.onNewFile(file);
-      }
-    });
-
-    // Handle updated files
-    this.connection.on('ReceiveUpdatedFile', (file) => {
-      console.log('Updated file received via SignalR:', file);
-      if (this.callbacks.onUpdatedFile) {
-        this.callbacks.onUpdatedFile(file);
-      }
-    });
-
-    // Handle deleted files
-    this.connection.on('ReceiveDeletedFile', (fileId) => {
-      console.log('Deleted file received via SignalR:', fileId);
-      if (this.callbacks.onDeletedFile) {
-        this.callbacks.onDeletedFile(fileId);
-      }
-    });
-
-    // Handle reconnection
+    // Connection state handlers
     this.connection.onreconnecting((error) => {
-      console.log('SignalR attempting to reconnect:', error);
+      console.log('Connection lost. Attempting to reconnect...', error);
       if (this.callbacks.onConnectionChange) {
         this.callbacks.onConnectionChange(false);
       }
     });
 
     this.connection.onreconnected((connectionId) => {
-      console.log('SignalR reconnected. ConnectionId:', connectionId);
+      console.log('Connection reestablished. ID:', connectionId);
+      this.reconnectAttempts = 0;
       if (this.callbacks.onConnectionChange) {
         this.callbacks.onConnectionChange(true);
       }
     });
 
     this.connection.onclose((error) => {
-      console.log('SignalR connection closed:', error);
+      console.log('Connection closed:', error);
       if (this.callbacks.onConnectionChange) {
         this.callbacks.onConnectionChange(false);
       }
       this.attemptReconnect();
     });
+
+    // Post events
+    this.connection.on('ReceiveNewPost', (post) => {
+      if (this.callbacks.onNewPost) {
+        this.callbacks.onNewPost(post);
+      }
+    });
+
+    this.connection.on('ReceiveUpdatedPost', (post) => {
+      if (this.callbacks.onUpdatedPost) {
+        this.callbacks.onUpdatedPost(post);
+      }
+    });
+
+    this.connection.on('ReceiveDeletedPost', (postId) => {
+      if (this.callbacks.onDeletedPost) {
+        this.callbacks.onDeletedPost(postId);
+      }
+    });
+
+    // Comment events
+    this.connection.on('ReceiveNewComment', (comment) => {
+      if (this.callbacks.onNewComment) {
+        this.callbacks.onNewComment(comment);
+      }
+    });
+
+    this.connection.on('ReceiveUpdatedComment', (comment) => {
+      if (this.callbacks.onUpdatedComment) {
+        this.callbacks.onUpdatedComment(comment);
+      }
+    });
+
+    this.connection.on('ReceiveDeletedComment', (commentId) => {
+      if (this.callbacks.onDeletedComment) {
+        this.callbacks.onDeletedComment(commentId);
+      }
+    });
+
+    this.connection.on('ReceiveNewReply', (reply, parentCommentId) => {
+      if (this.callbacks.onNewReply) {
+        this.callbacks.onNewReply(reply, parentCommentId);
+      }
+    });
+
+    // Reaction events
+    this.connection.on('ReceiveNewReaction', (reaction) => {
+      if (this.callbacks.onNewReaction) {
+        this.callbacks.onNewReaction(reaction);
+      }
+    });
+
+    this.connection.on('ReceiveUpdatedReaction', (reaction) => {
+      if (this.callbacks.onUpdatedReaction) {
+        this.callbacks.onUpdatedReaction(reaction);
+      }
+    });
+
+    this.connection.on('ReceiveReactionDeleted', (reactionInfo) => {
+      if (this.callbacks.onDeletedReaction) {
+        const reactionId = reactionInfo.reactionId || reactionInfo.ReactionId;
+        const postId = reactionInfo.postId || reactionInfo.PostId;
+        this.callbacks.onDeletedReaction(reactionId, postId);
+      }
+    });
+
+    this.connection.on('ReceiveReactionSummary', (postId, summary) => {
+      if (this.callbacks.onReactionSummary) {
+        this.callbacks.onReactionSummary(postId, summary);
+      }
+    });
+
+    // File events
+    this.connection.on('ReceiveNewFile', (file) => {
+      if (this.callbacks.onNewFile) {
+        this.callbacks.onNewFile(file);
+      }
+    });
+
+    this.connection.on('ReceiveUpdatedFile', (file) => {
+      if (this.callbacks.onUpdatedFile) {
+        this.callbacks.onUpdatedFile(file);
+      }
+    });
+
+    this.connection.on('ReceiveDeletedFile', (fileId) => {
+      if (this.callbacks.onDeletedFile) {
+        this.callbacks.onDeletedFile(fileId);
+      }
+    });
   }
 
-  // Attempt to reconnect with exponential backoff
-  attemptReconnect() {
+  async attemptReconnect() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Maximum reconnect attempts reached');
+      console.error('Maximum reconnection attempts reached');
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = this.reconnectInterval * Math.pow(2, this.reconnectAttempts - 1);
-    
-    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
-    
-    setTimeout(() => {
-      console.log(`Reconnecting... (attempt ${this.reconnectAttempts})`);
-      this.connection = null;
-      this.connectionPromise = null;
-      this.start().catch(() => {});
-    }, delay);
+    const backoffTime = this.reconnectInterval;
+
+    console.log(`Attempting to reconnect in ${backoffTime}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+    return new Promise((resolve) => {
+      setTimeout(async () => {
+        try {
+          // Check for any active connection first
+          for (const groupName of this.connectionPool.keys()) {
+            const conn = this.connectionPool.get(groupName);
+            if (conn && conn.state === 'Connected') {
+              this.connection = conn;
+              this.connectionCache.set('default', conn);
+              console.log('Reused existing connection');
+              resolve();
+              return;
+            }
+          }
+
+          // Create a new connection
+          await this.start();
+          console.log('Reconnected successfully');
+          resolve();
+        } catch (error) {
+          console.error('Reconnection attempt failed:', error);
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect().then(resolve);
+          } else {
+            resolve(); // Resolve anyway to prevent hanging promises
+          }
+        }
+      }, backoffTime);
+    });
   }
 
-  // Stop the connection
-  async stop() {
-    if (this.connection) {
-      try {
-        await this.connection.stop();
-        console.log('SignalR connection stopped');
-      } catch (error) {
-        console.error('Error stopping SignalR connection:', error);
-      } finally {
-        this.connection = null;
-        this.connectionPromise = null;
+  async stop(groupName = 'default') {
+    const connection = this.connectionPool.get(groupName);
+    if (!connection) return;
+
+    try {
+      // Remove all event handlers for this connection
+      if (connection.methods) {
+        Object.keys(connection.methods).forEach(method => {
+          connection.off(method);
+        });
       }
+
+      await connection.stop();
+      console.log(`SignalR connection stopped for group: ${groupName}`);
+      this.connectionPool.delete(groupName);
+      this.connectionCache.delete(groupName);
+      
+      if (this.connection === connection) {
+        this.connection = null;
+      }
+    } catch (error) {
+      console.error(`Error stopping SignalR connection for group ${groupName}:`, error);
     }
   }
 
-  // Join a specific feed group
+  async stopAll() {
+    const stopPromises = Array.from(this.connectionPool.keys()).map(groupName => this.stop(groupName));
+    await Promise.all(stopPromises);
+    this.connectionCache.clear();
+    this.isInitialized = false;
+    this.connectionPromise = null;
+    this.connection = null;
+    this.eventHandlersRegistered = false;
+  }
+
   async joinFeedGroup(groupName) {
-    if (!this.connection) {
-      await this.start();
+    if (!groupName) {
+      throw new Error('Group name is required');
     }
     
     try {
+      await this.start(groupName);
+      
+      if (!this.connection) {
+        throw new Error('No active connection available');
+      }
+      
       await this.connection.invoke('JoinFeedGroup', groupName);
       console.log(`Joined feed group: ${groupName}`);
     } catch (error) {
@@ -283,9 +338,11 @@ class SignalRService {
     }
   }
 
-  // Leave a feed group
   async leaveFeedGroup(groupName) {
-    if (!this.connection) return;
+    if (!this.connection || this.connection.state !== 'Connected') {
+      console.warn(`Cannot leave group ${groupName}: No active connection`);
+      return;
+    }
     
     try {
       await this.connection.invoke('LeaveFeedGroup', groupName);
@@ -295,7 +352,7 @@ class SignalRService {
     }
   }
 
-  // Register callbacks for events
+  // Register callbacks (keeping the existing implementation)
   onNewPost(callback) {
     this.callbacks.onNewPost = callback;
   }
@@ -312,7 +369,6 @@ class SignalRService {
     this.callbacks.onConnectionChange = callback;
   }
 
-  // Register callbacks for comment events
   onNewComment(callback) {
     this.callbacks.onNewComment = callback;
   }
@@ -329,7 +385,6 @@ class SignalRService {
     this.callbacks.onNewReply = callback;
   }
 
-  // Register callbacks for reaction events
   onNewReaction(callback) {
     this.callbacks.onNewReaction = callback;
   }
@@ -342,12 +397,10 @@ class SignalRService {
     this.callbacks.onDeletedReaction = callback;
   }
 
-  // Register callback for reaction summary updates
   onReactionSummary(callback) {
     this.callbacks.onReactionSummary = callback;
   }
 
-  // Register callbacks for file events
   onNewFile(callback) {
     this.callbacks.onNewFile = callback;
   }
@@ -360,152 +413,19 @@ class SignalRService {
     this.callbacks.onDeletedFile = callback;
   }
 
-  // Handle profile updates
-  onProfileUpdate(callback) {
-    this.callbacks.onProfileUpdate = callback;
-  }
-
-  offProfileUpdate() {
-    this.callbacks.onProfileUpdate = null;
-  }
-
-  // Add profile update event handler
-  setupEventHandlers() {
-    if (!this.connection) return;
-
-    // Handle profile updates
-    this.connection.on('ReceiveProfileUpdate', (userId) => {
-      console.log('Profile update received for user:', userId);
-      if (this.callbacks.onProfileUpdate) {
-        this.callbacks.onProfileUpdate(userId);
-      }
-    });
-
-    // Handle new comments
-    this.connection.on('ReceiveNewComment', (comment) => {
-      console.log('New comment received:', comment);
-      if (this.callbacks.onNewComment) {
-        this.callbacks.onNewComment(comment);
-      }
-    });
-
-    // Handle updated comments
-    this.connection.on('ReceiveUpdatedComment', (comment) => {
-      console.log('Updated comment received:', comment);
-      if (this.callbacks.onUpdatedComment) {
-        this.callbacks.onUpdatedComment(comment);
-      }
-    });
-
-    // Handle deleted comments
-    this.connection.on('ReceiveDeletedComment', (commentId) => {
-      console.log('Deleted comment received:', commentId);
-      if (this.callbacks.onDeletedComment) {
-        this.callbacks.onDeletedComment(commentId);
-      }
-    });
-
-    // Handle new replies
-    this.connection.on('ReceiveNewReply', (reply, parentCommentId) => {
-      console.log('New reply received:', reply, 'Parent comment ID:', parentCommentId);
-      if (this.callbacks.onNewReply) {
-        this.callbacks.onNewReply(reply, parentCommentId);
-      }
-    });
-
-    // Handle new reactions
-    this.connection.on('ReceiveNewReaction', (reaction) => {
-      console.log('New reaction received:', reaction);
-      if (this.callbacks.onNewReaction) {
-        this.callbacks.onNewReaction(reaction);
-      }
-    });
-
-    // Handle updated reactions
-    this.connection.on('ReceiveUpdatedReaction', (reaction) => {
-      console.log('Updated reaction received:', reaction);
-      if (this.callbacks.onUpdatedReaction) {
-        this.callbacks.onUpdatedReaction(reaction);
-      }
-    });
-
-    // Handle deleted reactions
-    this.connection.on('ReceiveReactionDeleted', (reactionInfo) => {
-      console.log('Deleted reaction received:', reactionInfo);
-      if (this.callbacks.onDeletedReaction) {
-        // Extract the reaction ID, handling different possible formats
-        const reactionId = reactionInfo.reactionId || reactionInfo.ReactionId;
-        const postId = reactionInfo.postId || reactionInfo.PostId;
-        
-        // Pass both the reaction ID and post ID to the callback
-        this.callbacks.onDeletedReaction(reactionId, postId);
-      }
-    });
-
-    // Handle reaction summary updates
-    this.connection.on('ReceiveReactionSummary', (postId, summary) => {
-      console.log('Reaction summary update received:', postId, summary);
-      if (this.callbacks.onReactionSummary) {
-        this.callbacks.onReactionSummary(postId, summary);
-      }
-    });
-
-    // Handle new file uploads
-    this.connection.on('ReceiveNewFile', (file) => {
-      console.log('New file received via SignalR:', file);
-      if (this.callbacks.onNewFile) {
-        this.callbacks.onNewFile(file);
-      }
-    });
-
-    // Handle updated files
-    this.connection.on('ReceiveUpdatedFile', (file) => {
-      console.log('Updated file received via SignalR:', file);
-      if (this.callbacks.onUpdatedFile) {
-        this.callbacks.onUpdatedFile(file);
-      }
-    });
-
-    // Handle deleted files
-    this.connection.on('ReceiveDeletedFile', (fileId) => {
-      console.log('Deleted file received via SignalR:', fileId);
-      if (this.callbacks.onDeletedFile) {
-        this.callbacks.onDeletedFile(fileId);
-      }
-    });
-
-    // Handle reconnection
-    this.connection.onreconnecting((error) => {
-      console.log('SignalR attempting to reconnect:', error);
-      if (this.callbacks.onConnectionChange) {
-        this.callbacks.onConnectionChange(false);
-      }
-    });
-
-    this.connection.onreconnected((connectionId) => {
-      console.log('SignalR reconnected. ConnectionId:', connectionId);
-      if (this.callbacks.onConnectionChange) {
-        this.callbacks.onConnectionChange(true);
-      }
-    });
-
-    this.connection.onclose((error) => {
-      console.log('SignalR connection closed:', error);
-      if (this.callbacks.onConnectionChange) {
-        this.callbacks.onConnectionChange(false);
-      }
-      this.attemptReconnect();
-    });
-  }
-
-  // Check if the connection is active
-  isConnected() {
-    return this.connection?.state === 'Connected';
-  }
-
-  // Register callback for user status changes
   onUserStatusChange(callback) {
     this.callbacks.onUserStatusChange = callback;
+  }
+
+  isConnected(groupName = 'default') {
+    const connection = this.connectionPool.get(groupName);
+    return !!connection && connection.state === 'Connected';
+  }
+
+  getActiveConnectionCount() {
+    return Array.from(this.connectionPool.values())
+      .filter(conn => conn.state === 'Connected')
+      .length;
   }
 }
 

@@ -17,9 +17,6 @@ namespace ASTREE_PFE.Models
         [Required]
         public string SenderId { get; set; } = null!;    // Changed from Guid to string
         
-        [Required]
-        public string RecipientId { get; set; } = null!; // Changed from Guid to string
-        
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
         
@@ -27,7 +24,12 @@ namespace ASTREE_PFE.Models
         public DateTime? ReadAt { get; set; }
         public string? AttachmentUrl { get; set; }
         
-        [StringLength(50)]
-        public string MessageType { get; set; } = "Text";
+        
+        [Required]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string ConversationId { get; set; } = null!;
+        
+        [BsonIgnore]
+        public virtual Conversation Conversation { get; set; } = null!;
     }
 }

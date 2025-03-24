@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
+using ASTREE_PFE.DTOs;
 using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Repositories
@@ -142,6 +143,34 @@ namespace ASTREE_PFE.Repositories
             employee.DepartmentId = departmentId;
             var result = await _userManager.UpdateAsync(employee);
             return result.Succeeded;
+        }
+
+        public async Task<List<UserInfoDTO>> GetUserInfoBatchAsync(List<string> ids)
+        {
+            return await _context.Employees
+                .Include(e => e.Department)
+                .Where(e => ids.Contains(e.Id))
+                .Select(e => new UserInfoDTO
+                {
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    Email = e.Email,
+                    DateOfBirth = e.DateOfBirth,
+                    Role = e.Role,
+                    Status = e.Status,
+                    DepartmentId = e.DepartmentId,
+                    LastLoginDate = e.LastLoginDate,
+                    IsFirstLogin = e.IsFirstLogin,
+                    CreatedDate = e.CreatedDate,
+                    ProfilePictureUrl = e.ProfilePictureUrl ?? string.Empty,
+                    Department = e.Department != null ? new DepartmentDTO
+                    {
+                        Id = e.Department.Id,
+                        Name = e.Department.Name,
+                        Description = e.Department.Description
+                    } : null
+                })
+                .ToListAsync();
         }
     }
 }

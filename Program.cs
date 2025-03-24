@@ -45,6 +45,10 @@ builder.Services.AddScoped<IMongoRepository<Reaction>>(sp =>
     new MongoRepository<Reaction>(sp.GetRequiredService<IMongoDatabase>(), "Reactions"));
 builder.Services.AddScoped<IMongoRepository<Channel>>(sp => 
     new MongoRepository<Channel>(sp.GetRequiredService<IMongoDatabase>(), "Channels"));
+builder.Services.AddScoped<IMongoRepository<Message>>(sp => 
+    new MongoRepository<Message>(sp.GetRequiredService<IMongoDatabase>(), "Messages"));
+builder.Services.AddScoped<IMongoRepository<Conversation>>(sp => 
+    new MongoRepository<Conversation>(sp.GetRequiredService<IMongoDatabase>(), "Conversations"));
 
 // Register Repositories
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
@@ -54,6 +58,8 @@ builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddScoped<IReactionRepository, ReactionRepository>();
 builder.Services.AddScoped<IChannelRepository, ChannelRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 
 // Add DbContext with SQL Server
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -194,6 +200,7 @@ builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IUserOnlineStatusService, UserOnlineStatusService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
@@ -233,6 +240,7 @@ app.MapControllers();
 
 // Map SignalR hubs
 app.MapHub<FeedHub>("/hubs/feed");
+app.MapHub<MessageHub>("/hubs/message");
 //app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

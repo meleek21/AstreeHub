@@ -9,11 +9,6 @@ namespace ASTREE_PFE.Hubs
             await Clients.All.SendAsync("UserStatusChanged", userId, isOnline);
         }
 
-        public async Task UpdateUserProfile(string userId, string updatedField, string newValue)
-        {
-            await Clients.All.SendAsync("UserProfileUpdated", userId, updatedField, newValue);
-        }
-
         public async Task JoinUserGroup(string userId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
@@ -27,11 +22,6 @@ namespace ASTREE_PFE.Hubs
         public async Task NotifyUserActivity(string userId, string activity)
         {
             await Clients.Group($"user_{userId}").SendAsync("UserActivity", userId, activity);
-        }
-
-        public async Task NotifyProfileUpdate(string userId)
-        {
-            await Clients.All.SendAsync("ReceiveProfileUpdate", userId);
         }
 
         public override async Task OnConnectedAsync()
