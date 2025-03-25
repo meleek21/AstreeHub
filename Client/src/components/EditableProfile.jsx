@@ -99,8 +99,8 @@ const EditableProfile = () => {
       if (formData.dateOfBirth) {
         formDataToSend.append('dateOfBirth', formData.dateOfBirth);
       }
-      if (formData.departmentId?.trim()) {
-        formDataToSend.append('departmentId', formData.departmentId.trim());
+      if (formData.departmentId) {
+        formDataToSend.append('departmentId', formData.departmentId);
       }
 
       // Handle profile picture

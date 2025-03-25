@@ -44,18 +44,20 @@
 /* Profile Picture */
 .profile-picture-container {
   flex-shrink: 0;
+  overflow:visible !important;
 }
 
 .profile-picture-wrapper {
   display: flex;
   align-items: center;
   gap: 5px;
+  position: relative;
 }
 
 .profile-picture {
   width: 180px;
   height: 180px;
-  border-radius: var(--border-radius);
+  border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--accent);
   transition: all var(--transition-speed) ease-in-out;
@@ -67,9 +69,9 @@
 }
 
 .upload-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  border-radius: var(--border-radius);
   background-color: var(--accent);
   color: white;
   font-size: 24px;

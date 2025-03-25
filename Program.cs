@@ -13,8 +13,12 @@ using CloudinaryDotNet;
 using System.Text.Json.Serialization;
 using System.Text;
 using ASTREE_PFE.Hubs;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure AutoMapper
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 // Configure Cloudinary
 var cloudinarySettings = builder.Configuration.GetSection("Cloudinary").Get<CloudinarySettings>();
@@ -49,8 +53,11 @@ builder.Services.AddScoped<IMongoRepository<Message>>(sp =>
     new MongoRepository<Message>(sp.GetRequiredService<IMongoDatabase>(), "Messages"));
 builder.Services.AddScoped<IMongoRepository<Conversation>>(sp => 
     new MongoRepository<Conversation>(sp.GetRequiredService<IMongoDatabase>(), "Conversations"));
+builder.Services.AddScoped<IMongoRepository<Event>>(sp => 
+    new MongoRepository<Event>(sp.GetRequiredService<IMongoDatabase>(), "Events"));
 
 // Register Repositories
+builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
@@ -201,6 +208,7 @@ builder.Services.AddScoped<IChannelService, ChannelService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IUserOnlineStatusService, UserOnlineStatusService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
