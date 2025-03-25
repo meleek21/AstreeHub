@@ -32,4 +32,32 @@ namespace ASTREE_PFE.Models
         Inactive,
         Suspended
     }
+
+    public enum EventCategory
+    {
+        [BsonRepresentation(BsonType.String)]
+        Meeting,
+        [BsonRepresentation(BsonType.String)]
+        Training,
+        [BsonRepresentation(BsonType.String)]
+        Conference,
+        [BsonRepresentation(BsonType.String)]
+        TeamBuilding,
+        [BsonRepresentation(BsonType.String)]
+        Other
+    }
+
+    public enum EventStatus
+    {
+        [BsonRepresentation(BsonType.String)]
+        Upcoming,
+        [BsonRepresentation(BsonType.String)]
+        Scheduled,
+        [BsonRepresentation(BsonType.String)]
+        InProgress,
+        [BsonRepresentation(BsonType.String)]
+        Completed,
+        [BsonRepresentation(BsonType.String)]
+        Cancelled
+    }
 }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
 
-namespace ASTREE_PFE.Repositories
+namespace ASTREE_PFE.Repositories.Interfaces
 {
     public interface IEmployeeRepository
     {
