@@ -50,7 +50,18 @@ function Sidebar() {
               colors="primary:#0047AB"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
-            <span>Fil d'actualité</span>
+            <span>Feed</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/chat" className={`sidebar-link ${location.pathname === '/chat' ? 'active' : ''}`}>
+            <lord-icon
+              src="https://cdn.lordicon.com/hdiorcun.json"
+              trigger="hover"
+              colors="primary:#0047AB"
+              style={{ width: '30px', height: '30px' }}
+            ></lord-icon>
+            <span>Messages</span>
           </Link>
         </li>
         <li>
