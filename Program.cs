@@ -241,6 +241,7 @@ app.MapControllers();
 // Map SignalR hubs
 app.MapHub<FeedHub>("/hubs/feed");
 app.MapHub<MessageHub>("/hubs/message");
+
 //app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

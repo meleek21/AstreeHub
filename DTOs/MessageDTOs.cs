@@ -52,9 +52,10 @@ namespace ASTREE_PFE.DTOs
         public bool IsOnline { get; set; }
     }
 
-    public class CreateGroupConversationDto
+    public class CreateConversationDto
     {
         public List<string> ParticipantIds { get; set; } = new List<string>();
-        public string Title { get; set; } = null!;
+        public string? Title { get; set; }
+        public bool IsGroup { get; set; }
     }
 }

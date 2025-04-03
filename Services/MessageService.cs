@@ -126,7 +126,7 @@ namespace ASTREE_PFE.Services
             return await MapToConversationDtoAsync(conversation, userId);
         }
 
-        public async Task<ConversationDto> CreateGroupConversationAsync(string creatorId, List<string> participantIds, string title)
+        public async Task<ConversationDto> CreateGroupConversationAsync(string creatorId, List<string> participantIds, string? title)
         {
             // Ensure creator is in the participants list
             if (!participantIds.Contains(creatorId))
@@ -134,11 +134,11 @@ namespace ASTREE_PFE.Services
                 participantIds.Add(creatorId);
             }
 
-            // Create a new group conversation
+            // Create a new conversation
             var conversation = new Conversation
             {
                 Participants = participantIds,
-                IsGroup = true,
+                IsGroup = participantIds.Count > 2,
                 Title = title,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow

@@ -74,11 +74,18 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(senderId))
                 throw new HubException("User not authenticated");
 
-            // Create the message in the database
-            var message = await _messageService.CreateMessageAsync(senderId, messageDto);
-            
-            // Send to all participants in the conversation group
-            await Clients.Group($"conversation_{message.ConversationId}").SendAsync("ReceiveMessage", message);
+            try
+            {
+                // Create the message in the database
+                var message = await _messageService.CreateMessageAsync(senderId, messageDto);
+                
+                // Send to all participants in the conversation group
+                await Clients.Group($"conversation_{message.ConversationId}").SendAsync("ReceiveMessage", message);
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to send message: {ex.Message}");
+            }
         }
 
         public async Task JoinConversation(string conversationId)
@@ -87,17 +94,31 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            // Verify user is part of the conversation
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
-            if (conversation == null)
-                throw new HubException("User not part of this conversation");
+            try
+            {
+                // Verify user is part of the conversation
+                var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+                if (conversation == null)
+                    throw new HubException("User not part of this conversation");
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to join conversation: {ex.Message}");
+            }
         }
 
         public async Task LeaveConversation(string conversationId)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            try
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to leave conversation: {ex.Message}");
+            }
         }
 
         public async Task MarkMessageAsRead(string messageId)
@@ -106,15 +127,22 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            var success = await _messageService.UpdateMessageStatusAsync(messageId, "read");
-            if (success)
+            try
             {
-                // Notify the sender that their message was read
-                var message = await _messageService.GetMessageByIdAsync(messageId);
-                if (message != null && _userConnectionMap.TryGetValue(message.SenderId, out var connectionId))
+                var success = await _messageService.UpdateMessageStatusAsync(messageId, "read");
+                if (success)
                 {
-                    await Clients.Client(connectionId).SendAsync("MessageRead", messageId, userId);
+                    // Notify the sender that their message was read
+                    var message = await _messageService.GetMessageByIdAsync(messageId);
+                    if (message != null && _userConnectionMap.TryGetValue(message.SenderId, out var connectionId))
+                    {
+                        await Clients.Client(connectionId).SendAsync("MessageRead", messageId, userId);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to mark message as read: {ex.Message}");
             }
         }
 
@@ -124,7 +152,13 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            await Clients.Group($"conversation_{conversationId}").SendAsync("UserTyping", userId, conversationId);
+            try
+            {
+                await Clients.Group($"conversation_{conversationId}").SendAsync("UserTyping", userId, conversationId);
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to send typing indicator: {ex.Message}");
+            }
         }
-    }
-    }
+    }}

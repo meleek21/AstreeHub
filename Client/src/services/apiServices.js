@@ -109,6 +109,24 @@ export const channelsAPI = {
   deleteChannel: (id) => api.delete(`/Channel/${id}`)
 };
 
+// Messages API service
+export const messagesAPI = {
+  // Conversation endpoints
+  getUserConversations: () => api.get('/message/conversations'),
+  getConversationById: (conversationId) => api.get(`/message/conversations/${conversationId}`),
+  getConversationMessages: (conversationId, skip = 0, limit = 50) => 
+    api.get(`/message/conversations/${conversationId}/messages?skip=${skip}&limit=${limit}`),
+  createGroupConversation: (participantIds, title) => 
+    api.post('/message/conversations/group', { participantIds, title }),
+  
+  // Message endpoints
+  sendMessage: (messageData) => api.post('/message/messages', messageData),
+  updateMessageStatus: (messageId, status) => 
+    api.put(`/message/messages/${messageId}/status`, { status }),
+  deleteMessage: (messageId) => api.delete(`/message/messages/${messageId}`),
+  getUnreadMessagesCount: () => api.get('/message/unread-count')
+};
+
 // Comments API service
 export const commentsAPI = {
   getPostComments: (postId) => api.get(`/comment/post/${postId}`),

@@ -70,8 +70,8 @@ namespace ASTREE_PFE.Controllers
             return Ok(message);
         }
 
-        [HttpPost("conversations/group")]
-        public async Task<IActionResult> CreateGroupConversation([FromBody] CreateGroupConversationDto dto)
+        [HttpPost("conversations")]
+        public async Task<IActionResult> CreateConversation([FromBody] CreateConversationDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
