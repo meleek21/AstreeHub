@@ -13,6 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
 import { AuthProvider } from './Context/AuthContext';
+import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -26,8 +27,9 @@ function App() {
     <Router>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <div className="app">
-            <Toaster />
+          <OnlineStatusProvider>
+            <div className="app">
+              <Toaster />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Authen />} />
@@ -50,7 +52,8 @@ function App() {
             {/* Redirect to home if no route matches */}
             <Route path="*" element={<Navigate to="/home" />} />
           </Routes>
-          </div>
+            </div>
+          </OnlineStatusProvider>
         </AuthProvider>
       </QueryClientProvider>
     </Router>

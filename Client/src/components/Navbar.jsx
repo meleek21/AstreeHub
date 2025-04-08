@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../Context/AuthContext';
-import { userAPI, userStatusAPI } from '../services/apiServices';
+import { userAPI, userOnlineStatusAPI as userStatusAPI } from '../services/apiServices';
 
 function Navbar() {
   const navigate = useNavigate();

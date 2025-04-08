@@ -7,11 +7,20 @@ const Message = React.memo(({
   conversation, 
   currentUserId 
 }) => {
+  // Add null check for conversation to prevent the error
+  if (!conversation || !conversation.participants) {
+    return null; // Don't render anything if conversation data isn't available yet
+  }
+  
+  // Find the sender in the participants list
+  const sender = conversation.participants.find(p => p.id === message.senderId);
+  const senderName = sender?.name || 'Unknown';
+  
   return (
     <div className={`message-item ${isSentByMe ? 'sent' : 'received'}`}>
-      {!isSentByMe && conversation?.isGroup && (
+      {!isSentByMe && (
         <strong>
-          {conversation.participants.find(p => p.id === message.senderId)?.name || 'Unknown'}
+          {senderName}
         </strong>
       )}
       

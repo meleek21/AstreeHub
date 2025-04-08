@@ -2,6 +2,7 @@ using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
 namespace ASTREE_PFE.Hubs
@@ -10,13 +11,11 @@ namespace ASTREE_PFE.Hubs
     public class MessageHub : Hub
     {
         private readonly IMessageService _messageService;
-        private readonly IUserOnlineStatusService _userOnlineStatusService;
         private static readonly Dictionary<string, string> _userConnectionMap = new Dictionary<string, string>();
 
-        public MessageHub(IMessageService messageService, IUserOnlineStatusService userOnlineStatusService)
+        public MessageHub(IMessageService messageService)
         {
             _messageService = messageService;
-            _userOnlineStatusService = userOnlineStatusService;
         }
 
         public override async Task OnConnectedAsync()
@@ -30,9 +29,6 @@ namespace ASTREE_PFE.Hubs
                 // Update connection mapping
                 _userConnectionMap[userId] = Context.ConnectionId;
                 
-                // Update user's online status
-                await _userOnlineStatusService.UpdateUserStatusAsync(userId, true);
-                
                 // Get user's conversations and join those groups
                 var conversations = await _messageService.GetUserConversationsAsync(userId);
                 foreach (var conversation in conversations)
@@ -40,8 +36,9 @@ namespace ASTREE_PFE.Hubs
                     await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversation.Id}");
                 }
                 
-                // Notify others that user is online
-                await Clients.Others.SendAsync("UserOnline", userId);
+                // Notify through UserHub
+                var userHub = Context.GetHttpContext().RequestServices.GetRequiredService<IHubContext<UserHub>>();
+                await userHub.Clients.All.SendAsync("UserStatusChanged", userId, true);
             }
             
             await base.OnConnectedAsync();
@@ -58,11 +55,9 @@ namespace ASTREE_PFE.Hubs
                 // Remove from connection mapping
                 _userConnectionMap.Remove(userId);
                 
-                // Update user's online status
-                await _userOnlineStatusService.UpdateUserStatusAsync(userId, false);
-                
-                // Notify others that user is offline
-                await Clients.Others.SendAsync("UserOffline", userId);
+                // Notify through UserHub
+                var userHub = Context.GetHttpContext().RequestServices.GetRequiredService<IHubContext<UserHub>>();
+                await userHub.Clients.All.SendAsync("UserStatusChanged", userId, false);
             }
             
             await base.OnDisconnectedAsync(exception);

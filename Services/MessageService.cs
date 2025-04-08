@@ -73,7 +73,6 @@ namespace ASTREE_PFE.Services
                 IsRead = false,
                 AttachmentUrl = messageDto.AttachmentUrl,
                 ConversationId = messageDto.ConversationId,
-
             };
 
             await _messageRepository.CreateMessageAsync(message);
@@ -126,12 +125,49 @@ namespace ASTREE_PFE.Services
             return await MapToConversationDtoAsync(conversation, userId);
         }
 
+        public async Task<ConversationDto> GetOrCreateConversationWithUserAsync(string currentUserId, string otherUserId)
+        {
+            // Create a list with both user IDs
+            var participantIds = new List<string> { currentUserId, otherUserId };
+            
+            // Sort participant IDs to ensure consistent lookup regardless of order
+            participantIds.Sort();
+            
+            // Try to find an existing conversation first
+            var existingConversation = await _conversationRepository.GetConversationByParticipantsAsync(participantIds);
+            
+            if (existingConversation != null)
+            {
+                // Return the existing conversation
+                return await MapToConversationDtoAsync(existingConversation, currentUserId);
+            }
+            
+            // If no existing conversation was found, create a new one
+            return await CreateGroupConversationAsync(currentUserId, participantIds, null);
+        }
+
         public async Task<ConversationDto> CreateGroupConversationAsync(string creatorId, List<string> participantIds, string? title)
         {
             // Ensure creator is in the participants list
             if (!participantIds.Contains(creatorId))
             {
                 participantIds.Add(creatorId);
+            }
+
+            // For direct conversations (exactly 2 participants), check if one already exists
+            if (participantIds.Count == 2 && string.IsNullOrEmpty(title))
+            {
+                // Sort participant IDs to ensure consistent lookup regardless of order
+                var sortedParticipantIds = new List<string>(participantIds);
+                sortedParticipantIds.Sort();
+                
+                // First try to find an existing conversation
+                var existingConversation = await _conversationRepository.GetConversationByParticipantsAsync(sortedParticipantIds);
+                if (existingConversation != null)
+                {
+                    // Return the existing conversation instead of creating a new one
+                    return await MapToConversationDtoAsync(existingConversation, creatorId);
+                }
             }
 
             // Create a new conversation
@@ -214,4 +250,3 @@ namespace ASTREE_PFE.Services
         }
     }
 }
-        
