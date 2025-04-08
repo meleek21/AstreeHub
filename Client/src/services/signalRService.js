@@ -70,7 +70,7 @@ class SignalRService {
       }
 
       this.connection = new HubConnectionBuilder()
-        .withUrl('http://localhost:5126/hubs/feed', {
+        .withUrl('http://localhost:5126/hubs/user', {
           accessTokenFactory: () => token,
           withCredentials: false,
           skipNegotiation: true,
@@ -131,6 +131,13 @@ class SignalRService {
       console.log('Connection lost. Attempting to reconnect...', error);
       if (this.callbacks.onConnectionChange) {
         this.callbacks.onConnectionChange(false);
+      }
+    });
+    
+    // User status events
+    this.connection.on('UserStatusChanged', (userId, isOnline) => {
+      if (this.callbacks.onUserStatusChange) {
+        this.callbacks.onUserStatusChange(userId, isOnline);
       }
     });
 
@@ -309,13 +316,41 @@ class SignalRService {
   }
 
   async stopAll() {
+    // Remove all event handlers
+    if (this.connection) {
+      this.connection.off('UserStatusChanged');
+      this.connection.off('ReceiveNewPost');
+      this.connection.off('ReceiveUpdatedPost');
+      this.connection.off('ReceiveDeletedPost');
+      this.connection.off('ReceiveNewComment');
+      this.connection.off('ReceiveUpdatedComment');
+      this.connection.off('ReceiveDeletedComment');
+      this.connection.off('ReceiveNewReply');
+      this.connection.off('ReceiveNewReaction');
+      this.connection.off('ReceiveUpdatedReaction');
+      this.connection.off('ReceiveReactionDeleted');
+      this.connection.off('ReceiveReactionSummary');
+      this.connection.off('ReceiveNewFile');
+      this.connection.off('ReceiveUpdatedFile');
+      this.connection.off('ReceiveDeletedFile');
+    }
+    
+    // Stop all connections
     const stopPromises = Array.from(this.connectionPool.keys()).map(groupName => this.stop(groupName));
     await Promise.all(stopPromises);
+    
+    // Clear all collections
     this.connectionCache.clear();
+    this.connectionPool.clear();
     this.isInitialized = false;
     this.connectionPromise = null;
     this.connection = null;
     this.eventHandlersRegistered = false;
+    
+    // Reset all callbacks
+    Object.keys(this.callbacks).forEach(key => {
+      this.callbacks[key] = null;
+    });
   }
 
   async joinFeedGroup(groupName) {
@@ -414,7 +449,20 @@ class SignalRService {
   }
 
   onUserStatusChange(callback) {
+    // Remove existing handler if any
+    if (this.connection) {
+      this.connection.off('UserStatusChanged');
+    }
+    
+    // Store the callback
     this.callbacks.onUserStatusChange = callback;
+    
+    // Register new handler only if callback exists
+    if (callback && this.connection) {
+      this.connection.on('UserStatusChanged', (userId, isOnline) => {
+        callback(userId, isOnline);
+      });
+    }
   }
 
   isConnected(groupName = 'default') {
@@ -426,6 +474,19 @@ class SignalRService {
     return Array.from(this.connectionPool.values())
       .filter(conn => conn.state === 'Connected')
       .length;
+  }
+
+  async invokeHubMethod(methodName, ...args) {
+    if (!this.connection || this.connection.state !== 'Connected') {
+      throw new Error(`Cannot invoke method ${methodName}: No active connection`);
+    }
+    
+    try {
+      return await this.connection.invoke(methodName, ...args);
+    } catch (error) {
+      console.error(`Error invoking hub method ${methodName}:`, error);
+      throw error;
+    }
   }
 }
 

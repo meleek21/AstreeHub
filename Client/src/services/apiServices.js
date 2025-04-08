@@ -88,15 +88,16 @@ export const userAPI = {
       'Content-Type': 'multipart/form-data'
     }
   }),
+  getAllEmployees: () => api.get('/employee'),
 };
 
-// User online status API service
-export const userStatusAPI = {
-  getOnlineUsers: () => api.get('/useronlinestatus/online'),
-  getUserStatus: (userId) => api.get(`/useronlinestatus/${userId}/status`),
-  getLastSeen: (userId) => api.get(`/useronlinestatus/${userId}/last-seen`),
-  updateUserStatus: (userId, isOnline) => api.post(`/useronlinestatus/${userId}/status`, isOnline),
-  updateLastActivity: (userId) => api.post(`/useronlinestatus/${userId}/activity`)
+// User online status API service - Updated with correct casing
+export const userOnlineStatusAPI = {
+  getOnlineUsers: () => api.get('/UserOnlineStatus/online'),
+  getUserStatus: (userId) => api.get(`/UserOnlineStatus/${userId}/status`),
+  getLastSeen: (userId) => api.get(`/UserOnlineStatus/${userId}/last-seen`),
+  updateUserStatus: (userId, isOnline) => api.post(`/UserOnlineStatus/${userId}/status`, isOnline),
+  updateLastActivity: (userId) => api.post(`/UserOnlineStatus/${userId}/activity`)
 };
 
 // Channels API service
@@ -117,7 +118,9 @@ export const messagesAPI = {
   getConversationMessages: (conversationId, skip = 0, limit = 50) => 
     api.get(`/message/conversations/${conversationId}/messages?skip=${skip}&limit=${limit}`),
   createGroupConversation: (participantIds, title) => 
-    api.post('/message/conversations/group', { participantIds, title }),
+    api.post('/message/conversations', { participantIds, title }),
+  getOrCreateConversationWithUser: (otherUserId) =>
+    api.get(`/message/conversations/with-user/${otherUserId}`),
   
   // Message endpoints
   sendMessage: (messageData) => api.post('/message/messages', messageData),
@@ -134,4 +137,4 @@ export const commentsAPI = {
   addReply: (commentId, replyData) => api.post(`/comment/${commentId}/reply`, replyData),
   updateComment: (commentId, content) => api.put(`/comment/${commentId}`, { content }),
   deleteComment: (commentId) => api.delete(`/comment/${commentId}`)
-};
+}

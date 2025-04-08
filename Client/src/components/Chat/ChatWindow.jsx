@@ -5,10 +5,14 @@ import MessageInput from './MessageInput';
 import Message from './Message';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import 'intersection-observer';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 
-const ChatWindow = ({ conversationId, onlineUsers }) => {
+const ChatWindow = ({ conversationId }) => {
+  // Use the centralized online status hook
+  const { onlineUsers, isUserOnline } = useOnlineStatus();
   const [conversation, setConversation] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
   const loadMoreRef = useRef(null);
@@ -286,17 +290,20 @@ const ChatWindow = ({ conversationId, onlineUsers }) => {
   const getConversationName = () => {
     if (!conversation) return '';
     
-    if (conversation.isGroup) {
+    // Use the title field that's already set by the backend
+    if (conversation.title) {
       return conversation.title;
+    }
+    
+    // Fallback logic
+    if (conversation.isGroup) {
+      return 'Group Chat';
     }
     
     const otherParticipant = conversation.participants.find(p => p.id !== currentUserId);
     return otherParticipant ? otherParticipant.name : 'Unknown User';
   };
   
-  const isUserOnline = (userId) => {
-    return onlineUsers.includes(userId);
-  };
   
   const getParticipantStatus = () => {
     if (!conversation || conversation.isGroup) return '';

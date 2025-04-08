@@ -81,6 +81,17 @@ namespace ASTREE_PFE.Controllers
             return Ok(conversation);
         }
 
+        [HttpGet("conversations/with-user/{otherUserId}")]
+        public async Task<IActionResult> GetOrCreateConversationWithUser(string otherUserId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var conversation = await _messageService.GetOrCreateConversationWithUserAsync(userId, otherUserId);
+            return Ok(conversation);
+        }
+
         [HttpPut("messages/{messageId}/status")]
         public async Task<IActionResult> UpdateMessageStatus(string messageId, [FromBody] MessageStatusUpdateDto statusDto)
         {

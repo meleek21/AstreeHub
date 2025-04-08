@@ -9,9 +9,8 @@ class ChatSignalRService {
     this.callbacks = {
       onReceiveMessage: null,
       onMessageRead: null,
-      onUserTyping: null,
-      onUserOnline: null,
-      onUserOffline: null
+      onUserTyping: null
+      // Removed onUserOnline and onUserOffline callbacks as they're now handled by OnlineStatusContext
     };
   }
 
@@ -86,18 +85,8 @@ class ChatSignalRService {
       }
     });
 
-    // Online status events
-    this.connection.on('UserOnline', (userId) => {
-      if (this.callbacks.onUserOnline) {
-        this.callbacks.onUserOnline(userId);
-      }
-    });
-
-    this.connection.on('UserOffline', (userId) => {
-      if (this.callbacks.onUserOffline) {
-        this.callbacks.onUserOffline(userId);
-      }
-    });
+    // Online status events are now completely handled by OnlineStatusContext
+    // These handlers have been removed as they're no longer needed here
   }
 
   // Register event handlers

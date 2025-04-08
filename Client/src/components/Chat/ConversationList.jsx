@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { messagesAPI } from '../../services/apiServices';
 import chatSignalRService from '../../services/chatSignalRService';
+import CreateGroupChat from './CreateGroupChat';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 
-const ConversationList = ({ onSelectConversation, selectedConversationId, onlineUsers }) => {
+const ConversationList = ({ 
+  onSelectConversation, 
+  selectedConversationId, 
+  onCreateGroup,
+  showCreateGroupModal,
+  setShowCreateGroupModal,
+  onGroupCreated
+}) => {
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,6 +22,7 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
       try {
         setLoading(true);
         const response = await messagesAPI.getUserConversations();
+        console.log('Fetched conversations:', response.data);
         setConversations(response.data);
         setLoading(false);
       } catch (error) {
@@ -91,16 +101,23 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
   }, [currentUserId]);
   
   const getConversationName = (conversation) => {
-    if (conversation.isGroup) {
+    if (!conversation) return 'Unknown';
+    
+    // Use the title field that's already set by the backend
+    if (conversation.title) {
       return conversation.title;
     }
     
-    const otherParticipant = conversation.participants.find(
-      p => p.id !== currentUserId
-    );
+    // Fallback logic in case title is not set
+    if (conversation.isGroup) {
+      return 'Group Chat';
+    }
     
-    return otherParticipant ? otherParticipant.name : 'Unknown User';
+
+    
+    return 'Unknown Conversation';
   };
+  
   
   const getLastMessagePreview = (conversation) => {
     if (!conversation.lastMessage) {
@@ -140,9 +157,8 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
     }
   };
   
-  const isUserOnline = (userId) => {
-    return onlineUsers.includes(userId);
-  };
+  // Use the centralized online status hook
+  const { isUserOnline } = useOnlineStatus();
   
   const getParticipantStatus = (conversation) => {
     if (conversation.isGroup) return null;
@@ -153,7 +169,8 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
     
     if (!otherParticipant) return null;
     
-    return isUserOnline(otherParticipant.id);
+    // Return a string status instead of a boolean
+    return isUserOnline(otherParticipant.id) ? 'Online' : 'Offline';
   };
   
   const filteredConversations = conversations?.filter(conversation => {
@@ -165,7 +182,9 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
   if (loading) {
     return (
       <div className="user-list">
-        <h2>Conversations</h2>
+        <div className="conversation-header-container">
+          <h2>Conversations</h2>
+        </div>
         <div className="loading-message">Loading conversations...</div>
       </div>
     );
@@ -173,7 +192,9 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
   
   return (
     <div className="user-list">
-      <h2>Conversations</h2>
+      <div className="conversation-header-container">
+        <h2>Conversations</h2>
+      </div>
       
       <div className="search-container">
         <input
@@ -183,7 +204,24 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
+        <button 
+          className="create-group-button" 
+          onClick={onCreateGroup}
+          aria-label="Create Group Chat"
+        >
+          <span className="create-group-button-icon">+</span>
+          <span className="create-group-button-text">New Group</span>
+        </button>
       </div>
+      
+      {/* Create Group Chat Modal */}
+      {showCreateGroupModal && (
+        <CreateGroupChat 
+          isOpen={showCreateGroupModal} 
+          onClose={() => setShowCreateGroupModal(false)}
+          onGroupCreated={onGroupCreated}
+        />
+      )}
       
       {filteredConversations.length === 0 ? (
         <div className="empty-list">No conversations found</div>
@@ -195,6 +233,9 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
             ? formatTimestamp(conversation.lastMessage.timestamp)
             : formatTimestamp(conversation.updatedAt);
           
+          // Get the conversation name (other recipient's name)
+          const conversationName = getConversationName(conversation);
+          
           return (
             <div 
               key={conversation.id} 
@@ -203,7 +244,7 @@ const ConversationList = ({ onSelectConversation, selectedConversationId, online
             >
               <div className="conversation-info">
                 <div className="conversation-header">
-                  <p className="conversation-name">{getConversationName(conversation)}</p>
+                  <p className="conversation-name">{conversationName}</p>
                   {isOnline !== null && (
                     <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`} />
                   )}

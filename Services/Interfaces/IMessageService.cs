@@ -10,6 +10,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> UpdateMessageStatusAsync(string messageId, string status);
         Task<bool> DeleteMessageAsync(string id);
         Task<IEnumerable<ConversationDto>> GetUserConversationsAsync(string userId);
+        Task<ConversationDto> GetOrCreateConversationWithUserAsync(string currentUserId, string otherUserId);
         Task<ConversationDto> GetConversationByIdAsync(string conversationId, string userId);
         Task<ConversationDto> CreateGroupConversationAsync(string creatorId, List<string> participantIds, string title);
         Task<int> GetUnreadMessagesCountAsync(string userId);

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
-import { userAPI, userStatusAPI } from '../services/apiServices';
+import { userAPI } from '../services/apiServices';
+import useOnlineStatus from '../hooks/useOnlineStatus';
 
 const UserBadge = ({ userId }) => {
   const { user } = useAuth();
+  const { isUserOnline, getLastSeenTime } = useOnlineStatus();
   const loggedInUserId = user?.id;
 
   const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
@@ -13,32 +15,26 @@ const UserBadge = ({ userId }) => {
     firstName: '',
     lastName: '',
     profilePicture: defaultProfilePicture,
-    isOnline: false,
-    lastSeen: '',
   });
+  
+  const [lastSeen, setLastSeen] = useState('Unknown');
 
   const fetchUserInfo = async () => {
     if (!userId) return;
 
     try {
-      const [userInfoResponse, userStatusResponse, lastSeenResponse] = await Promise.all([
-        userAPI.getUserInfo(userId),
-        userStatusAPI.getUserStatus(userId),
-        userStatusAPI.getLastSeen(userId),
-      ]);
-
-      // Debugging: Log the lastSeenResponse
-      console.log('Last Seen Response:', lastSeenResponse);
-
-      // Extract lastSeen directly from the response
-      const lastSeen = lastSeenResponse.data; // Direct string response
+      const userInfoResponse = await userAPI.getUserInfo(userId);
+      
+      // Get last seen time from the API only if user is offline
+      if (!isUserOnline(userId)) {
+        const lastSeenResponse = await getLastSeenTime(userId);
+        setLastSeen(lastSeenResponse || 'Unknown');
+      }
 
       setUserInfo({
         firstName: userInfoResponse.data.firstName,
         lastName: userInfoResponse.data.lastName,
         profilePicture: userInfoResponse.data.profilePictureUrl || defaultProfilePicture,
-        isOnline: userStatusResponse.data.isOnline,
-        lastSeen: lastSeen || 'Unknown', // Fallback to 'Unknown' if lastSeen is undefined
       });
     } catch (error) {
       console.error('Error fetching user info:', error);
@@ -47,9 +43,15 @@ const UserBadge = ({ userId }) => {
 
   useEffect(() => {
     fetchUserInfo();
-  }, [userId]);
+    
+    // Refresh user info when online status changes
+    const refreshInterval = setInterval(fetchUserInfo, 60000); // Refresh every minute
+    
+    return () => clearInterval(refreshInterval);
+  }, [userId, isUserOnline(userId)]);
 
   const profileUrl = userId === loggedInUserId ? `/profile/edit/${userId}` : `/profile/view/${userId}`;
+  const isOnline = isUserOnline(userId);
 
   return (
     <Link to={profileUrl} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -67,7 +69,7 @@ const UserBadge = ({ userId }) => {
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           />
-          {userInfo.isOnline && (
+          {isOnline && (
             <div
               style={{
                 position: 'absolute',
@@ -85,7 +87,7 @@ const UserBadge = ({ userId }) => {
         <div>
           <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
           <div style={{ color: '#666666', fontSize: '0.8em' }}>
-            {userInfo.isOnline ? 'Online' : `Last seen ${userInfo.lastSeen}`}
+            {isOnline ? 'Online' : `Last seen ${lastSeen}`}
           </div>
         </div>
       </div>
