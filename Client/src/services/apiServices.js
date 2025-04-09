@@ -121,6 +121,8 @@ export const messagesAPI = {
     api.post('/message/conversations', { participantIds, title }),
   getOrCreateConversationWithUser: (otherUserId) =>
     api.get(`/message/conversations/with-user/${otherUserId}`),
+  createGroupConversation: (participantIds, title) => 
+    api.post('/message/conversations', { participantIds, title, isGroup: participantIds.length > 1 }),
   
   // Message endpoints
   sendMessage: (messageData) => api.post('/message/messages', messageData),

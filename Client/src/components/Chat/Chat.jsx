@@ -42,17 +42,35 @@ const Chat = () => {
     setSelectedConversationId(conversationId);
   };
   
+  // State to track the selected employee for potential new conversation
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  
   const handleSelectEmployee = async (employee) => {
     try {
-      // Use the new API method to get or create a conversation with this employee
-      const response = await messagesAPI.getOrCreateConversationWithUser(employee.id);
+      // Store the selected employee for potential new conversation
+      setSelectedEmployee(employee);
       
-      // If we got a valid response with an ID, select the conversation
-      if (response && response.data && response.data.id) {
-        setSelectedConversationId(response.data.id);
-      } else {
-        console.error('Failed to get/create conversation: Invalid response format');
+      // Try to get an existing conversation with this employee
+      try {
+        const response = await messagesAPI.getOrCreateConversationWithUser(employee.id);
+        
+        // If we got a valid response with an ID, select the conversation
+        if (response && response.data && response.data.id) {
+          setSelectedConversationId(response.data.id);
+          return;
+        }
+      } catch (error) {
+        // If we get a 404, it means no conversation exists yet, which is fine
+        if (error.response && error.response.status === 404) {
+          console.log('No existing conversation with this user');
+        } else {
+          throw error; // Re-throw other errors
+        }
       }
+      
+      // If no existing conversation, set selectedConversationId to null
+      // and prepare UI for a new conversation
+      setSelectedConversationId(null);
     } catch (error) {
       console.error('Error handling employee selection:', error);
     }
@@ -81,6 +99,7 @@ const Chat = () => {
       />
       <ChatWindow 
         conversationId={selectedConversationId}
+        selectedEmployee={selectedEmployee}
       />
       <EmployeeList 
         onSelectEmployee={handleSelectEmployee}

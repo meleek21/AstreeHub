@@ -7,7 +7,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import 'intersection-observer';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
 
-const ChatWindow = ({ conversationId }) => {
+const ChatWindow = ({ conversationId, selectedEmployee }) => {
   // Use the centralized online status hook
   const { onlineUsers, isUserOnline } = useOnlineStatus();
   const [conversation, setConversation] = useState(null);
@@ -236,8 +236,32 @@ const ChatWindow = ({ conversationId }) => {
     if (!content.trim() && !attachmentUrl) return;
     
     try {
-      // First, send the message through SignalR for real-time delivery
-      await chatSignalRService.sendMessage(content, conversationId, attachmentUrl);
+      let actualConversationId = conversationId;
+      
+      // If no conversation exists yet but we have a selected employee, create a new conversation
+      if (!actualConversationId && selectedEmployee) {
+        try {
+          // Create a new conversation with the selected employee
+          const createResponse = await messagesAPI.createGroupConversation(
+            [selectedEmployee.id], // participant IDs (current user is added automatically)
+            null // no title for 1-on-1 conversations
+          );
+          
+          if (createResponse && createResponse.data && createResponse.data.id) {
+            actualConversationId = createResponse.data.id;
+            // Update the UI to show the new conversation
+            setConversation(createResponse.data);
+          } else {
+            throw new Error('Failed to create conversation');
+          }
+        } catch (createError) {
+          console.error('Error creating conversation:', createError);
+          return; // Don't proceed if we couldn't create a conversation
+        }
+      }
+      
+      // Now send the message with the conversation ID
+      await chatSignalRService.sendMessage(content, actualConversationId, attachmentUrl);
       
       // No need to update UI manually as the SignalR 'ReceiveMessage' handler will do it
       // The message will be received through the SignalR connection and added to the messages state
@@ -246,6 +270,12 @@ const ChatWindow = ({ conversationId }) => {
       
       // Fallback to REST API if SignalR fails
       try {
+        // If we don't have a conversation ID at this point, we can't send a message
+        if (!conversationId && !selectedEmployee) {
+          console.error('Cannot send message: No conversation ID and no selected employee');
+          return;
+        }
+        
         const response = await messagesAPI.sendMessage({
           content,
           conversationId,
@@ -314,11 +344,30 @@ const ChatWindow = ({ conversationId }) => {
     return isUserOnline(otherParticipant.id) ? 'Online' : 'Offline';
   };
   
-  if (!conversationId) {
+  if (!conversationId && !selectedEmployee) {
     return (
       <div className="chat-window">
         <div className="empty-chat">
           Select a conversation to start chatting
+        </div>
+      </div>
+    );
+  }
+  
+  if (!conversationId && selectedEmployee) {
+    return (
+      <div className="chat-window">
+        <div className="new-conversation">
+          <div className="chat-header">
+            <h2>New conversation with {selectedEmployee.name}</h2>
+          </div>
+          <div className="chat-box empty-chat">
+            <div className="empty-chat-message">
+              <p>Send a message to start the conversation</p>
+            </div>
+            <div ref={messagesEndRef} />
+          </div>
+          <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
         </div>
       </div>
     );

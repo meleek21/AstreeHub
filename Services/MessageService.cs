@@ -142,8 +142,8 @@ namespace ASTREE_PFE.Services
                 return await MapToConversationDtoAsync(existingConversation, currentUserId);
             }
             
-            // If no existing conversation was found, create a new one
-            return await CreateGroupConversationAsync(currentUserId, participantIds, null);
+            // Return null if no conversation exists - it will be created when a message is sent
+            return null;
         }
 
         public async Task<ConversationDto> CreateGroupConversationAsync(string creatorId, List<string> participantIds, string? title)
