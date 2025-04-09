@@ -82,13 +82,17 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("conversations/with-user/{otherUserId}")]
-        public async Task<IActionResult> GetOrCreateConversationWithUser(string otherUserId)
+        public async Task<IActionResult> GetConversationWithUser(string otherUserId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var conversation = await _messageService.GetOrCreateConversationWithUserAsync(userId, otherUserId);
+            // Return 404 if no conversation exists
+            if (conversation == null)
+                return NotFound(new { message = "No conversation exists with this user" });
+                
             return Ok(conversation);
         }
 
