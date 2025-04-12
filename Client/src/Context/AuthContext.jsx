@@ -13,7 +13,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const handleAuthError = (event) => {
       console.log('Auth error event received:', event.detail.message);
-      logout();
+      // Don't call logout() here as it can create an infinite loop
+      // Just clean up the auth state and redirect
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+      setUser(null);
       navigate('/authen');
     };
 
