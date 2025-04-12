@@ -2,6 +2,7 @@ using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
 
 namespace ASTREE_PFE.Hubs
@@ -10,13 +11,11 @@ namespace ASTREE_PFE.Hubs
     public class MessageHub : Hub
     {
         private readonly IMessageService _messageService;
-        private readonly IUserOnlineStatusService _userOnlineStatusService;
         private static readonly Dictionary<string, string> _userConnectionMap = new Dictionary<string, string>();
 
-        public MessageHub(IMessageService messageService, IUserOnlineStatusService userOnlineStatusService)
+        public MessageHub(IMessageService messageService)
         {
             _messageService = messageService;
-            _userOnlineStatusService = userOnlineStatusService;
         }
 
         public override async Task OnConnectedAsync()
@@ -30,9 +29,6 @@ namespace ASTREE_PFE.Hubs
                 // Update connection mapping
                 _userConnectionMap[userId] = Context.ConnectionId;
                 
-                // Update user's online status
-                await _userOnlineStatusService.UpdateUserStatusAsync(userId, true);
-                
                 // Get user's conversations and join those groups
                 var conversations = await _messageService.GetUserConversationsAsync(userId);
                 foreach (var conversation in conversations)
@@ -40,8 +36,9 @@ namespace ASTREE_PFE.Hubs
                     await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversation.Id}");
                 }
                 
-                // Notify others that user is online
-                await Clients.Others.SendAsync("UserOnline", userId);
+                // Notify through UserHub
+                var userHub = Context.GetHttpContext().RequestServices.GetRequiredService<IHubContext<UserHub>>();
+                await userHub.Clients.All.SendAsync("UserStatusChanged", userId, true);
             }
             
             await base.OnConnectedAsync();
@@ -58,11 +55,9 @@ namespace ASTREE_PFE.Hubs
                 // Remove from connection mapping
                 _userConnectionMap.Remove(userId);
                 
-                // Update user's online status
-                await _userOnlineStatusService.UpdateUserStatusAsync(userId, false);
-                
-                // Notify others that user is offline
-                await Clients.Others.SendAsync("UserOffline", userId);
+                // Notify through UserHub
+                var userHub = Context.GetHttpContext().RequestServices.GetRequiredService<IHubContext<UserHub>>();
+                await userHub.Clients.All.SendAsync("UserStatusChanged", userId, false);
             }
             
             await base.OnDisconnectedAsync(exception);
@@ -74,11 +69,18 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(senderId))
                 throw new HubException("User not authenticated");
 
-            // Create the message in the database
-            var message = await _messageService.CreateMessageAsync(senderId, messageDto);
-            
-            // Send to all participants in the conversation group
-            await Clients.Group($"conversation_{message.ConversationId}").SendAsync("ReceiveMessage", message);
+            try
+            {
+                // Create the message in the database
+                var message = await _messageService.CreateMessageAsync(senderId, messageDto);
+                
+                // Send to all participants in the conversation group
+                await Clients.Group($"conversation_{message.ConversationId}").SendAsync("ReceiveMessage", message);
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to send message: {ex.Message}");
+            }
         }
 
         public async Task JoinConversation(string conversationId)
@@ -87,17 +89,31 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            // Verify user is part of the conversation
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
-            if (conversation == null)
-                throw new HubException("User not part of this conversation");
+            try
+            {
+                // Verify user is part of the conversation
+                var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+                if (conversation == null)
+                    throw new HubException("User not part of this conversation");
 
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to join conversation: {ex.Message}");
+            }
         }
 
         public async Task LeaveConversation(string conversationId)
         {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            try
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conversation_{conversationId}");
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to leave conversation: {ex.Message}");
+            }
         }
 
         public async Task MarkMessageAsRead(string messageId)
@@ -106,15 +122,22 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            var success = await _messageService.UpdateMessageStatusAsync(messageId, "read");
-            if (success)
+            try
             {
-                // Notify the sender that their message was read
-                var message = await _messageService.GetMessageByIdAsync(messageId);
-                if (message != null && _userConnectionMap.TryGetValue(message.SenderId, out var connectionId))
+                var success = await _messageService.UpdateMessageStatusAsync(messageId, "read");
+                if (success)
                 {
-                    await Clients.Client(connectionId).SendAsync("MessageRead", messageId, userId);
+                    // Notify the sender that their message was read
+                    var message = await _messageService.GetMessageByIdAsync(messageId);
+                    if (message != null && _userConnectionMap.TryGetValue(message.SenderId, out var connectionId))
+                    {
+                        await Clients.Client(connectionId).SendAsync("MessageRead", messageId, userId);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to mark message as read: {ex.Message}");
             }
         }
 
@@ -124,7 +147,13 @@ namespace ASTREE_PFE.Hubs
             if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
-            await Clients.Group($"conversation_{conversationId}").SendAsync("UserTyping", userId, conversationId);
+            try
+            {
+                await Clients.Group($"conversation_{conversationId}").SendAsync("UserTyping", userId, conversationId);
+            }
+            catch (Exception ex)
+            {
+                throw new HubException($"Failed to send typing indicator: {ex.Message}");
+            }
         }
-    }
-    }
+    }}

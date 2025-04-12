@@ -8,20 +8,28 @@ import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ChannelsList from './pages/ChannelsList';
 import ChannelFeed from './pages/ChannelFeed';
+import ChatPage from './pages/ChatPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
 import { AuthProvider } from './Context/AuthContext';
+import { OnlineStatusProvider } from './Context/OnlineStatusContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+
+// Create a client
+const queryClient = new QueryClient();
 
 
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <div className="app">
-          <Toaster />
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <OnlineStatusProvider>
+            <div className="app">
+              <Toaster />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Authen />} />
@@ -37,14 +45,17 @@ function App() {
               <Route path="/channel/:channelId" element={<ErrorBoundary><ChannelFeed /></ErrorBoundary>} />
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
+              <Route path="/chat" element={<ErrorBoundary><ChatPage /></ErrorBoundary>} />
               {/* Add more private routes here */}
             </Route>
 
             {/* Redirect to home if no route matches */}
             <Route path="*" element={<Navigate to="/home" />} />
           </Routes>
-        </div>
-      </AuthProvider>
+            </div>
+          </OnlineStatusProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </Router>
   );
 }

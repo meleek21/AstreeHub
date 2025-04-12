@@ -70,14 +70,29 @@ namespace ASTREE_PFE.Controllers
             return Ok(message);
         }
 
-        [HttpPost("conversations/group")]
-        public async Task<IActionResult> CreateGroupConversation([FromBody] CreateGroupConversationDto dto)
+        [HttpPost("conversations")]
+        public async Task<IActionResult> CreateConversation([FromBody] CreateConversationDto dto)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var conversation = await _messageService.CreateGroupConversationAsync(userId, dto.ParticipantIds, dto.Title);
+            return Ok(conversation);
+        }
+
+        [HttpGet("conversations/with-user/{otherUserId}")]
+        public async Task<IActionResult> GetConversationWithUser(string otherUserId)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var conversation = await _messageService.GetOrCreateConversationWithUserAsync(userId, otherUserId);
+            // Return 404 if no conversation exists
+            if (conversation == null)
+                return NotFound(new { message = "No conversation exists with this user" });
+                
             return Ok(conversation);
         }
 
