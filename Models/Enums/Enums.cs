@@ -1,8 +1,16 @@
-﻿using MongoDB.Bson;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace ASTREE_PFE.Models
 {
+    public enum EventType
+    {
+        General,
+        Holiday,
+        Meeting,
+        Birthday
+    }
+
     public enum ReactionType
     {
         [BsonRepresentation(BsonType.String)]
@@ -44,7 +52,9 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.String)]
         TeamBuilding,
         [BsonRepresentation(BsonType.String)]
-        Other
+        Other,
+        [BsonRepresentation(BsonType.String)]
+        Birthday
     }
 
     public enum EventStatus
@@ -59,5 +69,15 @@ namespace ASTREE_PFE.Models
         Completed,
         [BsonRepresentation(BsonType.String)]
         Cancelled
+    }
+
+    public enum AttendanceStatus
+    {
+        [BsonRepresentation(BsonType.String)]
+        Pending,
+        [BsonRepresentation(BsonType.String)]
+        Accepted,
+        [BsonRepresentation(BsonType.String)]
+        Declined
     }
 }
