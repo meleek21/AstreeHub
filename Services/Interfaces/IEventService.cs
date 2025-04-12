@@ -5,6 +5,7 @@ namespace ASTREE_PFE.Services.Interfaces
 {
     public interface IEventService
     {
+        Task GenerateBirthdayEventsAsync();
         Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto);
         Task<EventResponseDTO> GetEventByIdAsync(string id);
         Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync();
@@ -15,6 +16,8 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> AddAttendeeAsync(string eventId, string employeeId);
         Task<bool> RemoveAttendeeAsync(string eventId, string employeeId);
         Task<IEnumerable<EventResponseDTO>> GetEventsByAttendeeAsync(string employeeId);
+        Task<bool> InviteDepartmentAsync(string eventId, string departmentId);
+        Task<bool> InviteMultipleAsync(string eventId, List<string> employeeIds);
         
         // Event filtering
         Task<IEnumerable<EventResponseDTO>> GetUpcomingEventsAsync();
@@ -24,5 +27,12 @@ namespace ASTREE_PFE.Services.Interfaces
         
         // Status management
         Task<bool> UpdateEventStatusAsync(string eventId, EventStatus status);
+        Task<bool> UpdateAttendanceStatusAsync(string eventId, string employeeId, AttendanceStatus status);
+
+        // Attendance statistics
+        Task<Dictionary<AttendanceStatus, int>> GetAttendanceStatusCountsAsync(string eventId);
+        Task<IEnumerable<BirthdayEventDTO>> GetBirthdayEventsAsync(int month);
+        Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync();
+        Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync();
     }
 }

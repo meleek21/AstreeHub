@@ -25,6 +25,15 @@ namespace ASTREE_PFE.Models
     [StringLength(500)]
     public string Description { get; set; }
 
+    [BsonElement("eventType")]
+    public EventType Type { get; set; } = EventType.General;
+
+    [BsonElement("isRecurring")]
+    public bool IsRecurring { get; set; }
+
+    [BsonElement("associatedEmployeeId")]
+    public string AssociatedEmployeeId { get; set; }
+
     // Date and time of the event
     [BsonElement("eventDateTime")]
     [Required]
@@ -49,6 +58,14 @@ namespace ASTREE_PFE.Models
     // List of attendees (stored as Employee IDs from SQL Server)
     [BsonElement("attendees")]
     public List<string> Attendees { get; set; } = new List<string>();
+
+    // Dictionary to store attendance status for each attendee
+    [BsonElement("attendeeStatuses")]
+    public Dictionary<string, AttendanceStatus> AttendeeStatuses { get; set; } = new Dictionary<string, AttendanceStatus>();
+
+    // Dictionary to track if an attendee's status is final (can't be changed)
+    [BsonElement("attendeeStatusFinal")]
+    public Dictionary<string, bool> AttendeeStatusFinal { get; set; } = new Dictionary<string, bool>();
 
     // Status of the event (e.g., Upcoming, Ongoing, Completed)
     [BsonElement("status")]

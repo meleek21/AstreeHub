@@ -12,6 +12,7 @@ import ChatPage from './pages/ChatPage';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
+import Calendar from './pages/Calendar';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -45,6 +46,7 @@ function App() {
               <Route path="/channel/:channelId" element={<ErrorBoundary><ChannelFeed /></ErrorBoundary>} />
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
+              <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
               <Route path="/chat" element={<ErrorBoundary><ChatPage /></ErrorBoundary>} />
               {/* Add more private routes here */}
             </Route>
