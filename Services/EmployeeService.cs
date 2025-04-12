@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Repositories.Interfaces;
+using ASTREE_PFE.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASTREE_PFE.Services
 {
@@ -12,11 +14,13 @@ namespace ASTREE_PFE.Services
     {
         private readonly IEmployeeRepository _employeeRepository;
         private readonly IDepartmentRepository _departmentRepository;
+        private readonly ApplicationDbContext _context;
 
-        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository)
+        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository, ApplicationDbContext context)
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
+            _context = context;
         }
 
         public async Task<IEnumerable<Employee>> GetAllEmployeesAsync()
@@ -125,7 +129,19 @@ namespace ASTREE_PFE.Services
             
             return false;
         }
+        public async Task<IEnumerable<Employee>> GetEmployeesByBirthMonthAsync(int month)
+        {
+            return await _context.Employees
+            .Where(e => e.DateOfBirth.Month == month)
+            .ToListAsync();
+        }
 
+        public async Task<IEnumerable<Employee>> GetEmployeesByBirthDateAsync(DateTime date)
+        {
+            return await _context.Employees
+            .Where(e =>e.DateOfBirth.Month == date.Month && e.DateOfBirth.Day == date.Day)
+            .ToListAsync();
+        }
 
     }
 }

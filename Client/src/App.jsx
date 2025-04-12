@@ -11,6 +11,7 @@ import ChannelFeed from './pages/ChannelFeed';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
+import Calendar from './pages/Calendar';
 import { AuthProvider } from './Context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -37,7 +38,7 @@ function App() {
               <Route path="/channel/:channelId" element={<ErrorBoundary><ChannelFeed /></ErrorBoundary>} />
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
-              {/* Add more private routes here */}
+              <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
             </Route>
 
             {/* Redirect to home if no route matches */}
