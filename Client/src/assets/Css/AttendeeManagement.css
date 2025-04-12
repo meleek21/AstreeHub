@@ -1,0 +1,97 @@
+.attendee-management {
+  padding: 20px;
+}
+
+.status-summary {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.status-badge.accepted {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.declined {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.pending {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-indicator {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  margin-left: 10px;
+}
+
+.status-indicator.accepted {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-indicator.declined {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-indicator.pending {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.attendee-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.attendee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.attendee-name {
+  display: flex;
+  align-items: center;
+}
+
+.attendee-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.attendee-actions .btn.active {
+  transform: scale(1.05);
+}
+
+.button-text {
+  margin-left: 5px;
+}
+
+.btn-group-sm .btn {
+  min-width: 90px;
+}

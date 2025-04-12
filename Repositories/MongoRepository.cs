@@ -28,6 +28,11 @@ namespace ASTREE_PFE.Repositories
             return await _collection.Find(predicate).ToListAsync();
         }
 
+        public async Task<T> FindOneAsync(Expression<Func<T, bool>> predicate)
+        {
+            return await _collection.Find(predicate).FirstOrDefaultAsync();
+        }
+
         public async Task CreateAsync(T entity)
         {
             await _collection.InsertOneAsync(entity);

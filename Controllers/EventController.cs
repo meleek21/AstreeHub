@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services.Interfaces;
 using ASTREE_PFE.Models;
+using System.Security.Claims;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -14,10 +15,20 @@ namespace ASTREE_PFE.Controllers
     public class EventController : ControllerBase
     {
         private readonly IEventService _eventService;
+        private readonly IEmployeeService _employeeService;
+        private readonly IGoogleCalendarService _googleCalendarService;
 
-        public EventController(IEventService eventService)
+        /// <summary>
+        /// Initializes a new instance of the EventController class.
+        /// </summary>
+        /// <param name="eventService">Service for managing events</param>
+        /// <param name="employeeService">Service for managing employees</param>
+        /// <param name="googleCalendarService">Service for Google Calendar integration</param>
+        public EventController(IEventService eventService, IEmployeeService employeeService, IGoogleCalendarService googleCalendarService)
         {
             _eventService = eventService;
+            _employeeService = employeeService;
+            _googleCalendarService = googleCalendarService;
         }
 
         /// <summary>
@@ -91,6 +102,16 @@ namespace ASTREE_PFE.Controllers
         {
             try
             {
+                var existingEvent = await _eventService.GetEventByIdAsync(id);
+                if (existingEvent == null)
+                    return NotFound($"Event with ID {id} not found.");
+
+                // Check if the current user is the organizer
+                var currentUser = HttpContext.User;
+                var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (existingEvent.Organizer != currentUserId)
+                    return Forbid("Only the event organizer can update this event.");
+
                 var result = await _eventService.UpdateEventAsync(id, eventDto);
                 return Ok(result);
             }
@@ -114,6 +135,16 @@ namespace ASTREE_PFE.Controllers
         {
             try
             {
+                var existingEvent = await _eventService.GetEventByIdAsync(id);
+                if (existingEvent == null)
+                    return NotFound($"Event with ID {id} not found.");
+
+                // Check if the current user is the organizer
+                var currentUser = HttpContext.User;
+                var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (existingEvent.Organizer != currentUserId)
+                    return Forbid("Only the event organizer can delete this event.");
+
                 var result = await _eventService.DeleteEventAsync(id);
                 if (!result)
                     return NotFound($"Event with ID {id} not found.");
@@ -131,15 +162,116 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventId">Event ID</param>
         /// <param name="attendeeDto">Contains employeeId of attendee</param>
         /// <returns>200 OK on success, 400 if event is open to all.</returns>
+
+
         [HttpPost("add-attendee/{eventId}")]
         public async Task<ActionResult> AddAttendee(string eventId, [FromBody] AttendeeUpdateDTO attendeeDto)
         {
             try
             {
                 var result = await _eventService.AddAttendeeAsync(eventId, attendeeDto.EmployeeId);
-                if (result)
-                    return Ok();
-                return BadRequest("Failed to add attendee.");
+                if (!result)
+                    return BadRequest("Failed to add attendee.");
+
+                // Get employee email for Google Calendar integration
+                var employee = await _employeeService.GetEmployeeByIdAsync(attendeeDto.EmployeeId);
+                if (employee != null)
+                {
+                    await _googleCalendarService.AddEventToAttendeeCalendarAsync(eventId, employee.Email);
+                }
+
+                return Ok();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Gets the attendance status counts for an event.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>Dictionary of attendance status counts with 200 status, or 404 if event not found.</returns>
+        [HttpGet("{eventId}/attendance-counts")]
+        public async Task<ActionResult<Dictionary<AttendanceStatus, int>>> GetAttendanceStatusCounts(string eventId)
+        {
+            try
+            {
+                var counts = await _eventService.GetAttendanceStatusCountsAsync(eventId);
+                return Ok(counts);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("{eventId}/user/{userId}/attendance-status")]
+        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetUserAttendanceStatus(string eventId, string userId)
+        {
+            try
+            {
+                var @event = await _eventService.GetEventByIdAsync(eventId);
+                if (!@event.Attendees.Contains(userId))
+                    return NotFound($"User with ID {userId} is not an attendee of this event.");
+
+                var status = @event.AttendeeStatuses.GetValueOrDefault(userId, AttendanceStatus.Pending);
+                var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(userId, false);
+
+                return Ok(new AttendanceStatusResponseDTO
+                {
+                    EventId = eventId,
+                    EmployeeId = userId,
+                    Status = status,
+                    IsFinal = isFinal
+                });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Gets the attendance status for a specific attendee in an event.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <param name="employeeId">Employee ID</param>
+        /// <returns>Attendance status details with 200 status, or 404 if not found.</returns>
+        [HttpGet("{eventId}/attendee/{employeeId}/status")]
+        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetAttendanceStatus(string eventId, string employeeId)
+        {
+            try
+            {
+                var @event = await _eventService.GetEventByIdAsync(eventId);
+                if (!@event.Attendees.Contains(employeeId))
+                    return NotFound($"Employee with ID {employeeId} is not an attendee of this event.");
+
+                var status = @event.AttendeeStatuses.GetValueOrDefault(employeeId, AttendanceStatus.Pending);
+                var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(employeeId, false);
+
+                var response = new AttendanceStatusResponseDTO
+                {
+                    EventId = eventId,
+                    EmployeeId = employeeId,
+                    Status = status,
+                    IsFinal = isFinal
+                };
+
+                return Ok(response);
             }
             catch (KeyNotFoundException ex)
             {
@@ -166,6 +298,33 @@ namespace ASTREE_PFE.Controllers
                 if (result)
                     return Ok();
                 return BadRequest("Failed to remove attendee.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Updates an attendee's status for an event (Accept or Decline).
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <param name="employeeId">Employee ID of the attendee</param>
+        /// <param name="status">New attendance status (Accepted or Declined)</param>
+        /// <returns>200 OK on success, 404 if event or attendee not found.</returns>
+        [HttpPut("{eventId}/attendee/{employeeId}/status")]
+        public async Task<ActionResult> UpdateAttendanceStatus(string eventId, string employeeId, [FromBody] AttendanceStatusUpdateDTO statusDto)
+        {
+            try
+            {
+                var result = await _eventService.UpdateAttendanceStatusAsync(eventId, employeeId, statusDto.Status);
+                if (result)
+                    return Ok();
+                return BadRequest("Failed to update attendance status.");
             }
             catch (KeyNotFoundException ex)
             {
@@ -295,5 +454,176 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        /// <summary>
+        /// Invites all employees from a department to an event.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <param name="departmentId">Department ID</param>
+        /// <returns>200 OK on success, 404 if event/department not found.</returns>
+        [HttpPost("invite-department/{eventId}/{departmentId}")]
+        public async Task<ActionResult> InviteDepartment(string eventId, string departmentId)
+        {
+            try
+            {
+                // Check if event exists
+                var existingEvent = await _eventService.GetEventByIdAsync(eventId);
+                if (existingEvent == null)
+                    return NotFound($"Event with ID {eventId} not found.");
+
+                // Check if current user is the organizer
+                var currentUser = HttpContext.User;
+                var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (existingEvent.Organizer != currentUserId)
+                    return Forbid("Only the event organizer can invite departments.");
+
+                var result = await _eventService.InviteDepartmentAsync(eventId, departmentId);
+                if (result)
+                    return Ok();
+                return BadRequest("Failed to invite department.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+        
+        /// <summary>
+        /// Invites multiple employees to an event.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <param name="employeeIds">List of employee IDs to invite</param>
+        /// <returns>200 OK on success, 404 if event not found, 403 if user is not the organizer.</returns>
+        [HttpPost("{eventId}/invite-multiple")]
+        public async Task<ActionResult> InviteMultiple(string eventId, [FromBody] List<string> employeeIds)
+        {
+            try
+            {
+                // Check if event exists
+                var existingEvent = await _eventService.GetEventByIdAsync(eventId);
+                if (existingEvent == null)
+                    return NotFound($"Event with ID {eventId} not found.");
+
+                // Check if current user is the organizer
+                var currentUser = HttpContext.User;
+                var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (existingEvent.Organizer != currentUserId)
+                    return Forbid("Only the event organizer can invite multiple employees.");
+                
+                if (employeeIds == null || !employeeIds.Any())
+                    return BadRequest("No employee IDs provided.");
+
+                var result = await _eventService.InviteMultipleAsync(eventId, employeeIds);
+                if (result)
+                    return Ok();
+                return BadRequest("Some invitations failed to send.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Invites all employees in the system to an event.
+        /// </summary>
+        /// <param name="eventId">Event ID</param>
+        /// <returns>200 OK on success, 404 if event not found.</returns>
+        [HttpPost("{eventId}/invite-all")]
+        public async Task<ActionResult> InviteAll(string eventId)
+        {
+            try
+            {
+                // Check if event exists
+                var existingEvent = await _eventService.GetEventByIdAsync(eventId);
+                if (existingEvent == null)
+                    return NotFound($"Event with ID {eventId} not found.");
+
+                // Check if current user is the organizer
+                var currentUser = HttpContext.User;
+                var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (existingEvent.Organizer != currentUserId)
+                    return Forbid("Only the event organizer can invite all employees.");
+
+                // Get all employees and add them as attendees
+                var employees = await _employeeService.GetAllEmployeesAsync();
+                bool success = true;
+                
+                foreach (var employee in employees)
+                {
+                    // Skip if employee is already an attendee
+                    if (existingEvent.Attendees.Contains(employee.Id))
+                        continue;
+                        
+                    // Add employee as attendee
+                    var result = await _eventService.AddAttendeeAsync(eventId, employee.Id);
+                    if (!result)
+                        success = false; // Track if any invitation fails
+                }
+                
+                if (success)
+                    return Ok();
+                return BadRequest("Some invitations failed to send.");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+       
+
+        [HttpGet("birthdays/{month}")]
+        public async Task<IActionResult> GetBirthdaysByMonth(int month)
+{
+    try
+    {
+        var birthdays = await _eventService.GetBirthdayEventsAsync(month);
+        return Ok(birthdays);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = ex.Message });
+    }
+}
+
+[HttpGet("birthdays/today")]
+public async Task<IActionResult> GetTodaysBirthdays()
+{
+    try
+    {
+        var todaysBirthdays = await _eventService.GetTodaysBirthdaysAsync();
+        return Ok(todaysBirthdays);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = ex.Message });
+    }
+}
+
+[HttpGet("birthdays/closest")]
+public async Task<IActionResult> GetClosestBirthdays()
+{
+    try
+    {
+        var closestBirthdays = await _eventService.GetClosestBirthdaysAsync();
+        return Ok(closestBirthdays);
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = ex.Message });
+    }
+}         
     }
 }

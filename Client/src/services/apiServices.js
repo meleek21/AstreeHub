@@ -117,3 +117,38 @@ export const commentsAPI = {
   updateComment: (commentId, content) => api.put(`/comment/${commentId}`, { content }),
   deleteComment: (commentId) => api.delete(`/comment/${commentId}`)
 };
+
+// Events API service
+export const eventsAPI = {
+  getAllEvents: () => api.get('/event/all'),
+  getEventById: (id) => api.get(`/event/get/${id}`),
+  createEvent: (eventData) => api.post('/event/create', eventData),
+  updateEvent: (id, eventData) => api.put(`/event/update/${id}`, eventData),
+  deleteEvent: (id) => api.delete(`/event/delete/${id}`),
+  addAttendee: (eventId, attendeeData) => api.post(`/event/${eventId}/attendee`, attendeeData),
+  removeAttendee: (eventId, attendeeId) => api.delete(`/event/remove-attendee/${eventId}/${attendeeId}`),
+  updateAttendanceStatus: (eventId, attendeeId, status) => api.put(`/event/${eventId}/attendee/${attendeeId}/status`, { status }),
+  getUserAttendanceStatus: (eventId, userId) => api.get(`/event/${eventId}/user/${userId}/attendance-status`),
+  
+  // Employee search and invitation endpoints
+  searchEmployees: (query) => api.get(`/employee/search?query=${query}`),
+  getDepartmentEmployees: (departmentId) => api.get(`/department/${departmentId}`),
+  getAllDepartments: () => api.get('/department'),
+  getCurrentUserDepartment: () => api.get('/employee/current-department'),
+  
+  // Bulk invitation endpoints
+  inviteAll: (eventId) => api.post(`/event/${eventId}/invite-all`),
+  inviteDepartment: (eventId, departmentId) => api.post(`/event/invite-department/${eventId}/${departmentId}`),
+  inviteMultiple: (eventId, employeeIds) => api.post(`/event/${eventId}/invite-multiple`, { employeeIds }),
+
+  getAttendanceStatusCounts: (eventId) => api.get(`/event/${eventId}/attendance-counts`),
+  getUpcomingEvents: () => api.get('/event/upcoming'),
+  getEventsByOrganizer: (organizerId) => api.get(`/event/by-organizer/${organizerId}`),
+  getEventsByCategory: (category) => api.get(`/event/by-category/${category}`),
+  getOpenEvents: () => api.get('/event/open-events'),
+  getEventsByAttendee: (employeeId) => api.get(`/event/by-attendee/${employeeId}`),
+  updateEventStatus: (eventId, status) => api.put(`/event/update-status/${eventId}`, status),
+  GetTodaysBirthdays: () => api.get('/event/birthdays/today'),
+  GetClosestBirthdays: () => api.get('/event/birthdays/closest'),
+  GetBirthdaysByMonth: (month) => api.get(`/event/birthdays/month/${month}`),
+};

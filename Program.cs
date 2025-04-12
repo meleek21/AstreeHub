@@ -159,6 +159,7 @@ builder.Services.ConfigureApplicationCookie(cookieOptions =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container
+builder.Services.AddHostedService<BirthdayEventBackgroundService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -209,6 +210,7 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IUserOnlineStatusService, UserOnlineStatusService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
 // Add SignalR
 builder.Services.AddSignalR();
