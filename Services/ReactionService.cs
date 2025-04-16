@@ -17,12 +17,15 @@ namespace ASTREE_PFE.Services
         private readonly IReactionRepository _reactionRepository;
         private readonly IPostService _postService;
         private readonly IHubContext<FeedHub> _feedHub;
+        private readonly INotificationService _notificationService;
 
-        public ReactionService(IReactionRepository reactionRepository, IPostService postService, IHubContext<FeedHub> feedHub)
+        public ReactionService(IReactionRepository reactionRepository, IPostService postService, IHubContext<FeedHub> feedHub, 
+            INotificationService notificationService)
         {
             _reactionRepository = reactionRepository;
             _postService = postService;
             _feedHub = feedHub;
+            _notificationService = notificationService;
         }
 
         public async Task<IEnumerable<Reaction>> GetAllAsync()
@@ -56,53 +59,69 @@ namespace ASTREE_PFE.Services
 
 
 
-        public async Task<Reaction> AddReactionAsync(ReactionRequest request)
+       // Add to ReactionService.cs
+public async Task<Reaction> AddReactionAsync(ReactionRequest request)
+{
+    if (string.IsNullOrEmpty(request.PostId))
+    {
+        throw new ArgumentException("PostId must be provided");
+    }
+
+    // Get the post to  find the author
+    var post = await _postService.GetPostByIdAsync(request.PostId);
+
+
+    // Check if a reaction already exists for this employee and post
+    var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
+
+    if (existingReaction != null)
+    {
+        // If the reaction type is the same, delete it (toggle off)
+        if (existingReaction.Type == request.Type)
         {
-            if (string.IsNullOrEmpty(request.PostId))
-            {
-                throw new ArgumentException("PostId must be provided");
-            }
-
-            // Check if a reaction already exists for this employee and post
-            var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
-
-            if (existingReaction != null)
-            {
-                // If the reaction type is the same, delete it (toggle off)
-                if (existingReaction.Type == request.Type)
-                {
-                    await DeleteReactionAsync(existingReaction.Id);
-                    return null;
-                }
-                // If the reaction type is different, update it
-                else
-                {
-                    return await UpdateReactionAsync(existingReaction.Id, request);
-                }
-            }
-
-            // If no existing reaction, create a new one
-            var reaction = new Reaction
-            {
-                EmployeeId = request.EmployeeId,
-                PostId = request.PostId,
-                Type = request.Type,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            await _reactionRepository.CreateAsync(reaction);
-            await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
-            
-            // Broadcast the new reaction to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveNewReaction", reaction);
-            
-            // Broadcast updated reaction summary
-            var summary = await GetReactionsSummaryForPostAsync(request.PostId);
-            await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", request.PostId, summary);
-            
-            return reaction;
+            await DeleteReactionAsync(existingReaction.Id);
+            return null;
         }
+        // If the reaction type is different, update it
+        else
+        {
+            return await UpdateReactionAsync(existingReaction.Id, request);
+        }
+    }
+
+    // If no existing reaction, create a new one
+    var reaction = new Reaction
+    {
+        EmployeeId = request.EmployeeId,
+        PostId = request.PostId,
+        Type = request.Type,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
+    };
+
+    await _reactionRepository.CreateAsync(reaction);
+    await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
+    
+    // Send notification to post author (if different from reactor)
+    if (post.AuthorId != request.EmployeeId)
+    {
+        await _notificationService.CreateReactionNotificationAsync(
+            request.EmployeeId,
+            post.AuthorId,
+            
+            request.PostId,
+            request.Type);
+    }
+    
+    // Broadcast the new reaction to all connected clients
+    await _feedHub.Clients.All.SendAsync("ReceiveNewReaction", reaction);
+    
+    // Broadcast updated reaction summary
+    var summary = await GetReactionsSummaryForPostAsync(request.PostId);
+    await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", request.PostId, summary);
+    
+    return reaction;
+}
 
         public async Task<Reaction> UpdateReactionAsync(string reactionId, ReactionRequest request)
         {

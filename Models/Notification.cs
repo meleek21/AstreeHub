@@ -9,17 +9,28 @@ namespace ASTREE_PFE.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; } = null!;  // Changed from Guid to string
+        public string Id { get; set; } = null!;
         
         [Required]
         public string Content { get; set; } = null!;
+        
         public string RecipientId { get; set; } = null!;
+        
         [Required]
         [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        
         public bool IsRead { get; set; } = false;
-        [StringLength(50)]
-        public string NotificationType { get; set; } = null!;
+        
+        [BsonRepresentation(BsonType.String)]
+        public NotificationType NotificationType { get; set; }
+        
         public string? RelatedEntityId { get; set; }
+        
+        // Additional properties for richer notifications
+        public string? SenderName { get; set; }
+        public string? SenderProfilePicture { get; set; }
+        public string? Title { get; set; }
+        public string? ActionUrl { get; set; } // URL to navigate to when clicking the notification
     }
 }
