@@ -80,4 +80,17 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.String)]
         Declined
     }
+
+    public enum NotificationType
+    {
+        Message,
+        PostReaction,
+        Comment,
+        EventInvitation,
+        EventUpdate,
+        Birthday,
+        EventStatusChange,
+        ChannelPost    
+    }
+
 }

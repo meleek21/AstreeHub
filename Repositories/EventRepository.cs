@@ -1,6 +1,7 @@
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using MongoDB.Driver;
+using MongoDB.Bson;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -18,6 +19,19 @@ namespace ASTREE_PFE.Repositories
         public EventRepository(IMongoDatabase database) : base(database, "Events")
         {
             _events = database.GetCollection<Event>("Events");
+        }
+
+        // Override GetByIdAsync to ensure related data is loaded if needed
+        // Note: MongoDB driver often handles document mapping automatically.
+        // This explicit override is generally not needed unless specific projections
+        // or population logic is required that the base method doesn't cover.
+        // However, given the issue, let's ensure it fetches the full document.
+        public  async Task<Event> GetByIdAsync(string id)
+        {
+
+            var filter = Builders<Event>.Filter.Eq(e => e.Id, id);
+  
+            return await _events.Find(filter).FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Event>> GetUpcomingEventsAsync()
