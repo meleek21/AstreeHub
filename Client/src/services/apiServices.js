@@ -77,7 +77,7 @@ export const reactionsAPI = {
   getReactionsByEmployee: (employeeId) => api.get(`/reaction/employee/${employeeId}`),
   getReactionByEmployeeAndPost: (employeeId, postId) => api.get(`/reaction/employee/${employeeId}/post/${postId}`),
   getReactionsSummary: (postId) => api.get(`/reaction/post/${postId}/summary`),
-  deleteReaction: (id) => api.delete(`/reaction/${id}`),
+  deleteReaction: (id) => api.delete(`/reaction/${id}`)
 };
 
 // User info API service
@@ -138,7 +138,9 @@ export const commentsAPI = {
   createComment: (commentData) => api.post('/comment', commentData),
   addReply: (commentId, replyData) => api.post(`/comment/${commentId}/reply`, replyData),
   updateComment: (commentId, content) => api.put(`/comment/${commentId}`, { content }),
-  deleteComment: (commentId) => api.delete(`/comment/${commentId}`)
+  deleteComment: (commentId) => api.delete(`/comment/${commentId}`),
+  updateReply: (commentId, replyId, content) => api.put(`/comment/${commentId}/reply/${replyId}`, { content }),
+  deleteReply: (commentId, replyId) => api.delete(`/comment/${commentId}/reply/${replyId}`)
 };
 
 // Events API service

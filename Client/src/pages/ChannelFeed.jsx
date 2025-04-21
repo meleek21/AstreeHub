@@ -5,9 +5,10 @@ import { postsAPI } from '../services/apiServices';
 import signalRService from '../services/signalRService';
 import PostCard from '../components/PostCard';
 import CreatePost from '../components/CreatePost';
-import Comment from '../components/Comment';
+import Comment from '../components/Comments/Comment';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
+import { createPortal } from "react-dom";
 
 function ChannelFeed() {
   const { channelId } = useParams();
@@ -285,8 +286,8 @@ function ChannelFeed() {
       </div>
 
       {isCommentsModalOpen && selectedPostId && (
-        <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
-          <div className="modal-content">
+        createPortal(
+          <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
             <button className="close-modal" onClick={closeCommentsModal}>
               &times;
             </button>
@@ -296,8 +297,9 @@ function ChannelFeed() {
               isAuthenticated={true}
               token={localStorage.getItem('token')}
             />
-          </div>
-        </div>
+          </div>,
+          document.body
+        )
       )}
     </div>
   );

@@ -14,6 +14,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task UpdateCommentAsync(string id, Comment comment);
         Task DeleteCommentAsync(string id);
         Task AddReplyAsync(string commentId, Comment reply);
-
+        Task UpdateReplyAsync(string commentId, string replyId, Comment updatedReply);
+        Task DeleteReplyAsync(string commentId, string replyId);
     }
 }

@@ -99,6 +99,17 @@ namespace ASTREE_PFE.Services
             await _feedHub.Clients.All.SendAsync("ReceiveNewReply", reply, commentId);
         }
         
-
+        public async Task UpdateReplyAsync(string commentId, string replyId, Comment updatedReply) {
+            await _commentRepository.UpdateReplyAsync(commentId, replyId, updatedReply);
+            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedReply", updatedReply, commentId);
+        }
+        
+        public async Task DeleteReplyAsync(string commentId, string replyId) {
+            var comment = await _commentRepository.GetByIdAsync(commentId);
+            if (comment != null) {
+                await _commentRepository.DeleteReplyAsync(commentId, replyId);
+                await _feedHub.Clients.All.SendAsync("ReceiveDeletedReply", replyId, commentId);
+            }
+        }
     }
 }

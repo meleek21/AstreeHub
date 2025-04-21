@@ -53,7 +53,7 @@ namespace ASTREE_PFE.Controllers
             // Verify user is part of the conversation
             var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
             if (conversation == null)
-                return NotFound("Conversation not found or user not authorized");
+                return NotFound(new { message = "Conversation not found or user not authorized" });
 
             var messages = await _messageService.GetMessagesByConversationIdAsync(conversationId, skip, limit);
             return Ok(messages);

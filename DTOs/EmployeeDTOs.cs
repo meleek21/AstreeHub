@@ -50,6 +50,7 @@ namespace ASTREE_PFE.DTOs
         public string PasswordHash { get; set; }
         public int? DepartmentId { get; set; }
         public string PhoneNumber { get; set; }
+        public string? ProfilePictureUrl { get; set; }
     }
     
     // Other employee DTOs would go here

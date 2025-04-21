@@ -35,14 +35,14 @@ namespace ASTREE_PFE.Controllers
             var userInfo = await _employeeService.GetUserInfoAsync(id);
             if (userInfo == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
             Console.WriteLine("user info: {0}", userInfo);
             return userInfo;
         }
 
         [HttpGet]
-        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
@@ -57,20 +57,21 @@ namespace ASTREE_PFE.Controllers
                 Email = e.Email,
                 PasswordHash = e.PasswordHash,
                 DepartmentId = e.DepartmentId,
-                PhoneNumber = e.PhoneNumber
+                PhoneNumber = e.PhoneNumber,
+                ProfilePictureUrl = e.ProfilePictureUrl
             }).ToList();
             
             return employeeDtos;
         }
         
         [HttpGet("{id}")]
-        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
+        [Authorize]
         public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(string id)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
             
             var employeeDto = new EmployeeResponseDto
@@ -91,7 +92,7 @@ namespace ASTREE_PFE.Controllers
         }
         
         [HttpGet("department/{departmentId}")]
-        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(int departmentId)
         {
             var employees = await _employeeService.GetEmployeesByDepartmentAsync(departmentId);
@@ -161,7 +162,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
     var existingEmployee = await _employeeService.GetEmployeeByIdAsync(id);
     if (existingEmployee == null)
     {
-        return NotFound();
+        return NotFound(new { message = "Employee not found" });
     }
 
     bool isUpdated = false;
@@ -240,7 +241,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
 
             // Check if employee is a director of any department
@@ -266,7 +267,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
 
             var result = await _employeeService.ChangeEmployeeStatusAsync(id, statusDto.Status);
@@ -279,13 +280,13 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
         }
 
         [HttpPatch("{id}/department")]
-        [Authorize(Roles = "DIRECTOR,SUPERADMIN")]
+        [Authorize]
         public async Task<ActionResult> AssignEmployeeToDepartment(string id, [FromBody] DepartmentAssignDto departmentDto)
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
 
             var result = await _employeeService.AssignEmployeeToDepartmentAsync(id, departmentDto.DepartmentId);
@@ -309,7 +310,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Employee not found" });
             }
 
             try

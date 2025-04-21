@@ -533,7 +533,7 @@ namespace ASTREE_PFE.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                return NotFound(ex.Message);
+                return NotFound(new { message = ex.Message });
             }
         }
 
@@ -555,7 +555,7 @@ namespace ASTREE_PFE.Controllers
             var channel = await _channelService.GetChannelByIdAsync(channelId);
             if (channel == null)
             {
-                return NotFound($"Channel with ID {channelId} not found");
+                return NotFound(new { message = $"Channel with ID {channelId} not found" });
             }
 
             // Check if user is authorized to post in this channel
@@ -603,14 +603,14 @@ namespace ASTREE_PFE.Controllers
             var channel = await _channelService.GetChannelByIdAsync(channelId);
             if (channel == null)
             {
-                return NotFound($"Channel with ID {channelId} not found");
+                return NotFound(new { message = $"Channel with ID {channelId} not found" });
             }
 
             // Get the post
             var post = await _postService.GetPostByIdAsync(postId);
             if (post == null)
             {
-                return NotFound($"Post with ID {postId} not found");
+                return NotFound(new { message = $"Post with ID {postId} not found" });
             }
 
             // Check if post belongs to the channel

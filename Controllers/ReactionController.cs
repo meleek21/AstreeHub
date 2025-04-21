@@ -74,11 +74,10 @@ namespace ASTREE_PFE.Controllers
             var reaction = await _reactionService.GetReactionByEmployeeAndPostAsync(employeeId, postId);
             if (reaction == null)
             {
-                return NotFound();
+                return Ok(null); // Return 200 OK with null when no reaction exists
             }
             return Ok(reaction);
         }
-        
         
         // GET: api/reaction/post/{postId}/summary
         [HttpGet("post/{postId}/summary")]

@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { debounce } from 'lodash';
-import signalRService from '../services/signalRService';
-import { reactionsAPI,userAPI } from '../services/apiServices';
-import '../assets/Css/Reactions.css';
+import signalRService from '../../services/signalRService';
+import { reactionsAPI, userAPI } from '../../services/apiServices';
+import ReactionSummary from './ReactionSummary';
+import ReactionTrigger from './ReactionTrigger';
 
-const reactionTypes = [
-  { type: 'Jaime', icon: <lord-icon src="https://cdn.lordicon.com/jrvgxhep.json" trigger="morph" state="hover-up" colors="primary:#f24c00,secondary:#f4b69c" style={{ width: '50px', height: '50px' }} /> },
-  { type: 'Bravo', icon: <lord-icon src="https://cdn.lordicon.com/hlpsxaub.json" trigger="morph" colors="primary:#f4b69c,secondary:#3a3347" style={{ width: '50px', height: '50px' }} /> },
-  { type: 'Jadore', icon: <lord-icon src="https://cdn.lordicon.com/dqhmanhc.json" trigger="morph" state="morph-glitter" style={{ width: '50px', height: '50px' }} /> },
-  { type: 'Youpi', icon: <lord-icon src="https://cdn.lordicon.com/mhnfcfpf.json" trigger="morph" colors="primary:#4bb3fd,secondary:#ffc738,tertiary:#f28ba8,quaternary:#f24c00" style={{ width: '50px', height: '50px' }} /> },
-  { type: 'Brillant', icon: <lord-icon src="https://cdn.lordicon.com/edplgash.json" trigger="morph" style={{ width: '50px', height: '50px' }} /> },
-];
+
+const ensureNumericValue = (value) => {
+  const numValue = Number(value);
+  return !isNaN(numValue) ? numValue : 0;
+};
 
 const fetchReactionData = async (postId, employeeId) => {
   try {
@@ -21,67 +20,31 @@ const fetchReactionData = async (postId, employeeId) => {
       reactionsAPI.getReactionByEmployeeAndPost(employeeId, postId).catch(() => ({ data: null })),
     ]);
 
-    // Get unique employee IDs from reactions
-    const employeeIds = [...new Set(reactionsRes.data.map(r => r.employeeId))];
-    // Fetch user info for all employees who reacted
-    const userInfoPromises = employeeIds.map(id => userAPI.getUserInfo(id));
-    const userInfos = await Promise.all(userInfoPromises);
+    if (Array.isArray(reactionsRes.data)) {
+      const employeeIds = [...new Set(reactionsRes.data.map(r => r.employeeId))];
+      const userInfoPromises = employeeIds.map(id => userAPI.getUserInfo(id));
+      const userInfos = await Promise.all(userInfoPromises);
 
-    // Create a map of employeeId to user info
-    const userInfoMap = userInfos.reduce((map, userInfo) => {
-      map[userInfo.data.employeeId] = userInfo.data;
-      return map;
-    }, {});
+      const userInfoMap = userInfos.reduce((map, userInfo) => {
+        map[userInfo.data.employeeId] = userInfo.data;
+        return map;
+      }, {});
 
-    return { 
-      summaryRes, 
-      reactionsRes, 
-      userRes,
-      userInfoMap 
-    };
+      return { 
+        summaryRes, 
+        reactionsRes, 
+        userRes,
+        userInfoMap 
+      };
+    } else {
+      console.error('Expected an array but received:', reactionsRes.data);
+      return { summaryRes, reactionsRes: { data: [] }, userRes, userInfoMap: {} };
+    }
   } catch (error) {
     console.error('Error fetching reaction data:', error);
     throw error;
   }
 };
-
-const ensureNumericValue = (value) => {
-  const numValue = Number(value);
-  return !isNaN(numValue) ? numValue : 0;
-};
-
-const ReactionButton = ({ type, icon, count, isActive, onClick }) => (
-  <button
-    onClick={onClick}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        onClick();
-      }
-    }}
-    className={`reaction-button ${isActive ? 'active' : ''}`}
-    aria-label={`React with ${type}`}
-    tabIndex={0}
-  >
-    {icon} ({count})
-  </button>
-);
-
-const ReactedUsers = ({ users, userInfoMap }) => (
-  <div className="reacted-users">
-    {users.map((reaction) => {
-      const userInfo = userInfoMap[reaction.employeeId];
-      const displayName = userInfo 
-        ? `${userInfo.firstName} ${userInfo.lastName}`
-        : `User ${reaction.employeeId}`; // Fallback to ID if user info is not available
-      
-      return (
-        <span key={reaction.id} className="user-reaction">
-          {displayName} ({reaction.type})
-        </span>
-      );
-    })}
-  </div>
-);
 
 function Reaction({ postId, employeeId }) {
   const [reactionSummary, setReactionSummary] = useState({
@@ -94,10 +57,9 @@ function Reaction({ postId, employeeId }) {
   });
   const [userReaction, setUserReaction] = useState(null);
   const [reactedUsers, setReactedUsers] = useState([]);
-  const [userInfoMap, setUserInfoMap] = useState({});  // New state for user info
+  const [userInfoMap, setUserInfoMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showPopover, setShowPopover] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -143,7 +105,6 @@ function Reaction({ postId, employeeId }) {
 
     const onReactionSummary = (receivedPostId, summary) => {
       if (receivedPostId === postId) {
-        console.log('Processing reaction summary:', summary);
         const validatedSummary = {
           Total: ensureNumericValue(summary.total || summary.Total),
           JaimeCount: ensureNumericValue(summary.jaimeCount || summary.JaimeCount),
@@ -251,63 +212,30 @@ function Reaction({ postId, employeeId }) {
   };
 
   if (loading) return <div className="loading">Loading reactions...</div>;
-  if (error)
-    return (
-      <div className="error">
-        {error}
-        <button onClick={() => window.location.reload()}>Retry</button>
-      </div>
-    );
-// Find the current reaction object based on userReaction
-const currentReaction = reactionTypes.find(r => r.type === userReaction);
-
-return (
-  <div className="reaction-container">
-    <div className="reaction-count-container">
-      <span
-        className="reaction-total"
-        onClick={() => setShowPopover(!showPopover)}
-        onMouseEnter={() => setShowPopover(true)}
-        onMouseLeave={() => setShowPopover(false)}
-      >
-        {ensureNumericValue(reactionSummary.Total)} Réactions
-      </span>
-      {showPopover && reactedUsers.length > 0 && (
-        <div className={`reaction-details-popover ${showPopover ? 'visible' : ''}`}>
-          <ReactedUsers users={reactedUsers} userInfoMap={userInfoMap} />
-        </div>
-      )}
+  if (error) return (
+    <div className="error">
+      {error}
+      <button onClick={() => window.location.reload()}>Retry</button>
     </div>
+  );
 
-    <div
-      className="reaction-trigger"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <button className="reaction-trigger-button">
-        {userReaction ? (
-          <>
-            {currentReaction?.icon}
-          </>
-        ) : (
-          'Jaime'
-        )}
-      </button>
-      <div className={`reaction-buttons ${isHovered ? 'visible' : ''}`}>
-        {reactionTypes.map(({ type, icon }) => (
-          <ReactionButton
-            key={type}
-            type={type}
-            icon={icon}
-            count={ensureNumericValue(reactionSummary[`${type}Count`])}
-            isActive={userReaction === type}
-            onClick={() => handleReaction(type)}
-          />
-        ))}
-      </div>
+  return (
+    <div className="reaction-container">
+      <ReactionSummary 
+        total={reactionSummary.Total} 
+        reactedUsers={reactedUsers} 
+        userInfoMap={userInfoMap}
+      />
+      
+      <ReactionTrigger
+        isHovered={isHovered}
+        setIsHovered={setIsHovered}
+        userReaction={userReaction}
+        reactionSummary={reactionSummary}
+        handleReaction={handleReaction}
+      />
     </div>
-  </div>
-);
+  );
 }
 
 Reaction.propTypes = {

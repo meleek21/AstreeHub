@@ -16,9 +16,8 @@ const placeholderPhrases = [
 const CreatePost = ({ channelId }) => {
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [scheduledTime, setScheduledTime] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [files, setFiles] = useState([]); // State to store selected files
+  const [files, setFiles] = useState([]);
   const { user } = useAuth();
   const userId = user?.id;
   const isDirector = user?.role === "DIRECTOR";
@@ -45,26 +44,23 @@ const CreatePost = ({ channelId }) => {
     setIsSubmitting(true);
 
     try {
-      // Create the post with file URLs and IDs
       const requestBody = {
-        content: postData.content || "", // Allow empty content
-        authorId: userId, // Required field
-        isPublic: true, // Required field
-        scheduledTime: scheduledTime || null, // Optional field
-        fileUrls: postData.fileUrls || [], // Ensure fileUrls is an array
-        fileIds: postData.fileIds || [], // Ensure fileIds is an array
+        content: postData.content || "",
+        authorId: userId,
+        isPublic: true,
+        fileUrls: postData.fileUrls || [],
+        fileIds: postData.fileIds || [],
       };
 
-      console.log("Request Body:", requestBody); // Log the request body for debugging
+      console.log("Request Body:", requestBody);
 
       const response = isChannelPost
         ? await postsAPI.createChannelPost(channelId, requestBody)
         : await postsAPI.createPost(requestBody);
       console.log("Publication créée :", response.data);
-      toast.success(scheduledTime ? "Publication planifiée !" : "Publication créée avec succès !");
+      toast.success("Publication créée avec succès !");
       setContent("");
-      setScheduledTime(null);
-      setFiles([]); // Clear selected files
+      setFiles([]);
       localStorage.removeItem("draftPost");
       setIsModalOpen(false);
     } catch (error) {
@@ -78,10 +74,9 @@ const CreatePost = ({ channelId }) => {
     }
   };
 
-  // Only show create post UI if it's not a channel post, or if user is a director for channel posts
   if (isChannelPost && !isDirector) {
     return (
-      <div className="create-post-container">
+      <div className="create-post-container create-post-restricted-wrapper">
         <div className="create-post-restricted">
           <p>BIENVENUE DANS LE CANAL OFFICIEL DU DEPARTEMENT</p>
         </div>
@@ -92,6 +87,15 @@ const CreatePost = ({ channelId }) => {
   return (
     <>
       <div className="create-post-container">
+        {user && (
+          <a href={user.id ? `/profile/view/${user.id}` : undefined} className="create-post-profile-link">
+            <img
+              src={user.profilePictureUrl || "https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg"}
+              alt="Profile"
+              className="create-post-profile-pic"
+            />
+          </a>
+        )}
         <input
           type="text"
           placeholder={isChannelPost ? "Créer une annonce officielle..." : placeholder}
@@ -109,8 +113,6 @@ const CreatePost = ({ channelId }) => {
         setContent={setContent}
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
-        scheduledTime={scheduledTime}
-        setScheduledTime={setScheduledTime}
         saveDraft={saveDraft}
         deleteDraft={deleteDraft}
         files={files}

@@ -1,37 +1,66 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Reaction from './Reaction';
+import Reaction from './Reactions/Reaction';
+import '../assets/Css/Reactions.css';
+import '../assets/Css/Comment.css';
 import UserBadge from './UserBadge';
 import toast from 'react-hot-toast';
+import DOMPurify from 'dompurify';
+import { useNavigate } from 'react-router-dom';
 import '../assets/Css/PostCard.css';
+import { formatDateOrRelative } from '../utils/formatDate';
 
 const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick }) => {
-  // Use onCommentClick if provided, otherwise fall back to openCommentsModal for backward compatibility
-  const handleCommentClick = onCommentClick || openCommentsModal;
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for 3-dot menu
-  const [isEditing, setIsEditing] = useState(false); // State for edit mode
-  const [updatedContent, setUpdatedContent] = useState(post.content); // State for updated content
-  const [expandedImage, setExpandedImage] = useState(null); // State for expanded image
-  const textareaRef = useRef(null); // Ref for auto-focusing the textarea
+  const navigate = useNavigate();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [updatedContent, setUpdatedContent] = useState(post.content);
+  const [expandedImage, setExpandedImage] = useState(null);
+  const textareaRef = useRef(null);
 
-  // Toggle the dropdown menu
+  const handleCommentClick = onCommentClick || openCommentsModal;
+
+  const formatContent = (content) => {
+    if (!content) return '';
+    
+    let formattedContent = content.replace(
+      /@\[([^\]]+)\]\(user:([^\)]+)\)/g,
+      '<a href="/profile/view/$2" class="user-mention">@$1</a>'
+    );
+    
+    formattedContent = formattedContent.replace(
+      /(https?:\/\/[^\s]+)/g, 
+      '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+    
+    return DOMPurify.sanitize(formattedContent, {
+      ALLOWED_TAGS: ['a', 'br', 'p'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+    });
+  };
+
+  const handleContentClick = (e) => {
+    if (e.target.classList.contains('user-mention')) {
+      e.preventDefault();
+      const href = e.target.getAttribute('href');
+      navigate(href);
+    }
+  };
+
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // Close the dropdown menu
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
-  // Auto-focus the textarea when entering edit mode
   useEffect(() => {
     if (isEditing && textareaRef.current) {
       textareaRef.current.focus();
     }
   }, [isEditing]);
 
-  // Handle saving the updated post
   const handleSave = async () => {
     if (!updatedContent.trim()) {
       toast.error('Le contenu ne peut pas être vide.');
@@ -46,7 +75,6 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
         fileIds: post.fileIds || [],
       });
       setIsEditing(false);
-
     } catch (err) {
       console.error('Erreur lors de la mise à jour du post :', err);
       if (err.message === 'Network Error') {
@@ -57,7 +85,6 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     }
   };
 
-  // Helper to format file size
   const formatFileSize = (bytes) => {
     if (!bytes) return 'N/A';
     if (bytes < 1024) return `${bytes} B`;
@@ -65,10 +92,8 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // Render files based on type
   const renderFile = (file) => {
     const { fileUrl, fileName, fileType, fileSize } = file;
-    console.log('Rendering file:', file);
 
     if (fileType?.startsWith('image/')) {
       return (
@@ -77,7 +102,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          onClick={() => setExpandedImage(fileUrl)} // Set the expanded image on click
+          onClick={() => setExpandedImage(fileUrl)}
         >
           <motion.img
             src={fileUrl}
@@ -92,7 +117,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     } else if (fileType === 'application/pdf') {
       return (
         <div className="file-item">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer">
+          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="file-link">
             {fileName} ({formatFileSize(fileSize)})
           </a>
         </div>
@@ -100,7 +125,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     } else {
       return (
         <div className="file-item">
-          <a href={fileUrl} download={fileName}>
+          <a href={fileUrl} download={fileName} className="file-link">
             {fileName} ({formatFileSize(fileSize)})
           </a>
         </div>
@@ -108,34 +133,38 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
     }
   };
 
+  const openReactionsModal = (postId) => {
+    setSelectedPostId(postId);
+    setIsReactionsModalOpen(true);
+  };
+
   return (
     <div key={post.id || post._id} className="post-card">
-      {/* Post Header with Author, Date, and 3-Dot Menu */}
+      {/* Post Header */}
       <div className="post-header">
         <div className="post-meta">
           <UserBadge userId={post.authorId} />
           <span className="post-date">
-            Date : {new Date(post.createdAt || post.timestamp).toLocaleDateString()}
+            {formatDateOrRelative(post.createdAt || post.timestamp)}
           </span>
         </div>
-        {/* 3-Dot Menu for Posts by the Logged-In User */}
+        
         {post.authorId === userId && (
           <div className="post-actions">
-            <div className="post-edit-menu custom-post-edit-menu">
+            <div className="post-edit-menu">
               <button
                 className="post-edit-toggle"
                 aria-label="Options"
-                onClick={toggleMenu} // Toggle menu on click
+                onClick={toggleMenu}
               >
                 ⋮
               </button>
-              {/* Conditionally render the dropdown menu */}
               {isMenuOpen && (
-                <div className="post-edit-options custom-post-edit-options">
+                <div className="post-edit-options">
                   <button
                     onClick={() => {
-                      setIsEditing(true); // Enter edit mode
-                      closeMenu(); // Close the dropdown menu
+                      setIsEditing(true);
+                      closeMenu();
                     }}
                   >
                     Modifier
@@ -166,12 +195,16 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             className="edit-textarea"
           />
           <div className="edit-actions">
-            <button onClick={handleSave}>Enregistrer</button>
-            <button onClick={() => setIsEditing(false)}>Annuler</button>
+            <button onClick={handleSave} className="save-button">Enregistrer</button>
+            <button onClick={() => setIsEditing(false)} className="cancel-button">Annuler</button>
           </div>
         </div>
       ) : (
-        <p className="post-content">{post.content}</p>
+        <div 
+          className="post-content"
+          dangerouslySetInnerHTML={{ __html: formatContent(post.content) }}
+          onClick={handleContentClick}
+        />
       )}
 
       {/* Attached Files */}
@@ -184,12 +217,12 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
         </div>
       )}
 
-      {/* Reaction and Comment Buttons */}
+      {/* Interaction Buttons */}
       <div className="post-interaction-buttons">
         <button className="view-comments-button" onClick={() => handleCommentClick(post.id)}>
           Commentaires
         </button>
-        <Reaction postId={post.id} employeeId={userId} />
+        <Reaction postId={post.id} employeeId={userId} openReactionsModal={openReactionsModal} />
       </div>
 
       {/* Expanded Image Modal */}
@@ -200,7 +233,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setExpandedImage(null)} // Close the modal when clicking outside
+            onClick={() => setExpandedImage(null)}
           >
             <motion.img
               src={expandedImage}

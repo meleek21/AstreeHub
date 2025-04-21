@@ -5,9 +5,13 @@ import { postsAPI } from '../services/apiServices';
 import signalRService from '../services/signalRService';
 import CreatePost from '../components/CreatePost';
 import PostCard from '../components/PostCard';
-import Comment from '../components/Comment';
+import Comment from '../components/Comments/Comment';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
+import { createPortal } from "react-dom";
+import ModalPortal from '../components/ModalPortal';
 
 // Main Feed component
 function Feed() {
@@ -29,12 +33,36 @@ function Feed() {
   // State for comments modal
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
+  
+  // State for reactions modal
+  const [isReactionsModalOpen, setIsReactionsModalOpen] = useState(false);
+  const [reactedUsers, setReactedUsers] = useState([]);
+  const [userInfoMap, setUserInfoMap] = useState({});
 
   // Open comments modal
   const openCommentsModal = (postId) => {
     setSelectedPostId(postId);
     setIsCommentsModalOpen(true);
   };
+
+  const commentsModalRef = useRef(null);
+
+  // Close comments modal when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (commentsModalRef.current && !commentsModalRef.current.contains(event.target)) {
+        closeCommentsModal();
+      }
+    };
+
+    if (isCommentsModalOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCommentsModalOpen]);
 
   // Close comments modal
   const closeCommentsModal = () => {
@@ -428,20 +456,25 @@ function Feed() {
 
       {/* Comments Modal */}
       {isCommentsModalOpen && (
-        <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
-          <div className="modal-content">
-            <button className="close-modal" onClick={closeCommentsModal}>
-              &times;
-            </button>
-            <Comment
-              postId={selectedPostId}
-              userId={userId}
-              isAuthenticated={isAuthenticated}
-              token={token}
-            />
+        <ModalPortal>
+          <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
+            <div className="modal-content" ref={commentsModalRef}>
+              <button className="close-modal" onClick={closeCommentsModal}>
+                <FontAwesomeIcon icon={faTimes}/>
+              </button>
+              <Comment
+                postId={selectedPostId}
+                userId={userId}
+                isAuthenticated={isAuthenticated}
+                token={token}
+              />
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
+
+      
+      
     </div>
   );
 }
