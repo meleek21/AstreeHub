@@ -1,23 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
-  --primary-color: #0047AB;
-  --secondary-color: #FF6600;
-  --background-color: #F5F5F5;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --accent: #6ED3CF;
-  --error-color: #D32F2F;
-  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
-  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
-  --border-radius: 8px;
-  --transition-speed: 0.5s;
+  /* Core Colors */
+  --primary: #253A82;           /* Deep blue (Primary brand color) */
+  --primary-light: #88A2FF;     /* Soft blue (Primary hover/focus) */
+  --secondary: #FF82F7;         /* Bright pink (Secondary actions) */
+  --accent: #E3FC87;            /* Neon green (Accents, highlights) */
+  --accent-alt: #AB9DFF;        /* Purple (Alternative accents) */
+  --background: #C0E0FF;        /* Light blue (Background/base) */
+
+  /* Neutrals (Kept minimal for contrast) */
+  --text-primary: #1A1A1A;      /* Almost black (Main text) */
+  --text-secondary: #4A4A4A;    /* Dark gray (Secondary text) */
+  --text-on-dark: #FFFFFF;      /* White (Text on dark backgrounds) */
+  --border: rgba(37, 58, 130, 0.2); /* Subtle border (using --primary opacity) */
+
+  /* Functional Colors */
+  --error: #FF4D4D;             /* Error states (adjusted for visibility) */
+  --success: #4CAF50;           /* Success (kept accessible) */
+  --warning: #FFC107;           /* Warning (standard yellow) */
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
+
+  /* Effects */
+  --shadow-sm: 0 2px 4px rgba(37, 58, 130, 0.1);
+  --shadow-md: 0 4px 8px rgba(37, 58, 130, 0.2);
+  --transition: all 0.3s ease;
 }
 
 body {
   font-family: 'Nunito', sans-serif;
-  background-color: var(--background-color);
+  background-color: var(--background);
   color: var(--text-primary);
   margin: 0;
   padding: 0;

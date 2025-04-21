@@ -70,6 +70,19 @@ namespace ASTREE_PFE.Repositories
             await _comments.UpdateOneAsync(filter, update);
         }
         
-
+        public async Task UpdateReplyAsync(string commentId, string replyId, Comment updatedReply) {
+            var filter = Builders<Comment>.Filter.And(
+                Builders<Comment>.Filter.Eq(c => c.Id, commentId),
+                Builders<Comment>.Filter.Eq("Replies.Id", replyId)
+            );
+            var update = Builders<Comment>.Update.Set("Replies.$.Content", updatedReply.Content).Set("Replies.$.UpdatedAt", updatedReply.UpdatedAt);
+            await _comments.UpdateOneAsync(filter, update);
+        }
+        
+        public async Task DeleteReplyAsync(string commentId, string replyId) {
+            var filter = Builders<Comment>.Filter.Eq(c => c.Id, commentId);
+            var update = Builders<Comment>.Update.PullFilter(c => c.Replies, r => r.Id == replyId);
+            await _comments.UpdateOneAsync(filter, update);
+        }
     }
 }

@@ -117,7 +117,8 @@ namespace ASTREE_PFE.Controllers
                     user.LastName,
                     user.Email,
                     user.Role,
-                    user.DepartmentId
+                    user.DepartmentId,
+                    user.ProfilePictureUrl
                 });
             }
             catch (Exception ex)

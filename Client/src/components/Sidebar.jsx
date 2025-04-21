@@ -8,12 +8,29 @@ function Sidebar() {
     <aside className="sidebar">
       <ul className="sidebar-links">
         {/* First Group */}
+         {/* Logo */}
+      <li>
+        <Link to="/" className="logo-link">Astree.net</Link>
+      </li>
+
+      {/* Home Link */}
+      <li>
+        <Link to="/" className="nav-link">
+          <lord-icon
+            src="https://cdn.lordicon.com/wmwqvixz.json"
+            trigger="hover"
+            colors="primary:#253A82"
+            style={{ width: '30px', height: '30px' }}
+          ></lord-icon>
+          <span>Acceuil</span>
+        </Link>
+      </li>
         <li>
           <Link to="/channels" className={`sidebar-link ${location.pathname === '/channels' ? 'active' : ''}`}>
             <lord-icon
               src="https://cdn.lordicon.com/wxhtpnnk.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#253A82"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Annonces</span>
@@ -24,7 +41,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/fkaukecx.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#253A82"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Bibliothèque</span>
@@ -35,7 +52,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/wmlleaaf.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#253A82"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Événement</span>
@@ -47,46 +64,35 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/eouimtlu.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#253A82"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
-            <span>Feed</span>
+            <span>Fil d'actualité</span>
           </Link>
         </li>
         <li>
-          <Link to="/chat" className={`sidebar-link ${location.pathname === '/chat' ? 'active' : ''}`}>
-            <lord-icon
-              src="https://cdn.lordicon.com/hdiorcun.json"
-              trigger="hover"
-              colors="primary:#0047AB"
-              style={{ width: '30px', height: '30px' }}
-            ></lord-icon>
-            <span>Messages</span>
-          </Link>
-        </li>
-        <li>
-          <Link to="/messages" className={`sidebar-link ${location.pathname === '/messages' ? 'active' : ''}`}>
+          <Link to="/chat" className={`sidebar-link ${location.pathname === '/messages' ? 'active' : ''}`}>
             <lord-icon
               src="https://cdn.lordicon.com/ayhtotha.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#253A82"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Messages</span>
           </Link>
         </li>
 
-        {/* Second Group */}
-        <li>
-          <Link to="/creer-post" className={`sidebar-link ${location.pathname === '/creer-post' ? 'active' : ''}`}>
+        {/* New Post Button */}
+        <li className="new-post-button">
+          <button className="create-post-btn">
             <lord-icon
               src="https://cdn.lordicon.com/hqymfzvj.json"
               trigger="hover"
-              colors="primary:#0047AB"
+              colors="primary:#E3FC87"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
-            <span>Nouvelle annonce?</span>
-          </Link>
+            <span>Nouvelle annonce</span>
+          </button>
         </li>
       </ul>
     </aside>

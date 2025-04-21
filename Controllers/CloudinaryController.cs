@@ -157,7 +157,7 @@ public async Task<IActionResult> UploadFile(IFormFile file)
                 var file = await _fileService.GetFileByIdAsync(fileId);
 
                 if (file == null)
-                    return NotFound("File not found.");
+                    return NotFound(new { message = "File not found." });
 
                 // Delete file from Cloudinary
                 var result = await _cloudinaryService.DeleteFileAsync(file.PublicId);

@@ -1,34 +1,17 @@
-/* assets/Css/PostCard.css */
-
-:root {
-  --primary-color: #0047AB;
-  --secondary-color: #FF6600;
-  --background-color: #F5F5F5;
-  --text-primary: #333333;
-  --text-secondary: #666666;
-  --accent: #00CED1;
-  --error-color: #D32F2F;
-  --gradient-primary: linear-gradient(135deg, var(--primary-color) 0%, #3b87d3 100%);
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-color) 0%, #FF9933 100%);
-  --box-shadow: 0 4px 6px rgba(75, 100, 117, 0.562);
-  --border-radius: 8px;
-  --transition-speed: 0.3s;
-}
-
 .post-card {
   background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: var(--border-radius);
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: var(--box-shadow);
-  transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
   position: relative;
 }
 
 .post-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 12px rgba(75, 100, 117, 0.7);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
 }
 
 /* Post Header */
@@ -36,19 +19,13 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .post-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.post-author {
-  font-size: 0.95em;
-  font-weight: 500;
-  color: var(--text-primary);
+  gap: 6px;
 }
 
 .post-date {
@@ -62,17 +39,22 @@
   line-height: 1.6;
   color: var(--text-primary);
   margin-bottom: 16px;
-  white-space: pre-wrap; /* Preserve line breaks and spacing */
+  white-space: pre-wrap;
 }
 
-/* Post Actions (3-Dot Menu) */
+.post-content a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.post-content a:hover {
+  text-decoration: underline;
+  color: var(--primary-light);
+}
+
+/* Post Actions Menu */
 .post-actions {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-
-.post-edit-menu {
   position: relative;
 }
 
@@ -81,25 +63,28 @@
   border: none;
   cursor: pointer;
   font-size: 1.5em;
-  color: var(--accent);
-  padding: 0;
-  margin: 0;
-  transition: color var(--transition-speed) ease;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: var(--transition);
 }
 
 .post-edit-toggle:hover {
-  color: var(--primary-color);
+  color: var(--primary);
+  background-color: rgba(37, 58, 130, 0.1);
 }
 
 .post-edit-options {
   position: absolute;
   right: 0;
+  top: 100%;
   background-color: white;
-  border: 1px solid #e0e0e0;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  z-index: 1;
-  transition: opacity var(--transition-speed) ease, visibility var(--transition-speed) ease;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  z-index: 10;
+  min-width: 120px;
+  overflow: hidden;
 }
 
 .post-edit-options button {
@@ -112,67 +97,55 @@
   color: var(--text-primary);
   cursor: pointer;
   font-size: 0.9em;
-  transition: background-color var(--transition-speed) ease;
+  transition: var(--transition);
 }
 
 .post-edit-options button:hover {
-  background-color: var(--background-color);
+  background-color: var(--background);
+  color: var(--primary);
 }
 
-.custom-post-edit-options {
-  min-width: 120px;
-  background-color: white;
-}
-
-.custom-post-edit-options button:hover {
-  background-color: var(--accent);
-  color: white;
-}
-.view-comments-button{
-  padding: 8px 16px; /* Smaller padding for Save and Delete buttons */
-  border-radius: 12px;
-  font-size: 15px; /* Smaller font size */
-  background: var(--gradient-primary);
-  color: var(--background-color);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border: none;
-}
-.view-comments-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-/* Smooth transitions for all interactive elements */
-button, .post-edit-options, .post-card {
-  transition: all var(--transition-speed) ease;
-}
+/* Interaction Buttons */
 .post-interaction-buttons {
   display: flex;
   align-items: center;
-  justify-content: center; /* Centers the buttons horizontally */
-  gap: 10px; /* Adjust the gap between buttons as needed */
-  margin-top: 10px; /* Add margin to separate from post content */
-  width: 100%; /* Ensures the buttons take full width of the card */
+  justify-content: space-evenly;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.view-comments-button {
+  padding: 8px 16px;
+  border-radius: 15px;
+  font-size: 15px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-comments-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(37, 58, 130, 0.2);
 }
 
 /* Files Section */
 .post-files {
   margin-top: 16px;
   padding: 12px;
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  border: 1px solid #e0e0e0;
+  background-color: rgba(192, 224, 255, 0.1);
+  border-radius: 8px;
+  border: 1px solid var(--border);
 }
 
 .post-files h4 {
-  font-size: 1em;
+  font-size: 0.95em;
   color: var(--text-primary);
   margin-bottom: 8px;
 }
@@ -183,83 +156,43 @@ button, .post-edit-options, .post-card {
   gap: 8px;
   padding: 8px;
   background-color: white;
-  border-radius: var(--border-radius);
-  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
   margin-bottom: 8px;
-  transition: box-shadow var(--transition-speed) ease;
+  transition: var(--transition);
 }
 
 .file-item:hover {
-  box-shadow: var(--box-shadow);
+  box-shadow: var(--shadow-sm);
 }
 
-/* Image Files */
 .post-image {
   max-width: 100%;
   max-height: 200px;
-  border-radius: var(--border-radius);
+  border-radius: 8px;
   object-fit: cover;
-  transition: transform var(--transition-speed) ease;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
 .post-image:hover {
-  transform: scale(1.05);
+  transform: scale(1.02);
 }
 
-/* PDF and Other Files */
-.file-item a {
+.file-link {
+  color: var(--primary);
   text-decoration: none;
-  color: var(--primary-color);
-  font-size: 0.9em;
-  transition: color var(--transition-speed) ease;
+  transition: var(--transition);
 }
 
-.file-item a:hover {
-  color: var(--accent);
+.file-link:hover {
+  color: var(--primary-light);
+  text-decoration: underline;
 }
 
-/* File Icon Styling */
-.file-item::before {
-  content: '';
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-}
-
-.file-item[data-filetype^="image/"]::before {
-  background-image: url('../assets/icons/image-icon.svg'); /* Replace with your image icon */
-}
-
-.file-item[data-filetype="application/pdf"]::before {
-  background-image: url('../assets/icons/pdf-icon.svg'); /* Replace with your PDF icon */
-}
-
-.file-item:not([data-filetype^="image/"]):not([data-filetype="application/pdf"])::before {
-  background-image: url('../assets/icons/file-icon.svg'); /* Replace with your generic file icon */
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .post-files {
-    padding: 8px;
-  }
-
-  .file-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .post-image {
-    max-height: 150px;
-  }
-}
-/* Edit Mode Styles */
+/* Edit Mode */
 .edit-mode {
-  margin-top: 12px;
-  margin-bottom: 12px;
+  margin: 12px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -267,22 +200,22 @@ button, .post-edit-options, .post-card {
 
 .edit-textarea {
   width: 100%;
-  height: 120px;
+  min-height: 120px;
   padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: var(--border-radius);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   font-family: inherit;
   font-size: 1em;
-  line-height: 1.6;
+  line-height: 1.5;
   color: var(--text-primary);
-  resize: vertical; /* Allow vertical resizing */
-  transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+  resize: vertical;
+  transition: var(--transition);
 }
 
 .edit-textarea:focus {
-  border-color: var(--primary-color);
+  border-color: var(--primary-light);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 71, 171, 0.2); /* Focus ring */
+  box-shadow: 0 0 0 2px rgba(37, 58, 130, 0.1);
 }
 
 .edit-actions {
@@ -291,60 +224,46 @@ button, .post-edit-options, .post-card {
   justify-content: flex-end;
 }
 
-.edit-actions button {
+.save-button {
   padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--gradient-primary);
+  color: white;
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 0.9em;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color var(--transition-speed) ease, transform var(--transition-speed) ease;
+  transition: var(--transition);
 }
 
-.edit-actions button:first-child {
-  background: var(--background-color);
-  color: var(--secondary-color);
-  border: 1px solid #FF6600;
-}
-
-.edit-actions button:first-child:hover {
-  background: var(--secondary-color);
-  color:var(--background-color);
+.save-button:hover {
   transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
 }
 
-.edit-actions button:last-child {
-  background-color: var(--background-color);
+.cancel-button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: none;
+  border: 1px solid var(--border);
   color: var(--text-primary);
-  border: 1px solid #e0e0e0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
 }
 
-.edit-actions button:last-child:hover {
-  background-color: #e0e0e0;
+.cancel-button:hover {
+  background-color: rgba(37, 58, 130, 0.05);
   transform: translateY(-2px);
 }
-@media (max-width: 768px) {
-  .edit-textarea {
-    height: 100px; /* Smaller height for mobile */
-  }
 
-  .edit-actions {
-    flex-direction: column; /* Stack buttons vertically on small screens */
-    gap: 8px;
-  }
-
-  .edit-actions button {
-    width: 100%; /* Full-width buttons on small screens */
-  }
-}
-
+/* Expanded Image */
 .expanded-image-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -355,5 +274,30 @@ button, .post-edit-options, .post-card {
   max-width: 90%;
   max-height: 90%;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(100, 173, 164, 0.336);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .post-card {
+    padding: 16px;
+  }
+  
+  .post-interaction-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .view-comments-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .edit-actions {
+    flex-direction: column;
+  }
+  
+  .save-button, .cancel-button {
+    width: 100%;
+  }
 }

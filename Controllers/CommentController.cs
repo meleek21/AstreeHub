@@ -185,5 +185,40 @@ public class CommentController : ControllerBase
             await _commentService.DeleteCommentAsync(id);
             return NoContent();
         }
+
+        [HttpPut("{commentId}/reply/{replyId}")]
+        public async Task<ActionResult<Comment>> UpdateReply(string commentId, string replyId, [FromBody] CommentUpdateDto replyDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (!ObjectId.TryParse(commentId, out _))
+                return BadRequest("Invalid comment ID format");
+
+            if (!ObjectId.TryParse(replyId, out _))
+                return BadRequest("Invalid reply ID format");
+
+            var updatedReply = new Comment
+            {
+                Content = replyDto.Content,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _commentService.UpdateReplyAsync(commentId, replyId, updatedReply);
+            return Ok(updatedReply);
+        }
+
+        [HttpDelete("{commentId}/reply/{replyId}")]
+        public async Task<ActionResult> DeleteReply(string commentId, string replyId)
+        {
+            if (!ObjectId.TryParse(commentId, out _))
+                return BadRequest("Invalid comment ID format");
+
+            if (!ObjectId.TryParse(replyId, out _))
+                return BadRequest("Invalid reply ID format");
+
+            await _commentService.DeleteReplyAsync(commentId, replyId);
+            return NoContent();
+        }
     }
 }

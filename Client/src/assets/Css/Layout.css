@@ -3,7 +3,9 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: var(--background-color);
+  background-color: var(--background);
+  padding: 0.5rem;
+  transition: background-color 0.3s ease;
 }
 
 /* Navbar styles */
@@ -11,13 +13,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 2rem; /* Increased padding for better spacing */
-  background-color: var(--background-color);
-  color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 82%;
+  padding: 1rem 2rem; 
+  background-color: white;
+  color: var(--text-on-dark);
   position: sticky;
   top: 0;
+  margin-left: 240px;
+  margin-right: 0;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom: 1px solid var(--accent-alt);
   z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .navbar-brand a {
@@ -28,41 +37,54 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: color 0.3s ease, transform 0.3s ease;
-  margin-right: 2rem; /* Added margin to space out the brand */
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  margin-right: 2rem;
 }
 
 .navbar-brand a:hover {
-  color: var(--primary-color);
+  color: var(--text-on-dark);
   transform: scale(1.05);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .search-bar {
   display: flex;
   align-items: center;
-  background: white;
+  background: var(--text-on-dark);
   padding: 0.5rem 1rem;
-  border-radius: 30px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
-  margin: 0 1.5rem; /* Added margin for spacing */
+  border-bottom: 1.5px solid var(--accent-alt);
+  transition: all 0.3s ease;
+  margin: 0 1.5rem;
+  border-radius: 8px;
 }
 
 .search-bar:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .search-bar input {
   border: none;
   outline: none;
   font-size: 1rem;
-  width: 200px;
-  transition: width 0.3s ease;
+  width: 300px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.25rem 0;
 }
 
 .search-bar input:focus {
-  width: 250px;
+  width: 400px;
+}
+
+.search-bar input::placeholder {
+  transition: opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.search-bar input:focus::placeholder {
+  opacity: 0.3;
 }
 
 .navbar-links {
@@ -73,45 +95,47 @@
 }
 
 .navbar-links li a {
-  color: var(--primary-color);
+  color: var(--text-on-dark);
   text-decoration: none;
   display: flex;
   align-items: center;
   font-size: 1rem;
-  
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
-.navbar-home{
+
+.navbar-home {
   margin-left: 4%;
 }
+
 .navbar-links li a:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
+
 /* User Dropdown */
 .user-dropdown {
   display: flex;
   align-items: center;
   position: relative;
-  margin-left: auto; /* Move dropdown to the left */
-  margin-right: 1.5rem; /* Added margin for spacing */
+  margin-left: auto;
+  margin-right: 1.5rem;
 }
 
 .welcome-text {
   font-size: 1rem;
   font-weight: bold;
-  color: #0047AB; /* Custom color */
-  margin-right: 10px; /* Spacing between the text and the profile picture */
+  color: var(--primary-light);
+  margin-right: 10px;
+  transition: color 0.2s ease;
 }
 
 .user-avatar-container {
   display: flex;
-  align-items: center; /* Align items vertically in the center */
-  cursor: pointer;
-  transition: transform 0.2s ease, border 0.2s ease; /* Smooth transition for scaling and border */
+  align-items: center;
+  transition: all 0.3s ease;
 }
 
 .user-avatar {
@@ -120,43 +144,50 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid transparent; 
-  transition: transform 0.2s ease, border 0.2s ease;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.user-avatar-container:hover .user-avatar {
-  transform: scale(1.1); /* Scale up the image by 10% */
-  border: 2px solid var(--accent); /* Add a border on hover */
+.user-avatar:hover {
+  transform: scale(1.1);
+  border: 2px solid var(--accent);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .dropdown-content {
   position: absolute;
   top: 100%;
   right: 0;
-  background-color: var(--background-color);
+  margin-right: -35px;
+  background-color: white;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   padding: 0.5rem 0;
   min-width: 150px;
-  display: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.dropdown-content a {
-  color: var(--primary-color);
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  display: block;
-  transition: background-color 0.3s ease;
-}
-
-.dropdown-content a:hover {
-  background-color: rgba(9, 179, 85, 0.384);
-}
-
-.dropdown-content {
   display: block;
   opacity: 1;
   transform: translateY(0);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top right;
+}
+
+.dropdown-content.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+}
+
+.dropdown-content a {
+  color: var(--primary);
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  display: block;
+  transition: all 0.2s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: rgba(37, 95, 184, 0.1);
+  padding-left: 1.25rem;
 }
 
 .logout-button {
@@ -164,35 +195,34 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--error-color);
+  color: var(--error);
   padding: 0.5rem 1rem;
   width: 100%;
   text-align: left;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .logout-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
+  padding-left: 1.25rem;
 }
+
 /* Sidebar styles */
 .sidebar {
-  width: 70px; /* Collapsed width */
+  width: 240px;
   border-radius: 15px;
   padding: 1rem;
   position: fixed;
-  top: 80px;
+  overflow-y: auto;
+  top: 0;
   left: 0;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-  transition: width 0.3s ease;
-  overflow: hidden; /* Prevent text overflow during transition */
-}
-
-.sidebar:hover {
-  width: 240px; /* Expanded width */
+  background-color: var(--background);
+  color: var(--primary-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-links {
@@ -201,73 +231,112 @@
   margin: 0;
 }
 
-.sidebar-links li {
-  margin: 1rem 0;
-}
-
 .sidebar-links li a {
-  color: var(--primary-color);
+  color: #7c94ee;
   text-decoration: none;
-  display: grid; /* Replace flex with grid */
-  grid-template-columns: 30px auto; /* Icon width + text */
+  display: grid;
+  grid-template-columns: 30px auto;
   align-items: center;
   gap: 0.75rem;
   font-size: 1rem;
-  padding: 0.75rem 0.5rem; /* Enhanced padding */
-  transition: all 0.3s ease;
-}
-.sidebar-links li a.active{
-  border-radius: 10px;
   padding: 0.75rem 0.5rem;
-  border-left: 3px solid var(--accent);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 10px;
+}
+
+.sidebar-links li a.active {
+  background-color: rgba(124, 148, 238, 0.1);
+  transform: translateX(5px);
 }
 
 .sidebar-links li a span {
-  opacity: 0; /* Hide text by default */
-  white-space: nowrap;/* Prevent text from wrapping */
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  padding-left: 0.5rem; /* Add padding to the text */
-}
-
-.sidebar:hover .sidebar-links li a span {
   padding: 0.5rem;
   border-radius: 15px;
-  opacity: 1; /* Show text on sidebar hover */
-}
-
-/* Hover effect for the link text only */
-.sidebar-links li a:hover span {
-  color: var(--background-color);
-  transform: translateX(5px);
-  background-color: var(--primary-color);
+  padding-left: 0.5rem;
   transition: all 0.3s ease;
 }
 
-.sidebar-links li a.active span {
-  color: var(--background-color);
-  background-color: var(--primary-color);
-  font-weight: bold;
- 
+.sidebar-links li a:hover span {
+  color: var(--primary);
+  transform: translateX(5px);
+  background-color: var(--accent);
 }
 
-/* Ensure icons are always visible and properly aligned */
+.sidebar-links li a.active span {
+  color: var(--primary);
+  background-color: var(--accent);
+  font-weight: bold;
+}
+
 .sidebar-links li a .lord-icon {
-  min-width: 30px; /* Ensure icons have a fixed width */
-  min-height: 30px; /* Ensure icons have a fixed height */
-  transition: none; /* Disable transitions for icons */
+  min-width: 30px;
+  min-height: 30px;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-links li a:hover .lord-icon {
+  transform: scale(1.1);
+}
+
+/* New Post Button Styles */
+.new-post-button {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s ease;
+}
+
+.create-post-btn {
+  display: grid;
+  grid-template-columns: 30px auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: var(--primary);
+  color: var(--accent);
+  border: none;
+  border-radius: 10px;
+  padding: 0.75rem 0.5rem;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-post-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.create-post-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.create-post-btn span {
+  text-align: left;
+  padding-left: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.create-post-btn:hover span {
+  transform: translateX(3px);
 }
 
 /* Main content area */
 .main-content {
-  margin-left: 80px; /* Adjust margin to match collapsed sidebar width */
+  margin-left: 240px;
   flex-grow: 1;
   z-index: 999;
   padding: 1rem;
-  background-color: var(--background-color);
-  border-radius: 20px;
-  transition: margin-left 0.3s ease;
+  background-color: var(--text-on-dark);
+  border-bottom-right-radius: 20px;
+  border-bottom-left-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
 }
 
-.sidebar:hover ~ .main-content {
-  margin-left: 240px; /* Adjust margin to match expanded sidebar width */
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
 }

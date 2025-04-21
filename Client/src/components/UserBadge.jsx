@@ -78,7 +78,7 @@ const UserBadge = ({ userId }) => {
                 width: '12px',
                 height: '12px',
                 borderRadius: '50%',
-                backgroundColor: 'green',
+                backgroundColor: '#4CAF50',
                 border: '2px solid white',
               }}
             />
@@ -87,7 +87,7 @@ const UserBadge = ({ userId }) => {
         <div>
           <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
           <div style={{ color: '#666666', fontSize: '0.8em' }}>
-            {isOnline ? 'Online' : `Last seen ${lastSeen}`}
+            {isOnline ? '' : ` ${lastSeen}`}
           </div>
         </div>
       </div>

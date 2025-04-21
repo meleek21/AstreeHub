@@ -213,10 +213,13 @@ export const OnlineStatusProvider = ({ children }) => {
 };
 
 // Custom hook for using the online status context
-export const useOnlineStatus = () => {
+// Change how the hook is exported to make it compatible with Fast Refresh
+export function useOnlineStatus() {
   const context = useContext(OnlineStatusContext);
   if (!context) {
     throw new Error('useOnlineStatus must be used within an OnlineStatusProvider');
   }
   return context;
-};
+}
+
+// Remove the previous export const declaration if it exists
