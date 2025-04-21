@@ -12,15 +12,19 @@ namespace ASTREE_PFE.Services
         private readonly IMessageRepository _messageRepository;
         private readonly IConversationRepository _conversationRepository;
         private readonly IEmployeeRepository _employeeRepository;
+        private readonly INotificationService _notificationService;
 
         public MessageService(
             IMessageRepository messageRepository,
             IConversationRepository conversationRepository,
-            IEmployeeRepository employeeRepository)
+            IEmployeeRepository employeeRepository ,
+            INotificationService notificationService
+            )
         {
             _messageRepository = messageRepository;
             _conversationRepository = conversationRepository;
             _employeeRepository = employeeRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<MessageResponseDto> GetMessageByIdAsync(string id)
@@ -45,43 +49,56 @@ namespace ASTREE_PFE.Services
             return messageDtos;
         }
 
-        public async Task<MessageResponseDto> CreateMessageAsync(string senderId, MessageCreateDto messageDto)
+ // Add to MessageService.cs
+public async Task<MessageResponseDto> CreateMessageAsync(string senderId, MessageCreateDto messageDto)
+{
+    if (string.IsNullOrEmpty(messageDto.ConversationId))
+    {
+        throw new ArgumentException("ConversationId is required");
+    }
+
+    var conversation = await _conversationRepository.GetConversationByIdAsync(messageDto.ConversationId);
+    if (conversation == null)
+    {
+        throw new ArgumentException("Invalid conversation ID");
+    }
+
+    // Verify sender is a participant in the conversation
+    if (!conversation.Participants.Contains(senderId))
+    {
+        throw new UnauthorizedAccessException("User is not a participant in this conversation");
+    }
+
+    // Create the message
+    var message = new Message
+    {
+        Content = messageDto.Content,
+        SenderId = senderId,
+        Timestamp = DateTime.UtcNow,
+        IsRead = false,
+        AttachmentUrl = messageDto.AttachmentUrl,
+        ConversationId = messageDto.ConversationId,
+    };
+
+    await _messageRepository.CreateMessageAsync(message);
+
+    // Update the conversation's last message
+    await _conversationRepository.UpdateLastMessageAsync(messageDto.ConversationId, message.Id);
+
+    // Send notifications to other participants
+    foreach (var participantId in conversation.Participants)
+    {
+        if (participantId != senderId) // Don't notify the sender
         {
-            if (string.IsNullOrEmpty(messageDto.ConversationId))
-            {
-                throw new ArgumentException("ConversationId is required");
-            }
-
-            var conversation = await _conversationRepository.GetConversationByIdAsync(messageDto.ConversationId);
-            if (conversation == null)
-            {
-                throw new ArgumentException("Invalid conversation ID");
-            }
-
-            // Verify sender is a participant in the conversation
-            if (!conversation.Participants.Contains(senderId))
-            {
-                throw new UnauthorizedAccessException("User is not a participant in this conversation");
-            }
-
-            // Create the message
-            var message = new Message
-            {
-                Content = messageDto.Content,
-                SenderId = senderId,
-                Timestamp = DateTime.UtcNow,
-                IsRead = false,
-                AttachmentUrl = messageDto.AttachmentUrl,
-                ConversationId = messageDto.ConversationId,
-            };
-
-            await _messageRepository.CreateMessageAsync(message);
-
-            // Update the conversation's last message
-            await _conversationRepository.UpdateLastMessageAsync(messageDto.ConversationId, message.Id);
-
-            return await MapToMessageResponseDtoAsync(message);
+            await _notificationService.CreateMessageNotificationAsync(
+                senderId,
+                participantId,
+                messageDto.ConversationId);
         }
+    }
+
+    return await MapToMessageResponseDtoAsync(message);
+}
 
         public async Task<bool> UpdateMessageStatusAsync(string messageId, string status)
         {

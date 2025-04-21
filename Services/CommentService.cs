@@ -15,12 +15,14 @@ namespace ASTREE_PFE.Services
         private readonly ICommentRepository _commentRepository;
         private readonly IPostRepository _postRepository;
         private readonly IHubContext<FeedHub> _feedHub;
+        private readonly INotificationService _notificationService;
         
-        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, IHubContext<FeedHub> feedHub)
+        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, IHubContext<FeedHub> feedHub, INotificationService notificationService)
         {
             _commentRepository = commentRepository;
             _postRepository = postRepository;
             _feedHub = feedHub;
+            _notificationService = notificationService;
         }
         
         public async Task<IEnumerable<Comment>> GetAllCommentsAsync()
@@ -43,6 +45,7 @@ namespace ASTREE_PFE.Services
             return await _commentRepository.GetByIdAsync(id);
         }
         
+        // Add to CommentService.cs
         public async Task<Comment> CreateCommentAsync(Comment comment)
         {
             // Ensure the comment has an ObjectId before inserting
@@ -50,15 +53,27 @@ namespace ASTREE_PFE.Services
             {
                 comment.Id = ObjectId.GenerateNewId().ToString();
             }
-            
+    
             await _commentRepository.CreateAsync(comment);
-            
+    
             // Also add the comment to the post's Comments list
             await _postRepository.AddCommentAsync(comment.PostId, comment);
-            
+    
+            // Send notification to post author (if different from commenter)
+            var post = await _postRepository.GetByIdAsync(comment.PostId);
+            if (post?.AuthorId != comment.AuthorId)
+            {
+                await _notificationService.CreateCommentNotificationAsync(
+                    comment.AuthorId,
+                    post.AuthorId,
+                    post.Id,
+                    comment.Content,
+                    comment.Id);
+            }
+    
             // Broadcast the new comment to all connected clients
             await _feedHub.Clients.All.SendAsync("ReceiveNewComment", comment);
-            
+    
             return comment;
         }
         
