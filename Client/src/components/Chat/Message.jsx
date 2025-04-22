@@ -2,28 +2,23 @@ import React from 'react';
 
 const Message = React.memo(({ 
   message, 
-  isSentByMe, 
-  formatDate, 
-  conversation, 
-  currentUserId 
+  isOwnMessage,
+  isOnline 
 }) => {
-  // Add null check for conversation to prevent the error
-  if (!conversation || !conversation.participants) {
-    return null; // Don't render anything if conversation data isn't available yet
+  if (!message) {
+    return null;
   }
-  
-  // Find the sender in the participants list
-  const sender = conversation.participants.find(p => p.id === message.senderId);
-  const senderName = sender?.name || 'Unknown';
+
+  // Format date helper function (since it's not being passed)
+  const formatDate = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
   
   return (
-    <div className={`message-item ${isSentByMe ? 'sent' : 'received'}`}>
-      {!isSentByMe && (
-        <strong>
-          {senderName}
-        </strong>
-      )}
-      
+    <div className={`message-item ${isOwnMessage ? 'sent' : 'received'}`}>
       <p>{message.content}</p>
       
       {message.attachmentUrl && (
@@ -40,7 +35,7 @@ const Message = React.memo(({
       
       <div className="message-timestamp">
         {formatDate(message.timestamp)}
-        {isSentByMe && (
+        {isOwnMessage && (
           <span className="read-receipt">
             {message.isRead ? 'Read' : 'Delivered'}
           </span>

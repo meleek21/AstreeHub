@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { List, ListItem, ListItemText, ListItemAvatar, Avatar, Typography, Badge, Box } from '@mui/material';
+
+import connectionManager from '../../services/connectionManager'; // Updated import
+// Removed unused fetchConversations import
+import { AuthContext } from '../../Context/AuthContext';
 import { messagesAPI } from '../../services/apiServices';
-import chatSignalRService from '../../services/chatSignalRService';
 import CreateGroupChat from './CreateGroupChat';
-import useOnlineStatus from '../../hooks/useOnlineStatus';
+import useOnlineStatus from '../../hooks/useOnlineStatus'; // Removed duplicate import
 
 const ConversationList = ({ 
   onSelectConversation, 
@@ -17,52 +21,54 @@ const ConversationList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const currentUserId = localStorage.getItem('userId');
   
+  const fetchInitialConversations = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await messagesAPI.getUserConversations();
+      console.log('Fetched conversations:', response.data);
+      // Sort conversations initially by last message timestamp or updated time
+      const sortedConversations = response.data.sort((a, b) => {
+        const dateA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(a.updatedAt);
+        const dateB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(b.updatedAt);
+        return dateB - dateA;
+      });
+      setConversations(sortedConversations);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      setLoading(false);
+    }
+  }, []);
+
+  // Consolidated useEffect for fetching and SignalR handling
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const response = await messagesAPI.getUserConversations();
-        console.log('Fetched conversations:', response.data);
-        setConversations(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching conversations:', error);
-        setLoading(false);
-      }
-    };
+    fetchInitialConversations();
     
-    fetchConversations();
-    
-    // Set up SignalR event handlers for conversation updates
+    // Define handlers within useEffect or ensure they are stable
     const handleNewMessage = (message) => {
       setConversations(prevConversations => {
-        // Find the conversation this message belongs to
         const conversationIndex = prevConversations.findIndex(
           conv => conv.id === message.conversationId
         );
         
         if (conversationIndex === -1) {
           // If this is a new conversation, fetch all conversations again
-          fetchConversations();
-          return prevConversations;
+          console.log('New conversation detected, fetching all conversations.');
+          fetchInitialConversations(); // Corrected: Call the defined fetch function
+          return prevConversations; // Return current state until fetch completes
         }
         
-        // Update the conversation with the new message
         const updatedConversations = [...prevConversations];
         const conversation = { ...updatedConversations[conversationIndex] };
         
-        // Update last message
         conversation.lastMessage = message;
         
-        // Update unread count if the message is not from current user
-        if (message.senderId !== currentUserId) {
+        if (message.senderId !== currentUserId && conversation.id !== selectedConversationId) {
           conversation.unreadCount = (conversation.unreadCount || 0) + 1;
         }
         
-        // Update the conversation
         updatedConversations[conversationIndex] = conversation;
         
-        // Sort conversations by last message timestamp
         return updatedConversations.sort((a, b) => {
           const dateA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(a.updatedAt);
           const dateB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(b.updatedAt);
@@ -71,38 +77,65 @@ const ConversationList = ({
       });
     };
     
-    const handleMessageRead = (messageId, userId) => {
-      if (userId === currentUserId) {
-        setConversations(prevConversations => {
-          return prevConversations.map(conv => {
-            if (conv.lastMessage && conv.lastMessage.id === messageId) {
-              return {
-                ...conv,
-                lastMessage: {
-                  ...conv.lastMessage,
-                  isRead: true,
-                  readAt: new Date()
-                }
-              };
-            }
-            return conv;
-          });
-        });
-      }
+    const handleMessageRead = (messageId, readerUserId) => {
+      // Update the read status for the specific message across conversations
+      // This might affect the 'isRead' status visually if displayed
+      setConversations(prevConversations => 
+        prevConversations.map(conv => {
+          if (conv.lastMessage && conv.lastMessage.id === messageId) {
+            // Check if the reader is the current user to potentially update UI elements
+            // specific to the current user's view, like read receipts they sent.
+            // However, the primary goal is usually to reflect that *someone* read it.
+            // If the backend sends 'isRead' updates based on any participant reading,
+            // we just update the message state.
+            return {
+              ...conv,
+              lastMessage: {
+                ...conv.lastMessage,
+                isRead: true, // Mark as read
+                // Optionally store who read it and when, if needed
+                // readBy: [...(conv.lastMessage.readBy || []), readerUserId],
+                // readAt: new Date()
+              }
+            };
+          }
+          // Also reset unread count if the message read belongs to the currently selected conversation
+          // and the reader is the current user.
+          if (conv.id === selectedConversationId && readerUserId === currentUserId) {
+             return { ...conv, unreadCount: 0 };
+          }
+          return conv;
+        })
+      );
     };
-    
-    chatSignalRService.connection?.on('ReceiveMessage', handleNewMessage);
-    chatSignalRService.connection?.on('MessageRead', handleMessageRead);
-    
+
+    // Register handlers using connectionManager
+    connectionManager.onReceiveMessage(handleNewMessage);
+    connectionManager.onMessageRead(handleMessageRead);
+
+    // Cleanup function
     return () => {
-      chatSignalRService.connection?.off('ReceiveMessage', handleNewMessage);
-      chatSignalRService.connection?.off('MessageRead', handleMessageRead);
+      // Unregister handlers
+      connectionManager.offReceiveMessage(handleNewMessage); // Use specific off methods if available
+      connectionManager.offMessageRead(handleMessageRead);   // Assuming off methods exist, else use null if that's the pattern
     };
-  }, [currentUserId]);
-  
+  // Dependencies: fetchInitialConversations runs once, currentUserId ensures handlers use correct ID
+  // selectedConversationId is added to handle unread count updates correctly within handleNewMessage/handleMessageRead
+  }, [fetchInitialConversations, currentUserId, selectedConversationId]); 
+
+  // Function to handle selecting a conversation
+  const handleSelectConversation = (conversationId) => {
+    onSelectConversation(conversationId);
+    // Reset unread count locally when conversation is selected
+    setConversations(prev => prev.map(c => 
+      c.id === conversationId ? { ...c, unreadCount: 0 } : c
+    ));
+  };
+
+  // Function to get conversation name
   const getConversationName = (conversation) => {
     if (!conversation) return 'Unknown';
-    
+       
     // Use the title field that's already set by the backend
     if (conversation.title) {
       return conversation.title;
@@ -112,12 +145,11 @@ const ConversationList = ({
     if (conversation.isGroup) {
       return 'Group Chat';
     }
-    
 
-    
-    return 'Unknown Conversation';
+    // For 1-on-1 chats, find the other participant
+    const otherParticipant = conversation.participants?.find(p => p.id !== currentUserId);
+    return otherParticipant ? `${otherParticipant.firstName} ${otherParticipant.lastName}` : 'Unknown User';
   };
-  
   
   const getLastMessagePreview = (conversation) => {
     if (!conversation.lastMessage) {
@@ -174,9 +206,12 @@ const ConversationList = ({
   };
   
   const filteredConversations = conversations?.filter(conversation => {
-    if (!conversation) return false;
-    const name = getConversationName(conversation)?.toLowerCase() || '';
-    return name.includes(searchTerm.toLowerCase());
+    if (!conversation) return false; // Ensure conversation object exists
+    const name = getConversationName(conversation)?.toLowerCase() || ''; // Get name safely
+    const lastMessageContent = conversation.lastMessage?.content?.toLowerCase() || '';
+    const searchLower = searchTerm.toLowerCase();
+    // Search in name or last message content
+    return name.includes(searchLower) || lastMessageContent.includes(searchLower);
   }) || [];
   
   if (loading) {
@@ -240,7 +275,7 @@ const ConversationList = ({
             <div 
               key={conversation.id} 
               className={`user-item ${isSelected ? 'selected' : ''}`}
-              onClick={() => onSelectConversation(conversation.id)}
+              onClick={() => handleSelectConversation(conversation.id)} // Corrected call to use the internal handler
             >
               <div className="conversation-info">
                 <div className="conversation-header">

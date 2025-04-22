@@ -1,40 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow';
 import EmployeeList from './EmployeeList';
-import chatSignalRService from '../../services/chatSignalRService';
+import { AuthContext } from '../../Context/AuthContext';
+import '../../assets/Css/Chat.css';
+import connectionManager from '../../services/connectionManager';
 import { messagesAPI } from '../../services/apiServices';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
 
 const Chat = () => {
   const [selectedConversationId, setSelectedConversationId] = useState(null);
-  // Using the centralized online status context instead of local state
   const { onlineUsers } = useOnlineStatus();
   const [signalRConnected, setSignalRConnected] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const currentUserId = localStorage.getItem('userId');
   
   useEffect(() => {
-    // Initialize SignalR connection
-    const initializeSignalR = async () => {
+    const initializeChat = async () => {
       try {
-        // No need to handle online/offline status here anymore
-        // It's now managed by the OnlineStatusContext
-        
-        await chatSignalRService.initialize();
+        await connectionManager.start();
         setSignalRConnected(true);
+        console.log('Chat component mounted, SignalR initialized.');
       } catch (error) {
-        console.error('Error initializing SignalR for chat:', error);
+        console.error('Failed to initialize SignalR in Chat component:', error);
         setSignalRConnected(false);
       }
     };
     
-    initializeSignalR();
+    initializeChat();
+    
+    // Add state change listener
+    connectionManager.addStateListener((state) => {
+      setSignalRConnected(state === 'Connected');
+    });
     
     return () => {
-      // Clean up connection
-      chatSignalRService.stop();
+      connectionManager.stop();
+      console.log('Chat component unmounted, SignalR stopped.');
     };
   }, []);
   
@@ -42,34 +44,27 @@ const Chat = () => {
     setSelectedConversationId(conversationId);
   };
   
-  // State to track the selected employee for potential new conversation
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   
   const handleSelectEmployee = async (employee) => {
     try {
-      // Store the selected employee for potential new conversation
       setSelectedEmployee(employee);
       
-      // Try to get an existing conversation with this employee
       try {
         const response = await messagesAPI.getOrCreateConversationWithUser(employee.id);
         
-        // If we got a valid response with an ID, select the conversation
         if (response && response.data && response.data.id) {
           setSelectedConversationId(response.data.id);
           return;
         }
       } catch (error) {
-        // If we get a 404, it means no conversation exists yet, which is fine
         if (error.response && error.response.status === 404) {
           console.log('No existing conversation with this user');
         } else {
-          throw error; // Re-throw other errors
+          throw error;
         }
       }
       
-      // If no existing conversation, set selectedConversationId to null
-      // and prepare UI for a new conversation
       setSelectedConversationId(null);
     } catch (error) {
       console.error('Error handling employee selection:', error);
@@ -77,8 +72,8 @@ const Chat = () => {
   };
   
   const handleCreateGroup = (e) => {
-    e.preventDefault(); // Prevent default button behavior
-    e.stopPropagation(); // Stop event propagation
+    e.preventDefault();
+    e.stopPropagation();
     setShowCreateGroupModal(true);
   };
   
@@ -99,10 +94,11 @@ const Chat = () => {
       />
       <ChatWindow 
         conversationId={selectedConversationId}
-        selectedEmployee={selectedEmployee}
+        signalRConnected={signalRConnected}
       />
       <EmployeeList 
         onSelectEmployee={handleSelectEmployee}
+        selectedEmployee={selectedEmployee}
       />
     </div>
   );
