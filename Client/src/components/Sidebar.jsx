@@ -18,8 +18,8 @@ function Sidebar() {
         <Link to="/" className="nav-link">
           <lord-icon
             src="https://cdn.lordicon.com/wmwqvixz.json"
-            trigger="hover"
-            colors="primary:#253A82"
+            trigger="morph"
+            colors="primary:#7697a0"
             style={{ width: '30px', height: '30px' }}
           ></lord-icon>
           <span>Acceuil</span>
@@ -30,7 +30,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/wxhtpnnk.json"
               trigger="hover"
-              colors="primary:#253A82"
+              colors="primary:#7697a0"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Annonces</span>
@@ -41,7 +41,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/fkaukecx.json"
               trigger="hover"
-              colors="primary:#253A82"
+              colors="primary:#7697a0"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Bibliothèque</span>
@@ -52,7 +52,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/wmlleaaf.json"
               trigger="hover"
-              colors="primary:#253A82"
+              colors="primary:#7697a0"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Événement</span>
@@ -64,7 +64,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/eouimtlu.json"
               trigger="hover"
-              colors="primary:#253A82"
+              colors="primary:#7697a0"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Fil d'actualité</span>
@@ -75,7 +75,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/ayhtotha.json"
               trigger="hover"
-              colors="primary:#253A82"
+              colors="primary:#7697a0"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Messages</span>
@@ -88,7 +88,7 @@ function Sidebar() {
             <lord-icon
               src="https://cdn.lordicon.com/hqymfzvj.json"
               trigger="hover"
-              colors="primary:#E3FC87"
+              colors="primary:#ffebd0ff"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
             <span>Nouvelle annonce</span>

@@ -11,10 +11,11 @@ const ChatWindow = ({ conversationId, signalRConnected }) => {
   const { onlineUsers, isUserOnline } = useOnlineStatus();
   const [conversation, setConversation] = useState(null);
   const [loading, setLoading] = useState(false);
+  const {user}=useAuth();
   const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
   const loadMoreRef = useRef(null);
-  const currentUserId = localStorage.getItem('userId');
+  const currentUserId =  user?.id;
   const queryClient = useQueryClient();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const typingTimeoutRef = useRef(null);
@@ -211,8 +212,26 @@ const ChatWindow = ({ conversationId, signalRConnected }) => {
 
   if (loading) {
     return (
-      <div className="chat-window loading">
-        <p>Loading conversation...</p>
+      <div className="chat-window">
+        <div className="new-conversation">
+          <div className="chat-header">
+            <h2>New conversation with {selectedEmployee.name}</h2>
+          </div>
+          <div className="chat-box empty-chat">
+            <div className="empty-chat-message">
+              <p>Send a message to start the conversation</p>
+            </div>
+            {typingUsers.filter(u => u.id !== currentUserId).length > 0 && (
+              <div className="typing-indicator">
+                {typingUsers.filter(u => u.id !== currentUserId).length === 1 
+                  ? `${typingUsers.filter(u => u.id !== currentUserId)[0].name} is typing...` 
+                  : `${typingUsers.filter(u => u.id !== currentUserId).length} people are typing...`}
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+          <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
+        </div>
       </div>
     );
   }
@@ -223,25 +242,36 @@ const ChatWindow = ({ conversationId, signalRConnected }) => {
         <div className="connection-status warning">
           Connecting to chat service...
         </div>
-      )}
-      <div className="messages-container" onScroll={(e) => {
-        const element = e.target;
-        const isNearBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
-        setShouldAutoScroll(isNearBottom);
-      }}>
-        {hasNextPage && (
-          <div ref={loadMoreRef} className="load-more">
-            {isFetchingNextPage ? 'Loading more...' : 'Load more'}
+      </div>
+      
+      <div className="chat-box">
+        <div ref={loadMoreRef} className="load-more-trigger">
+          {isFetchingNextPage ? 'Loading more...' : hasNextPage ? 'Load more' : ''}
+        </div>
+        
+        {Object.keys(messageGroups).map(date => (
+          <div key={date}>
+            <div className="date-label">{date}</div>
+            {messageGroups[date].map(message => (
+              <Message
+                key={message.id}
+                message={message}
+                isSentByMe={message.senderId === currentUserId}
+                formatDate={formatDate}
+                conversation={conversation}
+                currentUserId={currentUserId}
+              />
+            ))}
+          </div>
+        ))}
+        
+        {typingUsers.filter(u => u.id !== currentUserId).length > 0 && (
+          <div className="typing-indicator">
+            {typingUsers.filter(u => u.id !== currentUserId).length === 1 
+              ? `${typingUsers.filter(u => u.id !== currentUserId)[0].name} is typing...` 
+              : `${typingUsers.filter(u => u.id !== currentUserId).length} people are typing...`}
           </div>
         )}
-        {messages.map((message) => (
-          <Message
-            key={message.id}
-            message={message}
-            isOwnMessage={message.senderId === currentUserId}
-            isOnline={isUserOnline(message.senderId)}
-          />
-        ))}
         <div ref={messagesEndRef} />
         {typingUsers.length > 0 && (
           <div className="typing-indicator">
@@ -251,11 +281,7 @@ const ChatWindow = ({ conversationId, signalRConnected }) => {
           </div>
         )}
       </div>
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        onTyping={handleTypingIndicator}
-        disabled={!signalRConnected}
-      />
+      <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
     </div>
   );
 };

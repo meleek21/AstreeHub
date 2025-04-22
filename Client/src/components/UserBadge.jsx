@@ -54,9 +54,9 @@ const UserBadge = ({ userId }) => {
   const isOnline = isUserOnline(userId);
 
   return (
-    <Link to={profileUrl} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '10px', cursor: 'pointer' }}>
-        <div style={{ position: 'relative', marginRight: '10px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', padding: '10px' }}>
+      <div style={{ position: 'relative', marginRight: '10px' }}>
+        <Link to={profileUrl} style={{ textDecoration: 'none', color: 'inherit' }}>
           <img
             src={userInfo.profilePicture}
             alt={`${userInfo.firstName} ${userInfo.lastName}`}
@@ -65,33 +65,34 @@ const UserBadge = ({ userId }) => {
               height: '50px',
               borderRadius: '50%',
               transition: 'transform 0.2s ease-in-out',
+              cursor: 'pointer',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           />
-          {isOnline && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: '0',
-                right: '0',
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                backgroundColor: '#4CAF50',
-                border: '2px solid white',
-              }}
-            />
-          )}
-        </div>
-        <div>
-          <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
-          <div style={{ color: '#666666', fontSize: '0.8em' }}>
-            {isOnline ? '' : ` ${lastSeen}`}
-          </div>
+        </Link>
+        {isOnline && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '0',
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: '#4CAF50',
+              border: '2px solid white',
+            }}
+          />
+        )}
+      </div>
+      <div>
+        <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
+        <div style={{ color: '#666666', fontSize: '0.8em' }}>
+          {isOnline ? '' : ` ${lastSeen}`}
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

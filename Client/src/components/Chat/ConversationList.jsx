@@ -6,7 +6,8 @@ import connectionManager from '../../services/connectionManager'; // Updated imp
 import { AuthContext } from '../../Context/AuthContext';
 import { messagesAPI } from '../../services/apiServices';
 import CreateGroupChat from './CreateGroupChat';
-import useOnlineStatus from '../../hooks/useOnlineStatus'; // Removed duplicate import
+import useOnlineStatus from '../../hooks/useOnlineStatus';
+import {useAuth} from '../../Context/AuthContext';
 
 const ConversationList = ({ 
   onSelectConversation, 
@@ -19,7 +20,8 @@ const ConversationList = ({
   const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const currentUserId = localStorage.getItem('userId');
+  const{user} =useAuth();
+  const currentUserId =  user?.id;;
   
   const fetchInitialConversations = useCallback(async () => {
     try {
@@ -63,8 +65,17 @@ const ConversationList = ({
         
         conversation.lastMessage = message;
         
-        if (message.senderId !== currentUserId && conversation.id !== selectedConversationId) {
-          conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+        // Update unread count only for the recipient (not the sender)
+        if (message.senderId !== currentUserId) {
+          // Only increment unreadCount if this conversation is NOT currently selected/open
+          if (selectedConversationId !== conversation.id) {
+            conversation.unreadCount = (conversation.unreadCount || 0) + 1;
+          } else {
+            conversation.unreadCount = conversation.unreadCount || 0;
+          }
+        } else {
+          // Do not increment unreadCount for the sender
+          conversation.unreadCount = conversation.unreadCount || 0;
         }
         
         updatedConversations[conversationIndex] = conversation;
@@ -194,15 +205,14 @@ const ConversationList = ({
   
   const getParticipantStatus = (conversation) => {
     if (conversation.isGroup) return null;
-    
+    // Always get the other participant (receiver) for one-on-one conversations
+    if (!conversation.participants || conversation.participants.length < 2) return null;
     const otherParticipant = conversation.participants.find(
-      p => p.id !== currentUserId
+      p => String(p.id) !== String(currentUserId)
     );
-    
     if (!otherParticipant) return null;
-    
-    // Return a string status instead of a boolean
-    return isUserOnline(otherParticipant.id) ? 'Online' : 'Offline';
+    // Return a boolean for online status
+    return isUserOnline(otherParticipant.id);
   };
   
   const filteredConversations = conversations?.filter(conversation => {
@@ -267,10 +277,8 @@ const ConversationList = ({
           const lastMessageTime = conversation.lastMessage 
             ? formatTimestamp(conversation.lastMessage.timestamp)
             : formatTimestamp(conversation.updatedAt);
-          
           // Get the conversation name (other recipient's name)
           const conversationName = getConversationName(conversation);
-          
           return (
             <div 
               key={conversation.id} 
@@ -284,15 +292,17 @@ const ConversationList = ({
                     <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`} />
                   )}
                 </div>
-                
                 <p className="last-message">{getLastMessagePreview(conversation)}</p>
               </div>
-              
               <div className="conversation-meta">
-                <span className="timestamp">{lastMessageTime}</span>
-                {conversation.unreadCount > 0 && (
-                  <span className="unread-badge">{conversation.unreadCount}</span>
-                )}
+                <span className="conversation-time">
+                  {formatTimestamp(conversation.lastMessage?.timestamp || conversation.updatedAt)}
+                </span>
+                {conversation.lastMessage &&
+                  conversation.lastMessage.senderId !== currentUserId &&
+                  !conversation.lastMessage.isRead && (
+                    <div className="unread-indicator"></div>
+                  )}
               </div>
             </div>
           );
