@@ -119,8 +119,8 @@
   padding: 8px 16px;
   border-radius: 15px;
   font-size: 15px;
-  background: var(--primary-light);
-  color: var(--primary);
+  background: var(--accent);
+  color: var(--background);
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);

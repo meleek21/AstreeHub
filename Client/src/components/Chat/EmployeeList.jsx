@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { userAPI } from '../../services/apiServices';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
+import UserBadge from '../UserBadge';
 import '../../assets/Css/EmployeeList.css';
 
 const EmployeeList = ({ onSelectEmployee }) => {
@@ -9,7 +10,6 @@ const EmployeeList = ({ onSelectEmployee }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
   // Fetch all employees
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -25,10 +25,8 @@ const EmployeeList = ({ onSelectEmployee }) => {
         setLoading(false);
       }
     };
-    
     fetchEmployees();
   }, []);
-  
   // Debounce search function
   const debounce = (func, delay) => {
     let timeoutId;
@@ -39,7 +37,6 @@ const EmployeeList = ({ onSelectEmployee }) => {
       }, delay);
     };
   };
-  
   // Filter employees based on search term
   const filterEmployees = useCallback(
     debounce((searchValue) => {
@@ -47,27 +44,20 @@ const EmployeeList = ({ onSelectEmployee }) => {
         setFilteredEmployees(employees);
         return;
       }
-      
       const filtered = employees.filter((employee) => {
         const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
         return fullName.includes(searchValue.toLowerCase());
       });
-      
       setFilteredEmployees(filtered);
     }, 300),
     [employees]
   );
-  
   // Handle search input change
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
     filterEmployees(value);
   };
-  
-  // Use the centralized online status hook
-  const { isUserOnline } = useOnlineStatus();
-  
   if (loading) {
     return (
       <div className="employee-list-container">
@@ -76,7 +66,6 @@ const EmployeeList = ({ onSelectEmployee }) => {
       </div>
     );
   }
-  
   if (error) {
     return (
       <div className="employee-list-container">
@@ -85,50 +74,36 @@ const EmployeeList = ({ onSelectEmployee }) => {
       </div>
     );
   }
-  
   return (
-    <div className="employee-list-container">
-      <h2>Employees</h2>
-      
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search employees..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="search-input"
-        />
-      </div>
-      
-      {filteredEmployees.length === 0 ? (
-        <div className="empty-list">No employees found</div>
-      ) : (
-        <div className="employee-items">
-          {filteredEmployees.map((employee) => {
-            const isOnline = isUserOnline(employee.id);
-            
-            return (
-              <div 
-                key={employee.id} 
-                className="employee-item"
-                onClick={() => onSelectEmployee(employee)}
-              >
-                <div className="employee-info">
-                  <div className="employee-name">
-                    {employee.firstName} {employee.lastName}
-                    <span className={`status-indicator ${isOnline ? 'online' : 'offline'}`}></span>
-                  </div>
-                  {employee.department && (
-                    <div className="employee-department">{employee.department.name}</div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+    <div className="employee-list-horizontal-bar">
+      <div className="employee-list-inner">
+        <div className="employee-list-search-container">
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="employee-list-search-input"
+          />
         </div>
-      )}
+        {filteredEmployees.length === 0 ? (
+          <div className="empty-list">No employees found</div>
+        ) : (
+          <div className="employee-items-horizontal-scroll">
+            {filteredEmployees.map((employee) => (
+              <div
+                key={employee.id}
+                className="employee-badge-wrapper"
+                onClick={() => onSelectEmployee(employee)}
+                style={{ minWidth: 0 }}
+              >
+                <UserBadge userId={employee.id} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
 export default EmployeeList;

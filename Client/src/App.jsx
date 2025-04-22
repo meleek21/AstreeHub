@@ -8,7 +8,7 @@ import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ChannelsList from './pages/ChannelsList';
 import ChannelFeed from './pages/ChannelFeed';
-import ChatPage from './pages/ChatPage';
+import Chat from './components/Chat/Chat';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
@@ -47,7 +47,7 @@ function App() {
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
               <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
-              <Route path="/chat" element={<ErrorBoundary><ChatPage /></ErrorBoundary>} />
+              <Route path="/chat" element={<ErrorBoundary><Chat /></ErrorBoundary>} />
               {/* Add more private routes here */}
             </Route>
 
