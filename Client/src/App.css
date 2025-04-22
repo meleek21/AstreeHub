@@ -1,32 +1,32 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
 
 :root {
-  /* Core Colors */
-  --primary: #253A82;           /* Deep blue (Primary brand color) */
-  --primary-light: #88A2FF;     /* Soft blue (Primary hover/focus) */
-  --secondary: #FF82F7;         /* Bright pink (Secondary actions) */
-  --accent: #E3FC87;            /* Neon green (Accents, highlights) */
-  --accent-alt: #AB9DFF;        /* Purple (Alternative accents) */
-  --background: #C0E0FF;        /* Light blue (Background/base) */
+  /* New Core Colors */
+  --primary: #173b61ff;         /* Yale Blue (Primary brand color) */
+  --primary-light: #7697a0ff;   /* Cadet Gray (Primary hover/focus) */
+  --secondary: #17616eff;       /* Caribbean Current (Secondary actions) */
+  --accent: #fd8916ff;          /* Dark Orange Web (Accents, highlights) */
+  --accent-alt: #ffebd0ff;      /* Papaya Whip (Alternative accents) */
+  --background: #ffebd0ff;      /* Papaya Whip (Background/base) */
 
-  /* Neutrals (Kept minimal for contrast) */
-  --text-primary: #1A1A1A;      /* Almost black (Main text) */
-  --text-secondary: #4A4A4A;    /* Dark gray (Secondary text) */
-  --text-on-dark: #FFFFFF;      /* White (Text on dark backgrounds) */
-  --border: rgba(37, 58, 130, 0.2); /* Subtle border (using --primary opacity) */
+  /* Neutrals */
+  --text-primary: #1A1A1A;      /* Kept same for consistency */
+  --text-secondary: #4A4A4A;    /* Kept same */
+  --text-on-dark: #FFFFFF;      /* Kept same */
+  --border: rgba(23, 59, 97, 0.2); /* Updated using new --primary */
 
-  /* Functional Colors */
-  --error: #FF4D4D;             /* Error states (adjusted for visibility) */
-  --success: #4CAF50;           /* Success (kept accessible) */
-  --warning: #FFC107;           /* Warning (standard yellow) */
+  /* Functional Colors (kept same unless specified) */
+  --error: #A41623;
+  --success: #2E933C;
+  --warning: #FFC107;
 
-  /* Gradients */
+  /* Updated Gradients */
   --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
 
-  /* Effects */
-  --shadow-sm: 0 2px 4px rgba(37, 58, 130, 0.1);
-  --shadow-md: 0 4px 8px rgba(37, 58, 130, 0.2);
+  /* Updated Effects */
+  --shadow-sm: 0 2px 4px rgba(23, 59, 97, 0.1);
+  --shadow-md: 0 4px 8px rgba(23, 59, 97, 0.2);
   --transition: all 0.3s ease;
 }
 

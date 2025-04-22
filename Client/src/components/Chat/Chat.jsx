@@ -6,6 +6,7 @@ import EmployeeList from './EmployeeList';
 import chatSignalRService from '../../services/chatSignalRService';
 import { messagesAPI } from '../../services/apiServices';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
+import '../../assets/Css/Chat.css';
 
 const Chat = () => {
   const [selectedConversationId, setSelectedConversationId] = useState(null);
@@ -88,23 +89,25 @@ const Chat = () => {
   };
   
   return (
-    <div className="chat-container">
-      <ConversationList 
-        onSelectConversation={handleSelectConversation}
-        selectedConversationId={selectedConversationId}
-        onCreateGroup={handleCreateGroup}
-        showCreateGroupModal={showCreateGroupModal}
-        setShowCreateGroupModal={setShowCreateGroupModal}
-        onGroupCreated={handleGroupCreated}
-      />
-      <ChatWindow 
-        conversationId={selectedConversationId}
-        selectedEmployee={selectedEmployee}
-      />
+    <>
       <EmployeeList 
         onSelectEmployee={handleSelectEmployee}
       />
-    </div>
+      <div className="chat-container">
+        <ConversationList 
+          onSelectConversation={handleSelectConversation}
+          selectedConversationId={selectedConversationId}
+          onCreateGroup={handleCreateGroup}
+          showCreateGroupModal={showCreateGroupModal}
+          setShowCreateGroupModal={setShowCreateGroupModal}
+          onGroupCreated={handleGroupCreated}
+        />
+        <ChatWindow 
+          conversationId={selectedConversationId}
+          selectedEmployee={selectedEmployee}
+        />
+      </div>
+    </>
   );
 };
 
