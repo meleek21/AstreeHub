@@ -6,17 +6,18 @@ import Message from './Message';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import 'intersection-observer';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
+import {useAuth} from '../../Context/AuthContext';
 
 const ChatWindow = ({ conversationId, selectedEmployee }) => {
   // Use the centralized online status hook
   const { onlineUsers, isUserOnline } = useOnlineStatus();
   const [conversation, setConversation] = useState(null);
   const [loading, setLoading] = useState(false);
-
+  const {user}=useAuth();
   const [typingUsers, setTypingUsers] = useState([]);
   const messagesEndRef = useRef(null);
   const loadMoreRef = useRef(null);
-  const currentUserId = localStorage.getItem('userId');
+  const currentUserId =  user?.id;
   const queryClient = useQueryClient();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   
@@ -365,6 +366,13 @@ const ChatWindow = ({ conversationId, selectedEmployee }) => {
             <div className="empty-chat-message">
               <p>Send a message to start the conversation</p>
             </div>
+            {typingUsers.filter(u => u.id !== currentUserId).length > 0 && (
+              <div className="typing-indicator">
+                {typingUsers.filter(u => u.id !== currentUserId).length === 1 
+                  ? `${typingUsers.filter(u => u.id !== currentUserId)[0].name} is typing...` 
+                  : `${typingUsers.filter(u => u.id !== currentUserId).length} people are typing...`}
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
           <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
@@ -418,21 +426,16 @@ const ChatWindow = ({ conversationId, selectedEmployee }) => {
           </div>
         ))}
         
-        {typingUsers.length > 0 && (
+        {typingUsers.filter(u => u.id !== currentUserId).length > 0 && (
           <div className="typing-indicator">
-            {typingUsers.length === 1 
-              ? `${typingUsers[0].name} is typing...` 
-              : `${typingUsers.length} people are typing...`}
+            {typingUsers.filter(u => u.id !== currentUserId).length === 1 
+              ? `${typingUsers.filter(u => u.id !== currentUserId)[0].name} is typing...` 
+              : `${typingUsers.filter(u => u.id !== currentUserId).length} people are typing...`}
           </div>
         )}
-        
         <div ref={messagesEndRef} />
       </div>
-      
-      <MessageInput 
-        onSendMessage={handleSendMessage} 
-        onTyping={handleTyping} 
-      />
+      <MessageInput onSendMessage={handleSendMessage} onTyping={handleTyping} />
     </div>
   );
 };

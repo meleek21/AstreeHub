@@ -20,18 +20,17 @@ class ChatSignalRService {
     if (this.connectionPromise) {
       return this.connectionPromise;
     }
-    
     // If we already have a connected connection, use it
     if (this.connection && this.connection.state === 'Connected') {
       return Promise.resolve(this.connection);
     }
-    
+    // Prevent stop/start race: set a flag to indicate starting
+    this._starting = true;
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      
       // Create a new connection specifically for the message hub
       this.connection = new HubConnectionBuilder()
         .withUrl('http://localhost:5126/hubs/message', {
@@ -44,13 +43,10 @@ class ChatSignalRService {
         .withAutomaticReconnect([0, 1000, 2000, 5000])
         .configureLogging(LogLevel.Warning)
         .build();
-      
       this.setupEventHandlers();
-      
       // Start the connection
       this.connectionPromise = this.connection.start();
       await this.connectionPromise;
-      
       console.log('Chat SignalR connected successfully to message hub');
       return this.connection;
     } catch (error) {
@@ -58,6 +54,7 @@ class ChatSignalRService {
       this.connectionPromise = null;
       throw error;
     } finally {
+      this._starting = false;
       this.connectionPromise = null;
     }
   }
@@ -147,6 +144,11 @@ class ChatSignalRService {
   
   // Method to stop the connection
   async stop() {
+    // Prevent stop if connection is still starting
+    if (this._starting) {
+      console.warn('Attempted to stop SignalR connection before it finished starting. Ignoring stop call.');
+      return;
+    }
     if (this.connection) {
       try {
         await this.connection.stop();
