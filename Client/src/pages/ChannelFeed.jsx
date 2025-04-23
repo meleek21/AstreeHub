@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
-import signalRService from '../services/signalRService';
+import connectionManager from '../services/connectionManager';
 import PostCard from '../components/PostCard';
 import CreatePost from '../components/CreatePost';
 import Comment from '../components/Comments/Comment';
@@ -103,27 +103,25 @@ function ChannelFeed() {
     };
   }, [hasMore, loadingMore, loading]);
 
-  // Initialize SignalR connection
+  // Initialize real-time connection
   useEffect(() => {
     let isComponentMounted = true;
-    let connectionInitialized = false;
 
-    const initializeSignalR = async () => {
+    const setupRealTimeConnection = async () => {
       try {
         setError(null); // Reset error state before attempting connection
         if (!isComponentMounted) return; // Prevent connection if component is unmounting
 
-        signalRService.onConnectionChange((connected) => {
+        connectionManager.onConnectionChange((connected) => {
           if (isComponentMounted) {
             setSignalRConnected(connected);
             if (connected) {
               setError(null); // Clear any previous connection errors
-              connectionInitialized = true;
             }
           }
         });
 
-        signalRService.onNewPost(async (newPost) => {
+        connectionManager.onNewPost(async (newPost) => {
           if (newPost.channelId === channelId) {
             try {
               // Fetch author information for the new post
@@ -149,9 +147,8 @@ function ChannelFeed() {
           }
         });
 
-        signalRService.onUpdatedPost((updatedPost) => {
+        connectionManager.onUpdatedPost((updatedPost) => {
           if (updatedPost.channelId === channelId) {
-            // Don't make another API call, just update the local state
             setPosts((prevPosts) =>
               prevPosts.map((post) =>
                 post.id === updatedPost.id ? updatedPost : post
@@ -160,21 +157,16 @@ function ChannelFeed() {
           }
         });
 
-        signalRService.onDeletedPost((deletedPostId) => {
-          console.log('Deleted post received via SignalR:', deletedPostId);
-          // Directly update the UI state without making another API call
+        connectionManager.onDeletedPost((deletedPostId) => {
           setPosts((prevPosts) =>
             prevPosts.filter((post) => post.id !== deletedPostId)
           );
-
         });
 
-        signalRService.onNewComment((comment) => {
-          // Don't make an API call, just update the comment in the post directly
+        connectionManager.onNewComment((comment) => {
           setPosts((prevPosts) => {
             return prevPosts.map((post) => {
               if (post.id === comment.postId) {
-                // Add the new comment to the post's comments array
                 const updatedComments = [...(post.comments || []), comment];
                 return { ...post, comments: updatedComments };
               }
@@ -183,12 +175,10 @@ function ChannelFeed() {
           });
         });
 
-        signalRService.onUpdatedComment((comment) => {
-          // Don't make an API call, just update the comment in the post directly
+        connectionManager.onUpdatedComment((comment) => {
           setPosts((prevPosts) => {
             return prevPosts.map((post) => {
               if (post.id === comment.postId) {
-                // Update the specific comment in the post's comments array
                 const updatedComments = (post.comments || []).map((c) =>
                   c.id === comment.id ? comment : c
                 );
@@ -199,32 +189,31 @@ function ChannelFeed() {
           });
         });
 
-        signalRService.onDeletedComment((commentId) => {
-          // Don't refetch all posts, just update the state directly
+        connectionManager.onDeletedComment((commentId) => {
           setPosts((prevPosts) => {
             return prevPosts.map((post) => {
-              // Remove the deleted comment from each post's comments array
               const updatedComments = (post.comments || []).filter((c) => c.id !== commentId);
               return { ...post, comments: updatedComments };
             });
           });
         });
-
-        await signalRService.start();
-        console.log('SignalR connection established in ChannelFeed');
       } catch (error) {
-        console.error('Error initializing SignalR:', error);
+        console.error('Error setting up real-time connection:', error);
         setError('Failed to initialize real-time updates');
       }
     };
 
-    initializeSignalR();
+    setupRealTimeConnection();
 
     return () => {
       isComponentMounted = false;
-      if (connectionInitialized && signalRService.connection) {
-        signalRService.stop();
-      }
+      connectionManager.offNewPost();
+      connectionManager.offUpdatedPost();
+      connectionManager.offDeletedPost();
+      connectionManager.offNewComment();
+      connectionManager.offUpdatedComment();
+      connectionManager.offDeletedComment();
+      connectionManager.offConnectionChange();
     };
   }, [channelId]);
 

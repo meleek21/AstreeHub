@@ -1,27 +1,24 @@
-import { useOnlineStatus as useOnlineStatusFromContext } from '../Context/OnlineStatusContext';
-import { userOnlineStatusAPI } from '../services/apiServices';
+import { useContext } from 'react';
+// Ensure the path is correct based on your project structure
+import { OnlineStatusContext } from '../Context/OnlineStatusContext'; 
 
-/**
- * Custom hook to access online status information throughout the application
- * @returns {Object} Online status methods and data
- */
+// Custom hook for using the online status context
 const useOnlineStatus = () => {
-  const context = useOnlineStatusFromContext();
-  
-  // Add a method to get last seen time
-  const getLastSeenTime = async (userId) => {
-    try {
-      const response = await userOnlineStatusAPI.getLastSeen(userId);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching last seen time:', error);
-      return 'Unknown';
-    }
-  };
-  
+  const context = useContext(OnlineStatusContext);
+  if (!context) {
+    throw new Error('useOnlineStatus must be used within an OnlineStatusProvider');
+  }
+
+  // Expose the relevant state and functions from the refactored context
   return {
-    ...context,
-    getLastSeenTime
+    onlineUserIds: context.onlineUserIds, // Array of online user IDs
+    isLoading: context.isLoading,
+    error: context.error,
+    isUserOnline: context.isUserOnline, // Function: (userId) => boolean
+    getLastSeenTime: context.getLastSeenTime, // Function: (userId) => string | null
+    connectionState: context.connectionState, // 'Connected', 'Connecting', 'Disconnected', 'Reconnecting'
+    isUserActive: context.isUserActive, // boolean: Is the current browser session active?
+    currentUser: context.currentUser // The currently authenticated user object from AuthContext
   };
 };
 

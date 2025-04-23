@@ -17,6 +17,19 @@ class ConnectionManager {
     this.stateListeners = new Set();
     this.userCallbacks = {}; // Callbacks for user hub events
     this.messageCallbacks = {}; // Callbacks for message hub events
+    this.connectionChangeCallback = null; // Callback for connection state changes
+    this.activityListeners = new Set(); // Listeners for user activity changes
+    this.lastActivityTime = Date.now();
+    this.heartbeatIntervalId = null;
+    this.inactivityTimeoutId = null;
+    this.isUserActive = true; // Track user activity state
+    this.HEARTBEAT_INTERVAL = 30 * 1000; // 30 seconds
+    this.INACTIVITY_TIMEOUT = 60 * 1000; // 1 minute
+
+    // Bind methods
+    this.handleUserActivity = this.handleUserActivity.bind(this);
+    this.sendHeartbeat = this.sendHeartbeat.bind(this);
+    this.checkInactivity = this.checkInactivity.bind(this);
   }
 
   // --- State Management ---
@@ -40,7 +53,130 @@ class ConnectionManager {
 
   notifyStateChange() {
     this.stateListeners.forEach(listener => listener(this.state));
+    // Notify connection change callback if set
+    if (this.connectionChangeCallback) {
+      this.connectionChangeCallback(this.state === ConnectionState.CONNECTED);
+    }
   }
+
+  // Add onConnectionChange method
+  onConnectionChange(callback) {
+    this.connectionChangeCallback = callback;
+    if (callback) {
+      // Immediately notify of current state
+      callback(this.state === ConnectionState.CONNECTED);
+    }
+  }
+
+  // Add offConnectionChange method
+  offConnectionChange() {
+    this.connectionChangeCallback = null;
+  }
+
+  // --- Activity Tracking --- 
+    startActivityTracking() {
+        if (this.heartbeatIntervalId) return; // Already running
+
+        console.log('Starting activity tracking...');
+        this.lastActivityTime = Date.now();
+        this.isUserActive = true;
+        this.notifyActivityChange();
+
+        // Initial heartbeat
+        this.sendHeartbeat(); 
+
+        // Set up heartbeat interval
+        this.heartbeatIntervalId = setInterval(this.sendHeartbeat, this.HEARTBEAT_INTERVAL);
+
+        // Set up inactivity check
+        this.resetInactivityTimeout();
+
+        // Add event listeners for user activity
+        window.addEventListener('mousemove', this.handleUserActivity, { passive: true });
+        window.addEventListener('keydown', this.handleUserActivity, { passive: true });
+        window.addEventListener('scroll', this.handleUserActivity, { passive: true });
+    }
+
+    stopActivityTracking() {
+        if (this.heartbeatIntervalId) {
+            clearInterval(this.heartbeatIntervalId);
+            this.heartbeatIntervalId = null;
+        }
+        if (this.inactivityTimeoutId) {
+            clearTimeout(this.inactivityTimeoutId);
+            this.inactivityTimeoutId = null;
+        }
+        window.removeEventListener('mousemove', this.handleUserActivity);
+        window.removeEventListener('keydown', this.handleUserActivity);
+        window.removeEventListener('scroll', this.handleUserActivity);
+        this.isUserActive = false; // Mark as inactive when tracking stops
+        this.notifyActivityChange();
+        console.log('Activity tracking stopped.');
+    }
+
+    handleUserActivity() {
+        this.lastActivityTime = Date.now();
+        if (!this.isUserActive) {
+            this.isUserActive = true;
+            this.notifyActivityChange();
+            console.log('User became active.');
+            // Optionally send an immediate update to the server
+            this.sendHeartbeat(); 
+        }
+        // Reset inactivity timer on any activity
+        this.resetInactivityTimeout();
+    }
+
+    resetInactivityTimeout() {
+        if (this.inactivityTimeoutId) {
+            clearTimeout(this.inactivityTimeoutId);
+        }
+        this.inactivityTimeoutId = setTimeout(this.checkInactivity, this.INACTIVITY_TIMEOUT);
+    }
+
+    checkInactivity() {
+        const now = Date.now();
+        if (this.isUserActive && (now - this.lastActivityTime >= this.INACTIVITY_TIMEOUT)) {
+            this.isUserActive = false;
+            this.notifyActivityChange();
+            console.log('User became inactive due to timeout.');
+            // Server will detect inactivity based on lack of heartbeats
+        }
+        // Schedule the next check (even if inactive, keep checking)
+        this.resetInactivityTimeout(); 
+    }
+
+    async sendHeartbeat() {
+        if (this.state !== ConnectionState.CONNECTED || !this.userConnection) {
+            // console.log('Cannot send heartbeat, connection not established.');
+            return;
+        }
+        try {
+            // Ensure UserHub has an 'UpdateActivity' method
+            await this.invokeHubMethod('UserHub', 'UpdateActivity');
+            // console.log('Heartbeat sent successfully.');
+        } catch (error) {
+            // Avoid logging frequent errors if server isn't ready or during disconnects
+            if (this.state === ConnectionState.CONNECTED) { 
+              console.error('Failed to send heartbeat:', error);
+            }
+        }
+    }
+
+    // --- Activity State Subscription ---
+    onActivityChange(listener) {
+        this.activityListeners.add(listener);
+        // Immediately notify with current state
+        listener(this.isUserActive);
+    }
+
+    offActivityChange(listener) {
+        this.activityListeners.delete(listener);
+    }
+
+    notifyActivityChange() {
+        this.activityListeners.forEach(listener => listener(this.isUserActive));
+    }
 
   // --- Connection Factory (Internal) ---
   createConnection(hubPath) {
@@ -68,6 +204,8 @@ class ConnectionManager {
 async start() {
     if (this.state === ConnectionState.CONNECTED) {
       console.log('Connection manager already started.');
+      // Ensure activity tracking is running if already connected
+      this.startActivityTracking();
       return Promise.resolve();
     }
     
@@ -114,67 +252,63 @@ async start() {
   }
 
   async startSpecificConnection(hubPath, connectionType) {
-    let connection = connectionType === 'user' ? this.userConnection : this.messageConnection;
-    let connectionPromiseField = connectionType === 'user' ? 'userConnectionPromise' : 'messageConnectionPromise';
-
-    // Avoid restarting if already connected or connecting
-    if (connection && (connection.state === 'Connected' || connection.state === 'Connecting')) {
-        console.log(`${connectionType} connection already established or connecting.`);
-        return this[connectionPromiseField] || Promise.resolve(); 
-    }
-
-    // Return existing promise if a start attempt is already in progress
-    if (this[connectionPromiseField]) {
-        console.log(`Waiting for existing ${connectionType} connection attempt...`);
-        return this[connectionPromiseField];
-    }
-
-    const promise = (async () => {
-        try {
-            console.log(`Attempting to establish ${connectionType} SignalR connection...`);
-            connection = this.createConnection(hubPath);
-            
-            if (connectionType === 'user') {
-                this.userConnection = connection;
-                this.setupEventHandlers(this.userConnection, connectionType, this.userCallbacks);
-            } else {
-                this.messageConnection = connection;
-                this.setupEventHandlers(this.messageConnection, connectionType, this.messageCallbacks);
-            }
-
-            // Setup common handlers
-            this.setupCommonConnectionHandlers(connection, connectionType);
-
-            console.log(`Starting ${connectionType} SignalR connection...`);
-            await connection.start();
-
-            console.log(`${connectionType} SignalR connected successfully. Connection ID: ${connection.connectionId}`);
-            // Check if the *other* connection is also connected to potentially update global state
-            this.checkAndUpdateGlobalState(); 
-
-        } catch (error) {
-            console.error(`${connectionType} SignalR connection failed:`, error);
-            if (connectionType === 'user') {
-                this.userConnection = null;
-            } else {
-                this.messageConnection = null;
-            }
-            this.checkAndUpdateGlobalState(); // Update global state after failure
-            this[connectionPromiseField] = null; // Clear the promise on failure
-            throw error; // Re-throw error to be caught by the main start() method or caller
-        } finally {
-             // Clear the promise field once the connection attempt is fully resolved or rejected
-             // This might need adjustment depending on how retries interact
-             // If using withAutomaticReconnect, the connection object persists, 
-             // but the initial start promise should resolve/reject.
-             // Let's clear it here for now.
-             // this[connectionPromiseField] = null; 
-             // Reconsidering: Don't clear here, let start() manage the top-level promises.
-        }
-    })();
-
-    this[connectionPromiseField] = promise;
-    return promise;
+      let connection = connectionType === 'user' ? this.userConnection : this.messageConnection;
+      let connectionPromiseField = connectionType === 'user' ? 'userConnectionPromise' : 'messageConnectionPromise';
+  
+      // Avoid restarting if already connected or connecting
+      if (connection && (connection.state === 'Connected' || connection.state === 'Connecting')) {
+          console.log(`${connectionType} connection already established or connecting.`);
+          return this[connectionPromiseField] || Promise.resolve(); 
+      }
+  
+      // Return existing promise if a start attempt is already in progress
+      if (this[connectionPromiseField]) {
+          console.log(`Waiting for existing ${connectionType} connection attempt...`);
+          return this[connectionPromiseField];
+      }
+  
+      const promise = (async () => {
+          try {
+              console.log(`Attempting to establish ${connectionType} SignalR connection...`);
+              connection = this.createConnection(hubPath);
+              
+              if (connectionType === 'user') {
+                  this.userConnection = connection;
+                  this.setupEventHandlers(this.userConnection, connectionType, this.userCallbacks);
+              } else {
+                  this.messageConnection = connection;
+                  this.setupEventHandlers(this.messageConnection, connectionType, this.messageCallbacks);
+              }
+  
+              // Setup common handlers
+              this.setupCommonConnectionHandlers(connection, connectionType);
+  
+              console.log(`Starting ${connectionType} SignalR connection...`);
+              await connection.start();
+  
+              console.log(`${connectionType} SignalR connected successfully. Connection ID: ${connection.connectionId}`);
+              // Check if the *other* connection is also connected to potentially update global state
+              this.checkAndUpdateGlobalState(); 
+  
+          } catch (error) {
+              console.error(`${connectionType} SignalR connection failed:`, error);
+              if (connectionType === 'user') {
+                  this.userConnection = null;
+              } else {
+                  this.messageConnection = null;
+              }
+              this.checkAndUpdateGlobalState(); // Update global state after failure
+              throw error; // Re-throw error to be caught by the main start() method or caller
+          } finally {
+              // If the connection succeeded, start activity tracking
+              if (connection && connection.state === 'Connected') {
+                  this.startActivityTracking();
+              }
+          }
+      })();
+  
+      this[connectionPromiseField] = promise;
+      return promise;
   }
 
   setupCommonConnectionHandlers(connection, connectionType) {
@@ -238,6 +372,7 @@ async start() {
 
   async stop() {
     console.log('Stopping connection manager...');
+    this.stopActivityTracking(); // Stop heartbeats and activity listeners
     const previousState = this.state;
     this.setState(ConnectionState.DISCONNECTED); // Assume disconnection immediately
 
@@ -267,6 +402,8 @@ async start() {
     } finally {
       this.userConnection = null;
       this.messageConnection = null;
+      // Clear activity listeners on final stop
+      this.activityListeners.clear(); 
       // Ensure state is DISCONNECTED unless a reconnect started somehow
       if (this.state !== ConnectionState.RECONNECTING) {
           this.setState(ConnectionState.DISCONNECTED);
@@ -287,9 +424,79 @@ async start() {
             connection.off('UserStatusChanged'); 
             connection.on('UserStatusChanged', callbacks.onUserStatusChange);
         }
-        // Add other user hub event handlers here (e.g., onUserNotification)
-        // connection.off('ReceiveNotification');
-        // connection.on('ReceiveNotification', callbacks.onReceiveNotification);
+        // Add file-related event handlers
+        if (callbacks.onNewFile) {
+            connection.off('ReceiveNewFile');
+            connection.on('ReceiveNewFile', callbacks.onNewFile);
+        }
+        if (callbacks.onUpdatedFile) {
+            connection.off('ReceiveUpdatedFile');
+            connection.on('ReceiveUpdatedFile', callbacks.onUpdatedFile);
+        }
+        if (callbacks.onDeletedFile) {
+            connection.off('ReceiveDeletedFile');
+            connection.on('ReceiveDeletedFile', callbacks.onDeletedFile);
+        }
+        // Add post-related event handlers
+        if (callbacks.onNewPost) {
+            connection.off('NewPost');
+            connection.on('NewPost', callbacks.onNewPost);
+        }
+        // Add reply-related event handlers
+        if (callbacks.onNewReply) {
+            connection.off('NewReply');
+            connection.on('NewReply', callbacks.onNewReply);
+        }
+        if (callbacks.onUpdatedReply) {
+            connection.off('UpdatedReply');
+            connection.on('UpdatedReply', callbacks.onUpdatedReply);
+        }
+        if (callbacks.onDeletedReply) {
+            connection.off('DeletedReply');
+            connection.on('DeletedReply', callbacks.onDeletedReply);
+        }
+        if (callbacks.onUpdatedPost) {
+            connection.off('UpdatedPost');
+            connection.on('UpdatedPost', callbacks.onUpdatedPost);
+        }
+        if (callbacks.onDeletedPost) {
+            connection.off('DeletedPost');
+            connection.on('DeletedPost', callbacks.onDeletedPost);
+        }
+        if (callbacks.onPostSummary) {
+            connection.off('PostSummary');
+            connection.on('PostSummary', callbacks.onPostSummary);
+        }
+        // Add comment-related event handlers
+        if (callbacks.onNewComment) {
+            connection.off('NewComment');
+            connection.on('NewComment', callbacks.onNewComment);
+        }
+        if (callbacks.onUpdatedComment) {
+            connection.off('UpdatedComment');
+            connection.on('UpdatedComment', callbacks.onUpdatedComment);
+        }
+        if (callbacks.onDeletedComment) {
+            connection.off('DeletedComment');
+            connection.on('DeletedComment', callbacks.onDeletedComment);
+        }
+        // Add reaction-related event handlers
+        if (callbacks.onNewReaction) {
+            connection.off('NewReaction');
+            connection.on('NewReaction', callbacks.onNewReaction);
+        }
+        if (callbacks.onUpdatedReaction) {
+            connection.off('UpdatedReaction');
+            connection.on('UpdatedReaction', callbacks.onUpdatedReaction);
+        }
+        if (callbacks.onDeletedReaction) {
+            connection.off('DeletedReaction');
+            connection.on('DeletedReaction', callbacks.onDeletedReaction);
+        }
+        if (callbacks.onReactionSummary) {
+            connection.off('ReactionSummary');
+            connection.on('ReactionSummary', callbacks.onReactionSummary);
+        }
 
     } else if (connectionType === 'message') {
         // Register message-specific handlers using callbacks object
@@ -309,67 +516,248 @@ async start() {
     }
   }
 
-  // --- Callback Registration and Removal --- 
-  // User Hub Callbacks
-  onUserStatusChange(callback) {
-    this.userCallbacks.onUserStatusChange = callback;
-    // Re-apply handler if connection is active
+  // File Hub Callbacks
+  onNewFile(callback) {
+    this.userCallbacks.onNewFile = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offNewFile() {
+    delete this.userCallbacks.onNewFile;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('ReceiveNewFile');
+    }
+  }
+
+  onUpdatedFile(callback) {
+    this.userCallbacks.onUpdatedFile = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offUpdatedFile() {
+    delete this.userCallbacks.onUpdatedFile;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('ReceiveUpdatedFile');
+    }
+  }
+
+  onDeletedFile(callback) {
+    this.userCallbacks.onDeletedFile = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offDeletedFile() {
+    delete this.userCallbacks.onDeletedFile;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('ReceiveDeletedFile');
+    }
+  }
+
+  // Post Hub Callbacks
+  onNewPost(callback) {
+    this.userCallbacks.onNewPost = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offNewPost() {
+    delete this.userCallbacks.onNewPost;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('NewPost');
+    }
+  }
+
+  onUpdatedPost(callback) {
+    this.userCallbacks.onUpdatedPost = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offUpdatedPost() {
+    delete this.userCallbacks.onUpdatedPost;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('UpdatedPost');
+    }
+  }
+
+  onDeletedPost(callback) {
+    this.userCallbacks.onDeletedPost = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offDeletedPost() {
+    delete this.userCallbacks.onDeletedPost;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('DeletedPost');
+    }
+  }
+
+  onPostSummary(callback) {
+    this.userCallbacks.onPostSummary = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offPostSummary() {
+    delete this.userCallbacks.onPostSummary;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('PostSummary');
+    }
+  }
+
+  // Comment Hub Callbacks
+  onNewComment(callback) {
+    this.userCallbacks.onNewComment = callback;
     if (this.userConnection?.state === 'Connected') {
         this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
     }
   }
 
-  offUserStatusChange() {
-    delete this.userCallbacks.onUserStatusChange;
+  offNewComment() {
+    delete this.userCallbacks.onNewComment;
     if (this.userConnection?.state === 'Connected') {
-        this.userConnection.off('UserStatusChanged');
+        this.userConnection.off('NewComment');
     }
   }
 
-  // Message Hub Callbacks
-  onReceiveMessage(callback) {
-    this.messageCallbacks.onReceiveMessage = callback;
-    if (this.messageConnection?.state === 'Connected') {
-        this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+  onUpdatedComment(callback) {
+    this.userCallbacks.onUpdatedComment = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
     }
   }
 
-  offReceiveMessage() {
-    delete this.messageCallbacks.onReceiveMessage;
-    if (this.messageConnection?.state === 'Connected') {
-        this.messageConnection.off('ReceiveMessage');
+  offUpdatedComment() {
+    delete this.userCallbacks.onUpdatedComment;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('UpdatedComment');
     }
   }
 
-  onMessageRead(callback) {
-    this.messageCallbacks.onMessageRead = callback;
-    if (this.messageConnection?.state === 'Connected') {
-        this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+  onDeletedComment(callback) {
+    this.userCallbacks.onDeletedComment = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
     }
   }
 
-  offMessageRead() {
-    delete this.messageCallbacks.onMessageRead;
-    if (this.messageConnection?.state === 'Connected') {
-        this.messageConnection.off('MessageRead');
+  offDeletedComment() {
+    delete this.userCallbacks.onDeletedComment;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('DeletedComment');
     }
   }
 
-  onUserTyping(callback) {
-    this.messageCallbacks.onUserTyping = callback;
-    if (this.messageConnection?.state === 'Connected') {
-        this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+  // Reaction Hub Callbacks
+  onNewReaction(callback) {
+    this.userCallbacks.onNewReaction = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
     }
   }
 
-  offUserTyping() {
-    delete this.messageCallbacks.onUserTyping;
-    if (this.messageConnection?.state === 'Connected') {
-        this.messageConnection.off('UserTyping');
+  offNewReaction() {
+    delete this.userCallbacks.onNewReaction;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('NewReaction');
     }
   }
 
-  // Add other message hub callback registration methods here...
+  onUpdatedReaction(callback) {
+    this.userCallbacks.onUpdatedReaction = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offUpdatedReaction() {
+    delete this.userCallbacks.onUpdatedReaction;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('UpdatedReaction');
+    }
+  }
+
+  onDeletedReaction(callback) {
+    this.userCallbacks.onDeletedReaction = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offDeletedReaction() {
+    delete this.userCallbacks.onDeletedReaction;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('DeletedReaction');
+    }
+  }
+
+  onReactionSummary(callback) {
+    this.userCallbacks.onReactionSummary = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offReactionSummary() {
+    delete this.userCallbacks.onReactionSummary;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('ReactionSummary');
+    }
+  }
+
+  // Reply Hub Callbacks
+  onNewReply(callback) {
+    this.userCallbacks.onNewReply = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offNewReply() {
+    delete this.userCallbacks.onNewReply;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('NewReply');
+    }
+  }
+
+  onUpdatedReply(callback) {
+    this.userCallbacks.onUpdatedReply = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offUpdatedReply() {
+    delete this.userCallbacks.onUpdatedReply;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('UpdatedReply');
+    }
+  }
+
+  onDeletedReply(callback) {
+    this.userCallbacks.onDeletedReply = callback;
+    if (this.userConnection?.state === 'Connected') {
+        this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offDeletedReply() {
+    delete this.userCallbacks.onDeletedReply;
+    if (this.userConnection?.state === 'Connected') {
+        this.userConnection.off('DeletedReply');
+    }
+  }
 
   // --- Method Invocation --- 
   async invokeHub(connectionType, methodName, ...args) {
@@ -437,6 +825,64 @@ async start() {
 
   getCurrentState() {
       return this.state;
+  }
+
+  // User Status Change Callbacks
+  onUserStatusChange(callback) {
+    this.userCallbacks.onUserStatusChange = callback;
+    if (this.userConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
+    }
+  }
+
+  offUserStatusChange() {
+    delete this.userCallbacks.onUserStatusChange;
+    if (this.userConnection?.state === 'Connected') {
+      this.userConnection.off('UserStatusChanged');
+    }
+  }
+
+  // Message Hub Callbacks
+  onReceiveMessage(callback) {
+    this.messageCallbacks.onReceiveMessage = callback;
+    if (this.messageConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+    }
+  }
+
+  offReceiveMessage() {
+    delete this.messageCallbacks.onReceiveMessage;
+    if (this.messageConnection?.state === 'Connected') {
+      this.messageConnection.off('ReceiveMessage');
+    }
+  }
+
+  onMessageRead(callback) {
+    this.messageCallbacks.onMessageRead = callback;
+    if (this.messageConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+    }
+  }
+
+  offMessageRead() {
+    delete this.messageCallbacks.onMessageRead;
+    if (this.messageConnection?.state === 'Connected') {
+      this.messageConnection.off('MessageRead');
+    }
+  }
+
+  onUserTyping(callback) {
+    this.messageCallbacks.onUserTyping = callback;
+    if (this.messageConnection?.state === 'Connected') {
+      this.setupEventHandlers(this.messageConnection, 'message', this.messageCallbacks);
+    }
+  }
+
+  offUserTyping() {
+    delete this.messageCallbacks.onUserTyping;
+    if (this.messageConnection?.state === 'Connected') {
+      this.messageConnection.off('UserTyping');
+    }
   }
 }
 

@@ -42,10 +42,13 @@ const ConversationList = ({
     }
   }, []);
 
-  // Consolidated useEffect for fetching and SignalR handling
+  // First useEffect - Only for initial fetch, runs once on mount
   useEffect(() => {
     fetchInitialConversations();
-    
+  }, []); // Empty dependency array means it only runs once
+  
+  // Second useEffect - For SignalR handling
+  useEffect(() => {
     // Define handlers within useEffect or ensure they are stable
     const handleNewMessage = (message) => {
       setConversations(prevConversations => {
@@ -54,10 +57,26 @@ const ConversationList = ({
         );
         
         if (conversationIndex === -1) {
-          // If this is a new conversation, fetch all conversations again
-          console.log('New conversation detected, fetching all conversations.');
-          fetchInitialConversations(); // Corrected: Call the defined fetch function
-          return prevConversations; // Return current state until fetch completes
+          // If this is a new conversation, fetch it and add it to the list
+          console.log('New conversation detected, fetching:', message.conversationId);
+          messagesAPI.getConversationById(message.conversationId)
+            .then(response => {
+              const newConversation = response.data;
+              if (newConversation) {
+                // Add the new conversation and resort
+                setConversations(prev => 
+                  [...prev, newConversation].sort((a, b) => {
+                    const dateA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(a.updatedAt);
+                    const dateB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(b.updatedAt);
+                    return dateB - dateA;
+                  })
+                );
+              }
+            })
+            .catch(error => {
+              console.error('Error fetching new conversation:', error);
+            });
+          return prevConversations; // Return current state, update will happen asynchronously
         }
         
         const updatedConversations = [...prevConversations];
@@ -130,9 +149,7 @@ const ConversationList = ({
       connectionManager.offReceiveMessage(handleNewMessage); // Use specific off methods if available
       connectionManager.offMessageRead(handleMessageRead);   // Assuming off methods exist, else use null if that's the pattern
     };
-  // Dependencies: fetchInitialConversations runs once, currentUserId ensures handlers use correct ID
-  // selectedConversationId is added to handle unread count updates correctly within handleNewMessage/handleMessageRead
-  }, [fetchInitialConversations, currentUserId, selectedConversationId]); 
+  }, [currentUserId, selectedConversationId]); // Only these dependencies needed
 
   // Function to handle selecting a conversation
   const handleSelectConversation = (conversationId) => {
