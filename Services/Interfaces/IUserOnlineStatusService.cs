@@ -7,13 +7,18 @@ namespace ASTREE_PFE.Services.Interfaces
 {
     public interface IUserOnlineStatusService
     {
-        Task<UserOnlineStatus> GetUserStatusAsync(string userId);
+        // Existing methods
         Task<IEnumerable<UserOnlineStatus>> GetAllOnlineUsersAsync();
-        Task UpdateUserStatusAsync(string userId, bool isOnline);
-        Task UpdateLastActivityAsync(string userId); // Keep for potential direct calls
-        Task UpdateUserActivityAsync(string userId); // Called by Hub heartbeat
-        Task RecordDisconnectionAsync(string userId, string connectionId); // Called by Hub OnDisconnectedAsync
+        Task<UserOnlineStatus> GetUserStatusAsync(string userId);
         Task<DateTime?> GetLastSeenTimeAsync(string userId);
-        Task RecordConnectionAsync(string userId, string connectionId); // Called by Hub OnConnectedAsync
+        Task UpdateUserStatusAsync(string userId, bool isOnline);
+        Task UpdateUserHeartbeatAsync(string userId);
+        Task UserConnectedAsync(string userId);
+        Task UserDisconnectedAsync(string userId);
+        
+        // Add the missing methods
+        Task UpdateUserActivityAsync(string userId);
+        Task RecordConnectionAsync(string userId, string connectionId);
+        Task RecordDisconnectionAsync(string userId, string connectionId);
     }
 }

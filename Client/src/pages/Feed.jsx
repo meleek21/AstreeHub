@@ -285,15 +285,21 @@ function Feed() {
 
         connectionManager.onDeletedReaction((reactionId) => {
           console.log('Deleted reaction received via SignalR:', reactionId);
-          // We need to refresh all posts since we don't know which post the reaction belonged to
+          // TODO: Server should send postId along with reactionId for efficient client update.
+          // The current implementation fetching getAllPosts is incorrect with pagination
+          // and we don't know which post to update from reactionId alone.
+          // For now, this deletion won't reflect in real-time without a refresh or server change.
+          /*
           postsAPI
-            .getAllPosts()
+            .getAllPosts() // This is incorrect with pagination!
             .then((response) => {
               setPosts(response.data?.posts || []); // Ensure posts is an array
             })
             .catch((err) =>
               console.error('Error fetching posts after reaction deletion:', err)
             );
+          */
+         toast.info('Une réaction a été supprimée. Rafraîchissez pour voir les changements.'); // Optional: Inform user
         });
 
         // Add handlers for file events
@@ -361,10 +367,14 @@ function Feed() {
 
         connectionManager.onDeletedFile((fileId) => {
           console.log('Deleted file received via SignalR in Feed component:', fileId);
-          // We need to refresh all posts since we don't know which post the file belonged to
-          console.log('Refreshing all posts after file deletion');
+          // TODO: Server should send postId along with fileId for efficient client update.
+          // The current implementation fetching getAllPosts is incorrect with pagination
+          // and we don't know which post to update from fileId alone.
+          // For now, this deletion won't reflect in real-time without a refresh or server change.
+          console.log('Refreshing all posts after file deletion - This is inefficient and breaks pagination!');
+          /*
           postsAPI
-            .getAllPosts()
+            .getAllPosts() // This is incorrect with pagination!
             .then((response) => {
               console.log('Updated posts received after file deletion:', response.data.length);
               setPosts(response.data?.posts || []); // Ensure posts is an array
@@ -373,6 +383,8 @@ function Feed() {
             .catch((err) =>
               console.error('Error fetching posts after file deletion:', err)
             );
+          */
+         toast.info('Un fichier a été supprimé. Rafraîchissez pour voir les changements.'); // Optional: Inform user
         });
 
         // Start the connection
@@ -390,6 +402,7 @@ function Feed() {
     return () => {
       // Remove the stop call
       connectionManager.removeStateListener(setConnectionState);
+      // TODO: Consider removing specific event listeners here if connectionManager doesn't handle it automatically on stop/disconnect
     };
   }, [isAuthenticated]);
 

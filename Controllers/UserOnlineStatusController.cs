@@ -42,7 +42,7 @@ namespace ASTREE_PFE.Controllers
         {
             var lastSeen = await _userOnlineStatusService.GetLastSeenTimeAsync(userId);
             if (lastSeen == null)
-                return NotFound();
+                return ("Offline");
 
             var duration = GetHumanReadableDuration(lastSeen.Value);
             return Ok(duration);
@@ -56,9 +56,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost("{userId}/activity")]
-        public async Task<ActionResult> UpdateLastActivity(string userId)
+        public async Task<ActionResult> UpdateUserActivity(string userId)
         {
-            await _userOnlineStatusService.UpdateLastActivityAsync(userId);
+            // Replace UpdateLastActivityAsync with UpdateUserHeartbeatAsync
+            await _userOnlineStatusService.UpdateUserHeartbeatAsync(userId);
             return Ok();
         }
 

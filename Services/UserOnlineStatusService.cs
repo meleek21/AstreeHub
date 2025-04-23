@@ -1,184 +1,199 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
 using MongoDB.Driver;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.SignalR; // Required for IHubContext
-using ASTREE_PFE.Hubs; // Required for UserHub
-using System.Collections.Concurrent; // For tracking connections
+using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Services
 {
-    public class UserOnlineStatusService : IUserOnlineStatusService, IDisposable // Implement IDisposable if using timers
+    public class UserOnlineStatusService : IUserOnlineStatusService, IDisposable
     {
-        private readonly IMongoCollection<UserOnlineStatus> _userOnlineStatusCollection;
+        private readonly IMongoCollection<UserOnlineStatus> _userStatusCollection;
         private readonly ILogger<UserOnlineStatusService> _logger;
-        private readonly IHubContext<UserHub> _hubContext; // Inject HubContext to broadcast changes
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, DateTime>> _userConnections = new(); // userId -> { connectionId -> connectionTime }
-        private readonly Timer _inactivityCheckTimer; // Timer for checking inactivity
-        private static readonly TimeSpan InactivityThreshold = TimeSpan.FromMinutes(1.5); // e.g., 1.5 minutes - slightly longer than client timeout
-        private static readonly TimeSpan InactivityCheckInterval = TimeSpan.FromSeconds(30); // Check every 30 seconds
+        private readonly IHubContext<UserHub> _hubContext;
+        private readonly Timer _inactivityTimer;
+        
+        private static readonly TimeSpan InactivityThreshold = TimeSpan.FromMinutes(2);
 
-        public UserOnlineStatusService(IMongoDatabase database, ILogger<UserOnlineStatusService> logger, IHubContext<UserHub> hubContext)
+        public UserOnlineStatusService(
+            IMongoDatabase database, 
+            ILogger<UserOnlineStatusService> logger,
+            IHubContext<UserHub> hubContext)
         {
-            _userOnlineStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatuses");
+            _userStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatuses");
             _logger = logger;
             _hubContext = hubContext;
 
-            // Start the timer to periodically check for inactive users
-            _inactivityCheckTimer = new Timer(CheckForInactiveUsers, null, InactivityCheckInterval, InactivityCheckInterval);
-            _logger.LogInformation("UserOnlineStatusService initialized and inactivity timer started.");
+            _inactivityTimer = new Timer(CheckInactiveUsers, null, 
+                TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+
+            _logger.LogInformation("UserOnlineStatusService initialized");
         }
 
         public async Task<IEnumerable<UserOnlineStatus>> GetAllOnlineUsersAsync()
         {
-            return await _userOnlineStatusCollection.Find(u => u.IsOnline).ToListAsync();
+            return await _userStatusCollection.Find(u => u.IsOnline).ToListAsync();
         }
 
         public async Task<UserOnlineStatus> GetUserStatusAsync(string userId)
         {
-            return await _userOnlineStatusCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
+            return await _userStatusCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
         }
 
         public async Task<DateTime?> GetLastSeenTimeAsync(string userId)
         {
-            var userStatus = await _userOnlineStatusCollection.Find(u => u.UserId == userId).FirstOrDefaultAsync();
-            return userStatus?.LastSeenTime;
+            var user = await GetUserStatusAsync(userId);
+            return user?.LastSeenTime;
         }
 
-        public async Task UpdateUserStatusAsync(string userId, bool isOnline)
+        public async Task UserConnectedAsync(string userId)
         {
-            var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
-            var update = Builders<UserOnlineStatus>.Update
-                .Set(u => u.IsOnline, isOnline)
-                .Set(u => u.LastSeenTime, DateTime.UtcNow);
-
-            await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            await UpdateUserStatusAsync(userId, true);
+            _logger.LogInformation("User {UserId} connected and marked online", userId);
         }
 
-        // Called by UserHub on heartbeat
-        public async Task UpdateUserActivityAsync(string userId)
+        public async Task UserDisconnectedAsync(string userId)
+        {
+            await UpdateUserStatusAsync(userId, false);
+            _logger.LogInformation("User {UserId} disconnected and marked offline", userId);
+        }
+
+        public async Task UpdateUserHeartbeatAsync(string userId)
         {
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
             var update = Builders<UserOnlineStatus>.Update
                 .Set(u => u.LastActivityTime, DateTime.UtcNow)
-                .SetOnInsert(u => u.IsOnline, true) // Mark as online if this is the first activity update
-                .SetOnInsert(u => u.LastSeenTime, DateTime.UtcNow); // Also set LastSeenTime on insert
-
-            var result = await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
-
-            // If this upsert resulted in the user being marked online (or was already online)
-            // Ensure the connection is tracked (though OnConnectedAsync should handle initial add)
-            // This handles cases where the service might restart but client reconnects and sends heartbeat
-            if (result.IsAcknowledged && (result.MatchedCount > 0 || result.UpsertedId != null))
-            {
-                // Check if the user wasn't considered online before this activity
-                var userStatus = await GetUserStatusAsync(userId);
-                if (userStatus != null && !userStatus.IsOnline)
-                {
-                    _logger.LogInformation("User {UserId} marked as online due to activity.", userId);
-                    await UpdateUserStatusInternalAsync(userId, true); // Use internal method to also broadcast
-                }
-            }
+                .Set(u => u.IsOnline, true);
+                
+            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            _logger.LogDebug("Updated heartbeat for user {UserId}", userId);
         }
 
-        // Called by UserHub OnDisconnectedAsync
-        public Task RecordDisconnectionAsync(string userId, string connectionId)
+        public async Task UpdateUserStatusAsync(string userId, bool isOnline)
         {
-            if (_userConnections.TryGetValue(userId, out var connections))
-            {
-                if (connections.TryRemove(connectionId, out _))
-                {
-                    _logger.LogInformation("Removed connection {ConnectionId} for user {UserId}. Remaining: {Count}", connectionId, userId, connections.Count);
-                    if (connections.IsEmpty)
-                    {
-                        // If this was the last connection, start the process to check for inactivity soon,
-                        // but don't mark offline immediately. The timer will handle it.
-                        _logger.LogInformation("Last connection removed for user {UserId}. Inactivity timer will verify status.", userId);
-                        // Optionally trigger an immediate check, but the periodic timer is generally sufficient
-                        // CheckForInactiveUsers(null); 
-                    }
-                }
-            }
-            return Task.CompletedTask;
-        }
+            var now = DateTime.UtcNow;
 
-        // Internal method to update status and broadcast
-        private async Task UpdateUserStatusInternalAsync(string userId, bool isOnline)
-        {
-            var lastSeenTime = DateTime.UtcNow;
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
             var update = Builders<UserOnlineStatus>.Update
                 .Set(u => u.IsOnline, isOnline)
-                .Set(u => u.LastSeenTime, lastSeenTime); // Always update LastSeenTime on status change
+                .Set(u => u.LastSeenTime, now)
+                .Set(u => u.LastActivityTime, now);
 
-            // If marking offline, also clear connections (though RecordDisconnectionAsync should handle most)
-            if (!isOnline)
-            {
-                _userConnections.TryRemove(userId, out _);
-                _logger.LogInformation("Clearing tracked connections for user {UserId} due to being marked offline.", userId);
-            }
+            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
 
-            await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
-            _logger.LogInformation("Broadcasting UserStatusChanged for {UserId}: IsOnline={IsOnline}", userId, isOnline);
-            await _hubContext.Clients.All.SendAsync("UserStatusChanged", userId, isOnline, lastSeenTime);
+            await _hubContext.Clients.All.SendAsync("UserStatusChanged", userId, isOnline, now);
         }
 
-        // Timer callback method
-        private async void CheckForInactiveUsers(object? state)
+        private async void CheckInactiveUsers(object state)
         {
-            _logger.LogDebug("Running inactivity check...");
-            var cutoffTime = DateTime.UtcNow.Subtract(InactivityThreshold);
-            var potentiallyInactiveUsersFilter = Builders<UserOnlineStatus>.Filter.And(
-                Builders<UserOnlineStatus>.Filter.Eq(u => u.IsOnline, true),
-                Builders<UserOnlineStatus>.Filter.Lt(u => u.LastActivityTime, cutoffTime)
-            );
-
-            var inactiveUsers = await _userOnlineStatusCollection.Find(potentiallyInactiveUsersFilter).ToListAsync();
-
-            foreach (var user in inactiveUsers)
+            try
             {
-                // Double-check if any connections still exist (e.g., race condition)
-                if (!_userConnections.TryGetValue(user.UserId, out var connections) || connections.IsEmpty)
+                _logger.LogDebug("Checking for inactive users");
+                var cutoffTime = DateTime.UtcNow.Subtract(InactivityThreshold);
+
+                var filter = Builders<UserOnlineStatus>.Filter.And(
+                    Builders<UserOnlineStatus>.Filter.Eq(u => u.IsOnline, true),
+                    Builders<UserOnlineStatus>.Filter.Lt(u => u.LastActivityTime, cutoffTime)
+                );
+
+                var inactiveUsers = await _userStatusCollection.Find(filter).ToListAsync();
+                foreach (var user in inactiveUsers)
                 {
-                    _logger.LogInformation("User {UserId} found inactive (Last Activity: {LastActivityTime}). Marking offline.", user.UserId, user.LastActivityTime);
-                    await UpdateUserStatusInternalAsync(user.UserId, false);
-                }
-                else
-                {
-                    // This case should be rare if OnDisconnected cleans up properly
-                    _logger.LogWarning("User {UserId} flagged as inactive but still has {Count} tracked connections. Skipping offline status update for now.", user.UserId, connections.Count);
+                    _logger.LogInformation("Marking inactive user {UserId} as offline", user.UserId);
+                    await UpdateUserStatusAsync(user.UserId, false);
                 }
             }
-            _logger.LogDebug("Inactivity check finished.");
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking inactive users");
+            }
         }
 
-        // Called by UserHub OnConnectedAsync (needs modification in UserHub too)
-        public Task RecordConnectionAsync(string userId, string connectionId)
+        public async Task UpdateUserActivityAsync(string userId)
         {
-             var userConnectionDict = _userConnections.GetOrAdd(userId, _ => new ConcurrentDictionary<string, DateTime>());
-             userConnectionDict.TryAdd(connectionId, DateTime.UtcNow);
-             _logger.LogInformation("Added connection {ConnectionId} for user {UserId}. Total: {Count}", connectionId, userId, userConnectionDict.Count);
-             return Task.CompletedTask;
-        }
+            var now = DateTime.UtcNow;
 
-        // Implement IDisposable
-        public void Dispose()
-        {
-            _inactivityCheckTimer?.Dispose();
-            GC.SuppressFinalize(this);
-        }
-
-        // This method might still be useful for direct updates if needed, but heartbeat uses UpdateUserActivityAsync
-        public async Task UpdateLastActivityAsync(string userId)
-        {
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
             var update = Builders<UserOnlineStatus>.Update
-                .Set(u => u.LastActivityTime, DateTime.UtcNow);
+                .Set(u => u.LastActivityTime, now)
+                .Set(u => u.IsOnline, true)
+                .Set(u => u.UpdatedAt, now);
 
-            await _userOnlineStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            _logger.LogDebug("Updated activity for user {UserId}", userId);
+        }
+
+        public async Task RecordConnectionAsync(string userId, string connectionId)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(connectionId))
+            {
+                _logger.LogWarning("Invalid userId or connectionId in RecordConnectionAsync");
+                return;
+            }
+
+            var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
+            var userStatus = await _userStatusCollection.Find(filter).FirstOrDefaultAsync();
+
+            if (userStatus == null)
+            {
+                userStatus = new UserOnlineStatus
+                {
+                    UserId = userId,
+                    IsOnline = true,
+                    LastActivityTime = DateTime.UtcNow,
+                    LastSeenTime = DateTime.UtcNow,
+                    ConnectionIds = new List<string> { connectionId },
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                await _userStatusCollection.InsertOneAsync(userStatus);
+                _logger.LogInformation("Created new status for user {UserId} with connection {ConnectionId}", userId, connectionId);
+            }
+            else
+            {
+                if (!userStatus.ConnectionIds.Contains(connectionId))
+                {
+                    var update = Builders<UserOnlineStatus>.Update
+                        .Push(u => u.ConnectionIds, connectionId)
+                        .Set(u => u.UpdatedAt, DateTime.UtcNow);
+
+                    await _userStatusCollection.UpdateOneAsync(filter, update);
+                    _logger.LogDebug("Added connection {ConnectionId} for user {UserId}", connectionId, userId);
+                }
+            }
+        }
+
+        public async Task RecordDisconnectionAsync(string userId, string connectionId)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(connectionId))
+            {
+                _logger.LogWarning("Invalid userId or connectionId in RecordDisconnectionAsync");
+                return;
+            }
+
+            var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
+            var update = Builders<UserOnlineStatus>.Update
+                .Pull(u => u.ConnectionIds, connectionId)
+                .Set(u => u.UpdatedAt, DateTime.UtcNow);
+
+            await _userStatusCollection.UpdateOneAsync(filter, update);
+            _logger.LogDebug("Removed connection {ConnectionId} for user {UserId}", connectionId, userId);
+
+            var userStatus = await _userStatusCollection.Find(filter).FirstOrDefaultAsync();
+            if (userStatus != null && (userStatus.ConnectionIds == null || userStatus.ConnectionIds.Count == 0))
+            {
+                _logger.LogInformation("User {UserId} has no active connections remaining", userId);
+            }
+        }
+
+        public void Dispose()
+        {
+            _inactivityTimer?.Dispose();
         }
     }
 }
