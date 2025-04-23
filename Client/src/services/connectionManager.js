@@ -416,14 +416,16 @@ async start() {
   setupEventHandlers(connection, connectionType, callbacks) {
     if (!connection) return;
     console.log(`Setting up event handlers for ${connectionType}...`);
-
+  
     // Use connection.off().on() pattern to ensure handlers are correctly (re)applied
     if (connectionType === 'user') {
-        // Example: Register user-specific handlers using callbacks object
-        if (callbacks.onUserStatusChange) {
-            connection.off('UserStatusChanged'); 
-            connection.on('UserStatusChanged', callbacks.onUserStatusChange);
-        }
+      // Example: Register user-specific handlers using callbacks object
+      if (callbacks.onUserStatusChange) {
+        connection.off('UserStatusChanged'); 
+        connection.on('UserStatusChanged', (userId, isOnline, lastSeen) => {
+          callbacks.onUserStatusChange(userId, isOnline, lastSeen);
+        });
+      }
         // Add file-related event handlers
         if (callbacks.onNewFile) {
             connection.off('ReceiveNewFile');
@@ -829,12 +831,17 @@ async start() {
 
   // User Status Change Callbacks
   onUserStatusChange(callback) {
-    this.userCallbacks.onUserStatusChange = callback;
+    // This is a new, cleaner signature that matches what the server sends
+    this.userCallbacks.onUserStatusChange = (userId, isOnline, lastSeen) => {
+      // Ensure timestamp is properly passed to the callback
+      callback(userId, isOnline, lastSeen);
+    };
+    
     if (this.userConnection?.state === 'Connected') {
       this.setupEventHandlers(this.userConnection, 'user', this.userCallbacks);
     }
   }
-
+  
   offUserStatusChange() {
     delete this.userCallbacks.onUserStatusChange;
     if (this.userConnection?.state === 'Connected') {
