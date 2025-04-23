@@ -388,7 +388,7 @@ function Feed() {
 
     // Cleanup on unmount
     return () => {
-      connectionManager.stop();
+      // Remove the stop call
       connectionManager.removeStateListener(setConnectionState);
     };
   }, [isAuthenticated]);

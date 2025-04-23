@@ -152,8 +152,8 @@ class ConnectionManager {
             return;
         }
         try {
-            // Ensure UserHub has an 'UpdateActivity' method
-            await this.invokeHubMethod('UserHub', 'UpdateActivity');
+            // Use invokeUserHub instead of invokeHubMethod
+            await this.invokeUserHub('UpdateActivity');
             // console.log('Heartbeat sent successfully.');
         } catch (error) {
             // Avoid logging frequent errors if server isn't ready or during disconnects

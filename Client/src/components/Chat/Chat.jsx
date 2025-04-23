@@ -36,7 +36,7 @@ const Chat = () => {
     });
     
     return () => {
-      connectionManager.stop();
+      // Remove the stop call
       console.log('Chat component unmounted, SignalR stopped.');
     };
   }, []);
