@@ -25,7 +25,7 @@ namespace ASTREE_PFE.Services
             ILogger<UserOnlineStatusService> logger,
             IHubContext<UserHub> hubContext)
         {
-            _userStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatuses");
+            _userStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatus");
             _logger = logger;
             _hubContext = hubContext;
 
