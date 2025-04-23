@@ -1,16 +1,68 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { userOnlineStatusAPI } from '../services/apiServices';
-import signalRService from '../services/signalRService';
+import connectionManager from '../services/connectionManager';
+import { useAuth } from './AuthContext'; // Import useAuth to get user ID
 
 const OnlineStatusContext = createContext();
+export { OnlineStatusContext };
 
 export const OnlineStatusProvider = ({ children }) => {
-  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [lastSeenMap, setLastSeenMap] = useState(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'connected', 'disconnected', 'connecting'
+  const [connectionState, setConnectionState] = useState('Disconnected');
+  const [isUserActive, setIsUserActive] = useState(true);
+  const { user } = useAuth();
 
-  // Initialize online status data
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await userOnlineStatusAPI.getOnlineUsers();
+      const onlineUserIds = response.data.map(user => user.userId);
+      setOnlineUsers(new Set(onlineUserIds));
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching online users:', err);
+      setError('Failed to load online users');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+  // Subscribe to ConnectionManager state changes
+  useEffect(() => {
+    const handleStateChange = (newState) => {
+      setConnectionState(newState);
+      if (newState === 'Connected') {
+        setError(null);
+        // Refresh online users list when reconnected
+        fetchInitialData();
+      } else if (newState === 'Disconnected' || newState === 'Reconnecting') {
+        setError('Connection to real-time updates lost. Attempting to reconnect...');
+      }
+    };
+
+    connectionManager.addStateListener(handleStateChange);
+
+    return () => {
+      connectionManager.removeStateListener(handleStateChange);
+    };
+  }, [fetchInitialData]);
+
+  // Subscribe to ConnectionManager activity changes
+  useEffect(() => {
+    const handleActivityChange = (isActive) => {
+      setIsUserActive(isActive);
+    };
+
+    connectionManager.onActivityChange(handleActivityChange);
+
+    return () => {
+      connectionManager.offActivityChange(handleActivityChange);
+    };
+  }, []);
+
+  // Set up SignalR event handlers for user status changes from ConnectionManager
   useEffect(() => {
     const fetchOnlineUsers = async () => {
       try {
@@ -34,179 +86,68 @@ export const OnlineStatusProvider = ({ children }) => {
 
   // Set up SignalR event handlers for user status changes
   useEffect(() => {
-    const handleUserStatusChanged = (userId, isOnline) => {
+    // Handler for UserStatusChanged event (now includes lastSeen)
+    const handleUserStatusChanged = (userId, isOnline, lastSeen) => {
       setOnlineUsers(prevUsers => {
-        if (isOnline && !prevUsers.includes(userId)) {
-          return [...prevUsers, userId];
-        } else if (!isOnline && prevUsers.includes(userId)) {
-          return prevUsers.filter(id => id !== userId);
+        const newUsers = new Set(prevUsers);
+        if (isOnline) {
+          newUsers.add(userId);
+        } else {
+          newUsers.delete(userId);
         }
-        return prevUsers;
+        return newUsers;
       });
-    };
-
-    // Connect to UserHub via SignalR
-    const connectToUserHub = async () => {
-      try {
-        // Register the event handler for UserStatusChanged
-        signalRService.onUserStatusChange(handleUserStatusChanged);
-        
-        // Start the connection if not already started
-        if (!signalRService.isConnected()) {
-          await signalRService.start();
-        }
-      } catch (err) {
-        console.error('Error connecting to UserHub:', err);
-        setError('Failed to connect to real-time updates');
-        
-        // Attempt to reconnect after a delay
-        setTimeout(() => {
-          connectToUserHub();
-        }, 5000);
+      // Update last seen time if provided
+      if (lastSeen) {
+        setLastSeenMap(prevMap => new Map(prevMap).set(userId, lastSeen));
+      } else if (!isOnline) {
+        // If going offline and no specific lastSeen provided, maybe fetch it or use current time?
+        // For now, let's just remove if they go offline without a timestamp.
+        // Or perhaps the server *always* sends lastSeen when isOnline is false.
+        // Assuming server sends lastSeen when user goes offline.
       }
     };
 
-    connectToUserHub();
+    // Register the event handler via connectionManager
+    // Assuming connectionManager exposes a method like `onUserStatusChange`
+    connectionManager.onUserStatusChange(handleUserStatusChanged);
 
     // Clean up event handlers when component unmounts
     return () => {
-      // Properly remove the event handler
-      signalRService.onUserStatusChange(null);
+      connectionManager.offUserStatusChange(handleUserStatusChanged); // Use a corresponding off method
     };
   }, []);
 
-  // Add connection status change handler
-  useEffect(() => {
-    const handleConnectionChange = (isConnected) => {
-      setConnectionStatus(isConnected ? 'connected' : 'disconnected');
-      
-      if (!isConnected) {
-        setError('Connection to real-time updates lost. Attempting to reconnect...');
-      } else {
-        setError(null);
-        // Refresh online users list when reconnected
-        const fetchOnlineUsers = async () => {
-          try {
-            const response = await userOnlineStatusAPI.getOnlineUsers();
-            const onlineUserIds = response.data.map(user => user.userId);
-            setOnlineUsers(onlineUserIds);
-          } catch (err) {
-            console.error('Error refreshing online users:', err);
-          }
-        };
-        fetchOnlineUsers();
-      }
-    };
-    
-    signalRService.onConnectionChange(handleConnectionChange);
-    
-    return () => {
-      signalRService.onConnectionChange(null);
-    };
-  }, []);
-
-  // Set up a heartbeat to update last activity time
-  useEffect(() => {
-    const currentUserId = localStorage.getItem('userId');
-    if (!currentUserId) return;
-    
-    const updateActivity = async () => {
-      try {
-        await userOnlineStatusAPI.updateLastActivity(currentUserId);
-      } catch (err) {
-        console.error('Error updating last activity:', err);
-      }
-    };
-    
-    // Update activity immediately
-    updateActivity();
-    
-    // Set up interval to update activity every 5 minutes
-    const heartbeatInterval = setInterval(updateActivity, 5 * 60 * 1000);
-    
-    return () => {
-      clearInterval(heartbeatInterval);
-    };
-  }, []);
-
-  // Add browser online/offline detection
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log('Browser is online');
-      // Reconnect SignalR
-      if (!signalRService.isConnected()) {
-        const connectToUserHub = async () => {
-          try {
-            await signalRService.start();
-          } catch (err) {
-            console.error('Error reconnecting to SignalR:', err);
-          }
-        };
-        connectToUserHub();
-      }
-    };
-    
-    const handleOffline = () => {
-      console.log('Browser is offline');
-      setError('You are currently offline. Online status updates are paused.');
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  // Remove direct heartbeat logic - handled by ConnectionManager
+  // Remove direct connection status handling - handled by ConnectionManager state listener
+  // Remove browser online/offline detection - ConnectionManager handles reconnect attempts
 
   // Check if a user is online
-  const isUserOnline = (userId) => {
-    return onlineUsers.includes(userId);
-  };
+  const isUserOnline = useCallback((userId) => {
+    return onlineUsers.has(userId);
+  }, [onlineUsers]);
 
-  // Get all online users
-  const getOnlineUsers = () => {
-    return [...onlineUsers];
-  };
+  // Get last seen time for a user
+  const getLastSeenTime = useCallback((userId) => {
+    return lastSeenMap.get(userId) || null; // Return null if not found
+  }, [lastSeenMap]);
 
-  // Update a user's status manually (if needed)
-  const updateUserStatus = async (userId, isOnline) => {
-    try {
-      // Use the SignalR hub method instead of direct API call
-      if (signalRService.isConnected()) {
-        await signalRService.invokeHubMethod('UpdateUserStatus', userId, isOnline);
-        return true;
-      } else {
-        // Fall back to API call if SignalR is not connected
-        await userOnlineStatusAPI.updateUserStatus(userId, isOnline);
-        
-        // Update local state
-        setOnlineUsers(prevUsers => {
-          if (isOnline && !prevUsers.includes(userId)) {
-            return [...prevUsers, userId];
-          } else if (!isOnline && prevUsers.includes(userId)) {
-            return prevUsers.filter(id => id !== userId);
-          }
-          return prevUsers;
-        });
-        
-        return true;
-      }
-    } catch (err) {
-      console.error('Error updating user status:', err);
-      return false;
-    }
-  };
+  // Get all online user IDs
+  const getOnlineUserIds = useCallback(() => {
+    return Array.from(onlineUsers);
+  }, [onlineUsers]);
+
+  // Remove manual updateUserStatus - status is driven by server events via ConnectionManager
 
   const value = {
-    onlineUsers,
+    onlineUserIds: getOnlineUserIds(), // Provide the array of IDs
     isLoading,
     error,
-    isUserOnline,
-    getOnlineUsers,
-    updateUserStatus,
-    connectionStatus
+    isUserOnline, // Function (userId) => boolean
+    getLastSeenTime, // Function (userId) => string | null
+    connectionState, // 'Connected', 'Connecting', 'Disconnected', 'Reconnecting'
+    isUserActive, // boolean: Is the current user interacting?
+    currentUser: user // Expose the current user object
   };
 
   return <OnlineStatusContext.Provider value={value}>{children}</OnlineStatusContext.Provider>;

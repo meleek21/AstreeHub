@@ -101,6 +101,7 @@ const Chat = () => {
         <ChatWindow 
           conversationId={selectedConversationId}
           selectedEmployee={selectedEmployee}
+          signalRConnected={signalRConnected} // Pass the prop here
         />
       </div>
     </>

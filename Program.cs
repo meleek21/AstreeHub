@@ -55,6 +55,8 @@ builder.Services.AddScoped<IMongoRepository<Conversation>>(sp =>
     new MongoRepository<Conversation>(sp.GetRequiredService<IMongoDatabase>(), "Conversations"));
 builder.Services.AddScoped<IMongoRepository<Event>>(sp => 
     new MongoRepository<Event>(sp.GetRequiredService<IMongoDatabase>(), "Events"));
+builder.Services.AddScoped<IMongoRepository<UserOnlineStatus>>(sp => 
+    new MongoRepository<UserOnlineStatus>(sp.GetRequiredService<IMongoDatabase>(), "UserOnlineStatuses"));
 
 // Register Repositories
 builder.Services.AddScoped<IEventRepository, EventRepository>();
@@ -207,7 +209,8 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddScoped<IUserOnlineStatusService, UserOnlineStatusService>();
+// Register UserOnlineStatusService as Singleton due to its stateful nature (timer, connection tracking)
+builder.Services.AddSingleton<IUserOnlineStatusService, UserOnlineStatusService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();

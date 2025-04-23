@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
-import signalRService from '../services/signalRService';
+import connectionManager from '../services/connectionManager';
 import CreatePost from '../components/CreatePost';
 import PostCard from '../components/PostCard';
 import Comment from '../components/Comments/Comment';
@@ -18,7 +18,7 @@ function Feed() {
   const [posts, setPosts] = useState([]); // Initialize as an empty array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [signalRConnected, setSignalRConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState('Disconnected');
   const { isAuthenticated, logout, user } = useAuth();
   const userId = user?.id;
   const token = localStorage.getItem('token');
@@ -139,9 +139,10 @@ function Feed() {
     const initializeSignalR = async () => {
       try {
         // Register event handlers
-        signalRService.onConnectionChange(setSignalRConnected);
+        connectionManager.addStateListener(setConnectionState);
 
-        signalRService.onNewPost(async (newPost) => {
+        // Register feed event handlers
+        connectionManager.onNewPost(async (newPost) => {
           try {
             console.log('New post received via SignalR, fetching details:', newPost.id);
             // Fetch the complete post data with author information
@@ -158,7 +159,7 @@ function Feed() {
           }
         });
 
-        signalRService.onUpdatedPost((updatedPost) => {
+        connectionManager.onUpdatedPost((updatedPost) => {
           console.log('Updated post received via SignalR:', updatedPost);
           // Fetch the complete post data with author information
           postsAPI
@@ -175,7 +176,7 @@ function Feed() {
             );
         });
 
-        signalRService.onDeletedPost((deletedPostId) => {
+        connectionManager.onDeletedPost((deletedPostId) => {
           console.log('Deleted post received via SignalR:', deletedPostId);
           setPosts((prevPosts) =>
             prevPosts.filter((post) => post.id !== deletedPostId)
@@ -183,7 +184,7 @@ function Feed() {
         });
 
         // Add handlers for comment events
-        signalRService.onNewComment((comment) => {
+        connectionManager.onNewComment((comment) => {
           console.log('New comment received via SignalR:', comment);
           // Refresh the post that received the comment
           postsAPI
@@ -200,7 +201,7 @@ function Feed() {
             );
         });
 
-        signalRService.onUpdatedComment((comment) => {
+        connectionManager.onUpdatedComment((comment) => {
           console.log('Updated comment received via SignalR:', comment);
           // Refresh the post that contains the updated comment
           postsAPI
@@ -217,7 +218,7 @@ function Feed() {
             );
         });
 
-        signalRService.onDeletedComment((commentId) => {
+        connectionManager.onDeletedComment((commentId) => {
           console.log('Deleted comment received via SignalR:', commentId);
           // We need to refresh all posts since we don't know which post the comment belonged to
           postsAPI
@@ -230,7 +231,7 @@ function Feed() {
             );
         });
 
-        signalRService.onNewReply((reply, parentCommentId) => {
+        connectionManager.onNewReply((reply, parentCommentId) => {
           console.log('New reply received via SignalR:', reply, 'Parent comment ID:', parentCommentId);
           // Refresh the post that contains the comment that received the reply
           postsAPI
@@ -248,7 +249,7 @@ function Feed() {
         });
 
         // Add handlers for reaction events
-        signalRService.onNewReaction((reaction) => {
+        connectionManager.onNewReaction((reaction) => {
           console.log('New reaction received via SignalR:', reaction);
           // Refresh the post that received the reaction
           postsAPI
@@ -265,7 +266,7 @@ function Feed() {
             );
         });
 
-        signalRService.onUpdatedReaction((reaction) => {
+        connectionManager.onUpdatedReaction((reaction) => {
           console.log('Updated reaction received via SignalR:', reaction);
           // Refresh the post that contains the updated reaction
           postsAPI
@@ -282,7 +283,7 @@ function Feed() {
             );
         });
 
-        signalRService.onDeletedReaction((reactionId) => {
+        connectionManager.onDeletedReaction((reactionId) => {
           console.log('Deleted reaction received via SignalR:', reactionId);
           // We need to refresh all posts since we don't know which post the reaction belonged to
           postsAPI
@@ -296,7 +297,7 @@ function Feed() {
         });
 
         // Add handlers for file events
-        signalRService.onNewFile((file) => {
+        connectionManager.onNewFile((file) => {
           console.log('New file received via SignalR in Feed component:', file);
           // Refresh the post that received the new file
           if (file.postId) {
@@ -329,7 +330,7 @@ function Feed() {
           }
         });
 
-        signalRService.onUpdatedFile((file) => {
+        connectionManager.onUpdatedFile((file) => {
           console.log('Updated file received via SignalR:', file);
           // Refresh the post that contains the updated file
           if (file.postId) {
@@ -358,7 +359,7 @@ function Feed() {
           }
         });
 
-        signalRService.onDeletedFile((fileId) => {
+        connectionManager.onDeletedFile((fileId) => {
           console.log('Deleted file received via SignalR in Feed component:', fileId);
           // We need to refresh all posts since we don't know which post the file belonged to
           console.log('Refreshing all posts after file deletion');
@@ -375,7 +376,7 @@ function Feed() {
         });
 
         // Start the connection
-        await signalRService.start();
+        await connectionManager.start();
       } catch (err) {
         console.error('Error initializing SignalR:', err);
       }
@@ -387,7 +388,8 @@ function Feed() {
 
     // Cleanup on unmount
     return () => {
-      signalRService.stop();
+      connectionManager.stop();
+      connectionManager.removeStateListener(setConnectionState);
     };
   }, [isAuthenticated]);
 

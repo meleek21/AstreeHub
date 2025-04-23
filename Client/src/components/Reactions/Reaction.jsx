@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { debounce } from 'lodash';
-import signalRService from '../../services/signalRService';
+import connectionManager from '../../services/connectionManager';
 import { reactionsAPI, userAPI } from '../../services/apiServices';
 import ReactionSummary from './ReactionSummary';
 import ReactionTrigger from './ReactionTrigger';
@@ -118,16 +118,16 @@ function Reaction({ postId, employeeId }) {
       }
     };
 
-    signalRService.onNewReaction(onNewReaction);
-    signalRService.onUpdatedReaction(onUpdatedReaction);
-    signalRService.onDeletedReaction(onDeletedReaction);
-    signalRService.onReactionSummary(onReactionSummary);
+    connectionManager.onNewReaction(onNewReaction);
+    connectionManager.onUpdatedReaction(onUpdatedReaction);
+    connectionManager.onDeletedReaction(onDeletedReaction);
+    connectionManager.onReactionSummary(onReactionSummary);
 
     return () => {
-      signalRService.onNewReaction(null);
-      signalRService.onUpdatedReaction(null);
-      signalRService.onDeletedReaction(null);
-      signalRService.onReactionSummary(null);
+      connectionManager.onNewReaction(null);
+      connectionManager.onUpdatedReaction(null);
+      connectionManager.onDeletedReaction(null);
+      connectionManager.onReactionSummary(null);
     };
   }, [postId, employeeId]);
 

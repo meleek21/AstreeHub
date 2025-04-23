@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/apiServices';
+import connectionManager from '../services/connectionManager'; // Import ConnectionManager
 
 export const AuthContext = createContext();
 
@@ -35,6 +36,8 @@ export const AuthProvider = ({ children }) => {
           const response = await authAPI.getUserInfo();
           setUser(response.data);
           setIsAuthenticated(true);
+          // Start SignalR connection after successful token validation
+          connectionManager.start().catch(err => console.error('Failed to start connection on token validation:', err));
         } catch (error) {
           console.error('Token validation failed:', error.message);
           localStorage.removeItem('token');
@@ -76,6 +79,8 @@ export const AuthProvider = ({ children }) => {
 
       setUser(validatedUser);
       setIsAuthenticated(true);
+      // Start SignalR connection after successful login
+      connectionManager.start().catch(err => console.error('Failed to start connection on login:', err));
       navigate('/home');
     } catch (error) {
       console.error('Login error:', error.message);
@@ -93,6 +98,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error.message);
     } finally {
+      // Stop SignalR connection on logout
+      connectionManager.stop().catch(err => console.error('Failed to stop connection on logout:', err));
       localStorage.removeItem('token');
       setIsAuthenticated(false);
       setUser(null);
