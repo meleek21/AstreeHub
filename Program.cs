@@ -56,7 +56,7 @@ builder.Services.AddScoped<IMongoRepository<Conversation>>(sp =>
 builder.Services.AddScoped<IMongoRepository<Event>>(sp => 
     new MongoRepository<Event>(sp.GetRequiredService<IMongoDatabase>(), "Events"));
 builder.Services.AddScoped<IMongoRepository<UserOnlineStatus>>(sp => 
-    new MongoRepository<UserOnlineStatus>(sp.GetRequiredService<IMongoDatabase>(), "UserOnlineStatuses"));
+    new MongoRepository<UserOnlineStatus>(sp.GetRequiredService<IMongoDatabase>(), "UserOnlineStatus"));
 
 // Register Repositories
 builder.Services.AddScoped<IEventRepository, EventRepository>();
