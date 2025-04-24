@@ -2,7 +2,6 @@ using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -19,24 +18,16 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("conversations")]
-        public async Task<IActionResult> GetUserConversations()
+        public async Task<IActionResult> GetUserConversations([FromQuery] GetConversationRequestDto request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var conversations = await _messageService.GetUserConversationsAsync(userId);
+            var conversations = await _messageService.GetUserConversationsAsync(request.UserId);
             return Ok(conversations);
         }
 
         [HttpGet("conversations/{conversationId}")]
-        public async Task<IActionResult> GetConversationById(string conversationId)
+        public async Task<IActionResult> GetConversationById(string conversationId, [FromQuery] GetConversationRequestDto request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+            var conversation = await _messageService.GetConversationByIdAsync(conversationId, request.UserId);
             if (conversation == null)
                 return NotFound();
 
@@ -44,66 +35,41 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("conversations/{conversationId}/messages")]
-        public async Task<IActionResult> GetConversationMessages(string conversationId, [FromQuery] int skip = 0, [FromQuery] int limit = 50)
+        public async Task<IActionResult> GetConversationMessages(
+            string conversationId, 
+            [FromQuery] GetMessagesRequestDto request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
             // Verify user is part of the conversation
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+            var conversation = await _messageService.GetConversationByIdAsync(conversationId, request.UserId);
             if (conversation == null)
                 return NotFound(new { message = "Conversation not found or user not authorized" });
 
-            var messages = await _messageService.GetMessagesByConversationIdAsync(conversationId, skip, limit);
+            var messages = await _messageService.GetMessagesByConversationIdAsync(conversationId, request.Skip, request.Limit);
             return Ok(messages);
         }
 
         [HttpPost("messages")]
         public async Task<IActionResult> SendMessage([FromBody] MessageCreateDto messageDto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var message = await _messageService.CreateMessageAsync(userId, messageDto);
+            var message = await _messageService.CreateMessageAsync(messageDto);
             return Ok(message);
         }
 
         [HttpPost("conversations")]
         public async Task<IActionResult> CreateConversation([FromBody] CreateConversationDto dto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var conversation = await _messageService.CreateGroupConversationAsync(userId, dto.ParticipantIds, dto.Title);
+            var conversation = await _messageService.CreateGroupConversationAsync(dto);
             return Ok(conversation);
         }
 
-        [HttpGet("conversations/with-user/{otherUserId}")]
-        public async Task<IActionResult> GetConversationWithUser(string otherUserId)
-        {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var conversation = await _messageService.GetOrCreateConversationWithUserAsync(userId, otherUserId);
-            // Return 404 if no conversation exists
-            if (conversation == null)
-                return NotFound(new { message = "No conversation exists with this user" });
-                
-            return Ok(conversation);
-        }
+ 
 
         [HttpPut("messages/{messageId}/status")]
-        public async Task<IActionResult> UpdateMessageStatus(string messageId, [FromBody] MessageStatusUpdateDto statusDto)
+        public async Task<IActionResult> UpdateMessageStatus(
+            string messageId, 
+            [FromBody] MessageStatusUpdateDto statusDto)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var success = await _messageService.UpdateMessageStatusAsync(messageId, statusDto.Status);
+            var success = await _messageService.UpdateMessageStatusAsync(messageId, statusDto.Status, statusDto.UserId);
             if (!success)
                 return NotFound();
 
@@ -111,12 +77,9 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpDelete("messages/{messageId}")]
-        public async Task<IActionResult> DeleteMessage(string messageId)
+        public async Task<IActionResult> DeleteMessage(
+            string messageId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
             var success = await _messageService.DeleteMessageAsync(messageId);
             if (!success)
                 return NotFound();
@@ -125,13 +88,9 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("unread-count")]
-        public async Task<IActionResult> GetUnreadMessagesCount()
+        public async Task<IActionResult> GetUnreadMessagesCount([FromQuery] GetConversationRequestDto request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
-
-            var count = await _messageService.GetUnreadMessagesCountAsync(userId);
+            var count = await _messageService.GetUnreadMessagesCountAsync(request.UserId);
             return Ok(new { count });
         }
     }

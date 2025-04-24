@@ -13,8 +13,11 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<Notification> CreateNotificationAsync(Notification notification);
         Task MarkAsReadAsync(string id);
         Task MarkAllAsReadAsync(string recipientId);
+        
+        // Added method for notification deletion
+        Task<bool> DeleteNotificationAsync(string notificationId, string userId);
 
-        // New methods for specific notification types
+        // Specific notification type methods
         Task CreateMessageNotificationAsync(string senderId, string receiverId, string conversationId);
         Task CreateReactionNotificationAsync(string reactorId, string postOwnerId, string postId, ReactionType reactionType);
         Task CreateCommentNotificationAsync(string commenterId, string postOwnerId, string postId, string commentContent, string commentId);
@@ -23,7 +26,5 @@ namespace ASTREE_PFE.Services.Interfaces
         Task CreateBirthdayNotificationAsync(string birthdayPersonId, List<string> recipientIds);
         Task CreateEventStatusChangeNotificationAsync(string eventId, string eventTitle, string attendeeId, AttendanceStatus status, string updaterId);
         Task CreateChannelPostNotificationAsync(string posterId, string channelId, string channelName, string postId, string postContent);
-
-
     }
 }

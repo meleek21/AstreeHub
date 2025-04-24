@@ -67,6 +67,22 @@ namespace ASTREE_PFE.Services
             await _notificationRepository.MarkAllAsReadAsync(recipientId);
         }
 
+        // Implemented delete notification method
+        public async Task<bool> DeleteNotificationAsync(string notificationId, string userId)
+        {
+            // First, verify the notification exists and belongs to the user
+            var notification = await _notificationRepository.GetByIdAsync(notificationId);
+            
+            if (notification == null || notification.RecipientId != userId)
+            {
+                return false;
+            }
+            
+            // If notification exists and belongs to the user, delete it
+            await _notificationRepository.DeleteAsync(notificationId);
+            return true;
+        }
+
         // New methods for specific notification types
         public async Task CreateMessageNotificationAsync(string senderId, string receiverId,  string conversationId)
         {
@@ -213,53 +229,53 @@ namespace ASTREE_PFE.Services
 
             await CreateNotificationAsync(notification);
         }
+        
         public async Task CreateChannelPostNotificationAsync(string posterId, string channelId, string channelName, string postId, string postContent)
-{
-    // Skip notification if the poster is the same as recipient (though this shouldn't happen for broadcasts)
-    var poster = await _employeeRepository.GetByIdAsync(posterId);
-    
-    // For specific department channels, notify only department members
-    var channel = await _channelRepository.GetByIdAsync(channelId);
-    List<string> recipientIds;
-    
-    if (channel != null && channel.DepartmentId.HasValue)
-    {
-        // Get all employees in this department
-        var departmentEmployees = await _employeeRepository.GetByDepartmentAsync(channel.DepartmentId.Value);
-        recipientIds = departmentEmployees
-            .Where(e => e.Id != posterId) // Don't notify the poster
-            .Select(e => e.Id)
-            .ToList();
-    }
-    else
-    {
-        // For general channels, notify all employees
-        var allEmployees = await _employeeRepository.GetAllAsync();
-        recipientIds = allEmployees
-            .Where(e => e.Id != posterId) // Don't notify the poster
-            .Select(e => e.Id)
-            .ToList();
-    }
-
-    // Create a notification for each recipient
-    foreach (var recipientId in recipientIds)
-    {
-        var notification = new Notification
         {
-            RecipientId = recipientId,
-            Title = $"New post in {channelName}",
-            Content = $"{poster?.FullName ?? "Someone"} posted in {channelName}: {TruncateContent(postContent)}",
-            NotificationType = NotificationType.ChannelPost,
-            RelatedEntityId = postId,
-            SenderName = poster?.FullName,
-            SenderProfilePicture = poster?.ProfilePictureUrl,
-            ActionUrl = $"/channels/{channelId}/posts/{postId}"
-        };
+            // Skip notification if the poster is the same as recipient (though this shouldn't happen for broadcasts)
+            var poster = await _employeeRepository.GetByIdAsync(posterId);
+            
+            // For specific department channels, notify only department members
+            var channel = await _channelRepository.GetByIdAsync(channelId);
+            List<string> recipientIds;
+            
+            if (channel != null && channel.DepartmentId.HasValue)
+            {
+                // Get all employees in this department
+                var departmentEmployees = await _employeeRepository.GetByDepartmentAsync(channel.DepartmentId.Value);
+                recipientIds = departmentEmployees
+                    .Where(e => e.Id != posterId) // Don't notify the poster
+                    .Select(e => e.Id)
+                    .ToList();
+            }
+            else
+            {
+                // For general channels, notify all employees
+                var allEmployees = await _employeeRepository.GetAllAsync();
+                recipientIds = allEmployees
+                    .Where(e => e.Id != posterId) // Don't notify the poster
+                    .Select(e => e.Id)
+                    .ToList();
+            }
 
-        await CreateNotificationAsync(notification);
-    }
-}
+            // Create a notification for each recipient
+            foreach (var recipientId in recipientIds)
+            {
+                var notification = new Notification
+                {
+                    RecipientId = recipientId,
+                    Title = $"New post in {channelName}",
+                    Content = $"{poster?.FullName ?? "Someone"} posted in {channelName}: {TruncateContent(postContent)}",
+                    NotificationType = NotificationType.ChannelPost,
+                    RelatedEntityId = postId,
+                    SenderName = poster?.FullName,
+                    SenderProfilePicture = poster?.ProfilePictureUrl,
+                    ActionUrl = $"/channels/{channelId}/posts/{postId}"
+                };
 
+                await CreateNotificationAsync(notification);
+            }
+        }
 
         // Helper methods
         private string TruncateContent(string content, int maxLength = 50)

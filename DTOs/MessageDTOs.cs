@@ -7,7 +7,7 @@ namespace ASTREE_PFE.DTOs
         public string Content { get; set; } = null!;
         public string? ConversationId { get; set; }
         public string? AttachmentUrl { get; set; }
-
+        public string UserId { get; set; } = null!;
     }
 
     public class MessageResponseDto
@@ -30,6 +30,7 @@ namespace ASTREE_PFE.DTOs
     {
         public string MessageId { get; set; } = null!;
         public string Status { get; set; } = null!; // "read", "delivered", etc.
+        public string UserId { get; set; } = null!;
     }
 
     public class ConversationDto
@@ -57,5 +58,26 @@ namespace ASTREE_PFE.DTOs
         public List<string> ParticipantIds { get; set; } = new List<string>();
         public string? Title { get; set; }
         public bool IsGroup { get; set; }
+        public string UserId { get; set; } = null!;
     }
+    
+    public class GetConversationRequestDto
+    {
+        public string UserId { get; set; } = null!;
+    }
+    
+    public class GetMessagesRequestDto
+    {
+        public string UserId { get; set; } = null!;
+        public int Skip { get; set; } = 0;
+        public int Limit { get; set; } = 50;
+    }
+    
+    public class GetConversationWithUserDto
+    {
+        public string UserId { get; set; } = null!;
+        public string OtherUserId { get; set; } = null!;
+    }
+    
+
 }

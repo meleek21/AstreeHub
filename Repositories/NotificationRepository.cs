@@ -23,6 +23,10 @@ namespace ASTREE_PFE.Repositories
         {
             return await _notifications.Find(_ => true).ToListAsync();
         }
+        public async Task<Notification> GetByIdAsync(string id)
+        {
+            return await _notifications.Find(n => n.Id == id).FirstOrDefaultAsync();
+        }
 
         public async Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(string recipientId)
         {

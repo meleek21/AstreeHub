@@ -65,14 +65,17 @@ namespace ASTREE_PFE.Hubs
 
         public async Task SendMessage(MessageCreateDto messageDto)
         {
-            var senderId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(senderId))
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
                 throw new HubException("User not authenticated");
 
             try
             {
-                // Create the message in the database
-                var message = await _messageService.CreateMessageAsync(senderId, messageDto);
+                // Set the UserId from the authenticated user
+                messageDto.UserId = userId;
+                
+                // Create the message in the database using the updated service method
+                var message = await _messageService.CreateMessageAsync(messageDto);
                 
                 // Send to all participants in the conversation group
                 await Clients.Group($"conversation_{message.ConversationId}").SendAsync("ReceiveMessage", message);
@@ -91,6 +94,9 @@ namespace ASTREE_PFE.Hubs
 
             try
             {
+                // Create request DTO for the service method
+                var request = new GetConversationRequestDto { UserId = userId };
+                
                 // Verify user is part of the conversation
                 var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
                 if (conversation == null)
@@ -124,7 +130,16 @@ namespace ASTREE_PFE.Hubs
 
             try
             {
-                var success = await _messageService.UpdateMessageStatusAsync(messageId, "read");
+                // Create status update DTO
+                var statusDto = new MessageStatusUpdateDto
+                {
+                    MessageId = messageId,
+                    Status = "read",
+                    UserId = userId
+                };
+                
+                // Use the updated service method signature
+                var success = await _messageService.UpdateMessageStatusAsync(messageId, "read", userId);
                 if (success)
                 {
                     // Notify the sender that their message was read
@@ -149,6 +164,12 @@ namespace ASTREE_PFE.Hubs
 
             try
             {
+                // Verify user is part of the conversation first
+                var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+                if (conversation == null)
+                    throw new HubException("User not part of this conversation");
+                    
+                // Send typing indicator to conversation participants
                 await Clients.Group($"conversation_{conversationId}").SendAsync("UserTyping", userId, conversationId);
             }
             catch (Exception ex)
@@ -156,4 +177,5 @@ namespace ASTREE_PFE.Hubs
                 throw new HubException($"Failed to send typing indicator: {ex.Message}");
             }
         }
-    }}
+    }
+}
