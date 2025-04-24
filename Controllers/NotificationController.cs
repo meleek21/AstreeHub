@@ -1,16 +1,12 @@
-using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Controllers
 {
-    [Authorize]
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
@@ -20,90 +16,49 @@ namespace ASTREE_PFE.Controllers
             _notificationService = notificationService;
         }
 
-        /// <summary>
-        /// Get all notifications (admin only)
-        /// </summary>
-        [HttpGet("all")]
-        [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult<IEnumerable<Notification>>> GetAllNotifications()
-        {
-            var notifications = await _notificationService.GetAllNotificationsAsync();
-            return Ok(notifications);
-        }
-
-        /// <summary>
-        /// Get notifications for the current user
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Notification>>> GetUserNotifications([FromQuery] int skip = 0, [FromQuery] int take = 20)
+        public async Task<IActionResult> GetNotifications([FromQuery] string userId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
-            var notifications = await _notificationService.GetNotificationsForUserAsync(userId, skip, take);
+            var notifications = await _notificationService.GetNotificationsForUserAsync(userId);
             return Ok(notifications);
         }
 
-        /// <summary>
-        /// Get unread notifications for the current user
-        /// </summary>
         [HttpGet("unread")]
-        public async Task<ActionResult<IEnumerable<Notification>>> GetUnreadNotifications()
+        public async Task<IActionResult> GetUnreadNotifications([FromQuery] string userId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
             var notifications = await _notificationService.GetUnreadNotificationsAsync(userId);
             return Ok(notifications);
         }
 
-        /// <summary>
-        /// Get unread notification count for the current user
-        /// </summary>
-        [HttpGet("unread/count")]
-        public async Task<ActionResult<int>> GetUnreadNotificationCount()
+        [HttpGet("count")]
+        public async Task<IActionResult> GetUnreadNotificationCount([FromQuery] string userId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
             var count = await _notificationService.GetUnreadNotificationCountAsync(userId);
-            return Ok(count);
+            return Ok(new { count });
         }
 
-        /// <summary>
-        /// Mark a notification as read
-        /// </summary>
-        [HttpPut("{id}/read")]
-        public async Task<ActionResult> MarkAsRead(string id)
+        [HttpPut("{notificationId}/read")]
+        public async Task<IActionResult> MarkNotificationAsRead(string notificationId, [FromQuery] string userId)
         {
-            await _notificationService.MarkAsReadAsync(id);
-            return NoContent();
+            await _notificationService.MarkAsReadAsync(notificationId);
+            return Ok();
         }
 
-        /// <summary>
-        /// Mark all notifications as read for the current user
-        /// </summary>
-        [HttpPut("read/all")]
-        public async Task<ActionResult> MarkAllAsRead()
+        [HttpPut("mark-all-read")]
+        public async Task<IActionResult> MarkAllNotificationsAsRead([FromQuery] string userId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
-
             await _notificationService.MarkAllAsReadAsync(userId);
-            return NoContent();
+            return Ok();
         }
 
+        [HttpDelete("{notificationId}")]
+        public async Task<IActionResult> DeleteNotification(string notificationId, [FromQuery] string userId)
+        {
+            var success = await _notificationService.DeleteNotificationAsync(notificationId, userId);
+            if (!success)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }
