@@ -2,11 +2,14 @@ using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
-using ASTREE_PFE.Repositories;
 using AutoMapper;
-using ASTREE_PFE.Data;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using ASTREE_PFE.Data;
+using ASTREE_PFE.Repositories;
 
 namespace ASTREE_PFE.Services
 {
@@ -75,11 +78,99 @@ namespace ASTREE_PFE.Services
             return _mapper.Map<EventResponseDTO>(@event);
         }
 
-        public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
+public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
         {
+            // 1. Get all regular events
             var events = await _eventRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<EventResponseDTO>>(events);
+            var eventDtos = _mapper.Map<List<EventResponseDTO>>(events);
+
+            // 2. Get recent birthdays using existing method
+            var recentBirthdays = await GetRecentBirthdaysAsync(4);
+
+            // 3. Convert birthdays to EventResponseDTO format
+            var birthdayEvents = recentBirthdays.Select(b => new EventResponseDTO
+            {
+                IsBirthdayEvent = true,
+                BirthdayDetails = b,
+                Title = $"{b.FullName}'s Birthday",
+                Description = "Birthday Celebration",
+                EventDateTime = b.NextBirthday,
+                EndDateTime = b.NextBirthday.AddHours(1),
+                Location = "Office",
+                Organizer = "System",
+                Category = EventCategory.Birthday,
+                IsOpenEvent = true
+            });
+
+            // 4. Merge and order by date
+            return eventDtos
+                .Concat(birthdayEvents)
+                .OrderBy(e => e.EventDateTime);
         }
+
+        public async Task<IEnumerable<BirthdayResponseDTO>> GetRecentBirthdaysAsync(int count = 4)
+{
+    var allEmployees = await _employeeService.GetAllEmployeesAsync();
+    var today = DateTime.Today;
+
+    var recentBirthdays = allEmployees
+        .Select(e => {
+            // Calculate this year's birthday
+            var thisBirthday = new DateTime(today.Year, e.DateOfBirth.Month, e.DateOfBirth.Day);
+            
+            // If the birthday has already passed this year, calculate days since
+            if (thisBirthday < today)
+            {
+                int daysSince = (today - thisBirthday).Days;
+                return new BirthdayResponseDTO
+                {
+                    EmployeeId = e.Id,
+                    FullName = e.FullName,
+                    DateOfBirth = e.DateOfBirth,
+                    Age = today.Year - e.DateOfBirth.Year,
+                    ProfilePictureUrl = e.ProfilePictureUrl,
+                    NextBirthday = thisBirthday,
+                    DaysUntilNextBirthday = -daysSince // Negative value indicates past date
+                };
+            }
+            // If birthday is today
+            else if (thisBirthday == today)
+            {
+                return new BirthdayResponseDTO
+                {
+                    EmployeeId = e.Id,
+                    FullName = e.FullName,
+                    DateOfBirth = e.DateOfBirth,
+                    Age = today.Year - e.DateOfBirth.Year,
+                    ProfilePictureUrl = e.ProfilePictureUrl,
+                    NextBirthday = thisBirthday,
+                    DaysUntilNextBirthday = 0
+                };
+            }
+            // If birthday is in the future this year, calculate last year's birthday
+            else
+            {
+                var lastBirthday = thisBirthday.AddYears(-1);
+                int daysSince = (today - lastBirthday).Days;
+                return new BirthdayResponseDTO
+                {
+                    EmployeeId = e.Id,
+                    FullName = e.FullName,
+                    DateOfBirth = e.DateOfBirth,
+                    Age = today.Year - e.DateOfBirth.Year - 1,
+                    ProfilePictureUrl = e.ProfilePictureUrl,
+                    NextBirthday = lastBirthday,
+                    DaysUntilNextBirthday = -daysSince // Negative value indicates past date
+                };
+            }
+        })
+        .Where(b => b.DaysUntilNextBirthday <= 0) // Only include past birthdays (including today)
+        .OrderByDescending(b => b.NextBirthday) // Order by most recent first
+        .Take(count)
+        .ToList();
+
+    return recentBirthdays;
+}
 
         public async Task GenerateBirthdayEventsAsync()
         {

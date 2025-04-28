@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using System.Linq;
+using System;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -17,12 +18,14 @@ namespace ASTREE_PFE.Controllers
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService _departmentService;
-        private readonly IEmployeeService _employeeService; // Add employee service
+        private readonly IEmployeeService _employeeService;
+        private readonly IChannelService _channelService;
 
-        public DepartmentController(IDepartmentService departmentService, IEmployeeService employeeService)
+        public DepartmentController(IDepartmentService departmentService, IEmployeeService employeeService, IChannelService channelService)
         {
             _departmentService = departmentService;
-            _employeeService = employeeService; // Initialize employee service
+            _employeeService = employeeService;
+            _channelService = channelService;
         }
 
         [HttpGet]
@@ -139,14 +142,37 @@ namespace ASTREE_PFE.Controllers
         
             var createdDepartment = await _departmentService.CreateDepartmentAsync(department);
             
+            // Automatically create a channel for the new department
+            try
+            {
+                var channel = new Channel
+                {
+                    Name = $"{createdDepartment.Name} Channel",
+                    DepartmentId = createdDepartment.Id,
+                    IsGeneral = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                
+                var createdChannel = await _channelService.CreateChannelAsync(channel);
+                
+                // Update department with channel ID reference
+                createdDepartment.ChannelId = createdChannel.Id;
+                await _departmentService.UpdateDepartmentAsync(createdDepartment.Id, createdDepartment);
+            }
+            catch (Exception ex)
+            {
+                // Log the error but continue - don't fail department creation if channel creation fails
+                Console.WriteLine($"Error creating channel for department: {ex.Message}");
+            }
+            
             var responseDto = new DepartmentResponseDto
             {
                 Id = createdDepartment.Id,
                 Name = createdDepartment.Name,
                 Description = createdDepartment.Description,
                 DirectorId = createdDepartment.DirectorId
-                // Remove CreatedDate and UpdatedDate references
             };
+
             
             return CreatedAtAction(nameof(GetDepartment), new { id = responseDto.Id }, responseDto);
         }
@@ -154,58 +180,131 @@ namespace ASTREE_PFE.Controllers
         // For the UpdateDepartment method
         [HttpPut("{id}")]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpdateDto departmentDto)
+        public async Task<IActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpdateDto departmentDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-        
+
             var existingDepartment = await _departmentService.GetDepartmentByIdAsync(id);
             if (existingDepartment == null)
             {
                 return NotFound();
             }
-        
-            // If director is being changed, update the new employee's role
-            if (!string.IsNullOrEmpty(departmentDto.DirectorId) && existingDepartment.DirectorId != departmentDto.DirectorId)
+
+            // Store the old name to check if it changed
+            string oldName = existingDepartment.Name;
+
+            // Handle director change
+            if (existingDepartment.DirectorId != departmentDto.DirectorId)
             {
-                var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
-                if (!roleUpdateResult)
+                // If there was a previous director, update their role back to EMPLOYEE
+                if (!string.IsNullOrEmpty(existingDepartment.DirectorId))
                 {
-                    return BadRequest("Failed to update employee role to DIRECTOR");
+                    await _employeeService.UpdateEmployeeRoleAsync(existingDepartment.DirectorId, "EMPLOYEE");
+                }
+
+                // If there's a new director, update their role to DIRECTOR
+                if (!string.IsNullOrEmpty(departmentDto.DirectorId))
+                {
+                    await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
                 }
             }
-        
+
             existingDepartment.Name = departmentDto.Name;
             existingDepartment.Description = departmentDto.Description;
             existingDepartment.DirectorId = departmentDto.DirectorId;
-        
-            var updateResult = await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
-            if (!updateResult)
+
+            await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
+
+            // Update the associated channel if the department name changed
+            if (oldName != departmentDto.Name)
             {
-                return BadRequest("Failed to update department");
+                try
+                {
+                    // Try to get the department's channel
+                    var channel = await _channelService.GetChannelByDepartmentIdAsync(id);
+                    if (channel != null)
+                    {
+                        // Update the channel name to match the new department name
+                        channel.Name = $"{departmentDto.Name} Channel";
+                        channel.UpdatedAt = DateTime.UtcNow;
+                        await _channelService.UpdateChannelAsync(channel.Id, channel);
+                    }
+                }
+                catch (KeyNotFoundException)
+                {
+                    // Channel doesn't exist for this department, create one
+                    try
+                    {
+                        var channel = new Channel
+                        {
+                            Name = $"{departmentDto.Name} Channel",
+                            DepartmentId = id,
+                            IsGeneral = false,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        
+                        var createdChannel = await _channelService.CreateChannelAsync(channel);
+                        
+                        // Update department with channel ID reference
+                        existingDepartment.ChannelId = createdChannel.Id;
+                        await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but continue
+                        Console.WriteLine($"Error creating channel for department: {ex.Message}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log other errors but continue
+                    Console.WriteLine($"Error updating channel for department: {ex.Message}");
+                }
             }
-        
+
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult> DeleteDepartment(int id)
+        public async Task<IActionResult> DeleteDepartment(int id)
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
             if (department == null)
             {
                 return NotFound();
             }
-        
-            var result = await _departmentService.DeleteDepartmentAsync(id);
-            if (!result)
+
+            // If there was a director, update their role back to EMPLOYEE
+            if (!string.IsNullOrEmpty(department.DirectorId))
             {
-                return BadRequest("Failed to delete department. Make sure it has no employees assigned to it.");
+                await _employeeService.UpdateEmployeeRoleAsync(department.DirectorId, "EMPLOYEE");
             }
-        
+
+            // Delete the associated channel if it exists
+            try
+            {
+                var channel = await _channelService.GetChannelByDepartmentIdAsync(id);
+                if (channel != null)
+                {
+                    await _channelService.DeleteChannelAsync(channel.Id);
+                }
+            }
+            catch (KeyNotFoundException)
+            {
+                // No channel exists for this department, continue with deletion
+            }
+            catch (Exception ex)
+            {
+                // Log the error but continue with department deletion
+                Console.WriteLine($"Error deleting channel for department: {ex.Message}");
+            }
+
+            await _departmentService.DeleteDepartmentAsync(id);
+
             return NoContent();
         }
 

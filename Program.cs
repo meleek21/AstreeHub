@@ -161,7 +161,6 @@ builder.Services.ConfigureApplicationCookie(cookieOptions =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Add services to the container
-builder.Services.AddHostedService<BirthdayEventBackgroundService>();
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -252,10 +251,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Map SignalR hubs
-app.MapHub<FeedHub>("/hubs/feed");
 app.MapHub<MessageHub>("/hubs/message");
 app.MapHub<UserHub>("/hubs/user");
-
-//app.MapHub<NotificationHub>("/notificationHub");
+app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();

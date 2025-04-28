@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { debounce } from 'lodash';
-import connectionManager from '../../services/connectionManager';
 import { reactionsAPI, userAPI } from '../../services/apiServices';
 import ReactionSummary from './ReactionSummary';
 import ReactionTrigger from './ReactionTrigger';
@@ -61,75 +59,6 @@ function Reaction({ postId, employeeId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
-
-  useEffect(() => {
-    const refreshReactionData = async () => {
-      try {
-        const { summaryRes, reactionsRes, userRes, userInfoMap } = await fetchReactionData(postId, employeeId);
-        const validatedSummary = {
-          Total: ensureNumericValue(summaryRes.data?.total || summaryRes.data?.Total),
-          JaimeCount: ensureNumericValue(summaryRes.data?.jaimeCount || summaryRes.data?.JaimeCount),
-          JadoreCount: ensureNumericValue(summaryRes.data?.jadoreCount || summaryRes.data?.JadoreCount),
-          BravoCount: ensureNumericValue(summaryRes.data?.bravoCount || summaryRes.data?.BravoCount),
-          YoupiCount: ensureNumericValue(summaryRes.data?.youpiCount || summaryRes.data?.YoupiCount),
-          BrillantCount: ensureNumericValue(summaryRes.data?.brillantCount || summaryRes.data?.BrillantCount),
-        };
-        setReactionSummary(validatedSummary);
-        setReactedUsers(reactionsRes.data || []);
-        setUserReaction(userRes?.data?.type || null);
-        setUserInfoMap(userInfoMap);
-      } catch (error) {
-        console.error('Error refreshing reactions', error);
-      }
-    };
-
-    const debouncedRefresh = debounce(refreshReactionData, 300);
-
-    const onNewReaction = (reaction) => {
-      if (reaction.postId === postId) {
-        debouncedRefresh();
-      }
-    };
-
-    const onUpdatedReaction = (reaction) => {
-      if (reaction.postId === postId) {
-        debouncedRefresh();
-      }
-    };
-
-    const onDeletedReaction = (reactionId, receivedPostId) => {
-      if (receivedPostId === postId) {
-        debouncedRefresh();
-      }
-    };
-
-    const onReactionSummary = (receivedPostId, summary) => {
-      if (receivedPostId === postId) {
-        const validatedSummary = {
-          Total: ensureNumericValue(summary.total || summary.Total),
-          JaimeCount: ensureNumericValue(summary.jaimeCount || summary.JaimeCount),
-          JadoreCount: ensureNumericValue(summary.jadoreCount || summary.JadoreCount),
-          BravoCount: ensureNumericValue(summary.bravoCount || summary.BravoCount),
-          YoupiCount: ensureNumericValue(summary.youpiCount || summary.YoupiCount),
-          BrillantCount: ensureNumericValue(summary.brillantCount || summary.BrillantCount),
-        };
-        setReactionSummary(validatedSummary);
-        debouncedRefresh();
-      }
-    };
-
-    connectionManager.onNewReaction(onNewReaction);
-    connectionManager.onUpdatedReaction(onUpdatedReaction);
-    connectionManager.onDeletedReaction(onDeletedReaction);
-    connectionManager.onReactionSummary(onReactionSummary);
-
-    return () => {
-      connectionManager.onNewReaction(null);
-      connectionManager.onUpdatedReaction(null);
-      connectionManager.onDeletedReaction(null);
-      connectionManager.onReactionSummary(null);
-    };
-  }, [postId, employeeId]);
 
   useEffect(() => {
     const loadReactionData = async () => {

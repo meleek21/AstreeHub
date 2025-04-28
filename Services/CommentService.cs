@@ -14,14 +14,13 @@ namespace ASTREE_PFE.Services
     {
         private readonly ICommentRepository _commentRepository;
         private readonly IPostRepository _postRepository;
-        private readonly IHubContext<FeedHub> _feedHub;
         private readonly INotificationService _notificationService;
         
-        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, IHubContext<FeedHub> feedHub, INotificationService notificationService)
+        public CommentService(ICommentRepository commentRepository, IPostRepository postRepository, INotificationService notificationService)
         {
             _commentRepository = commentRepository;
             _postRepository = postRepository;
-            _feedHub = feedHub;
+
             _notificationService = notificationService;
         }
         
@@ -70,9 +69,7 @@ namespace ASTREE_PFE.Services
                     comment.Content,
                     comment.Id);
             }
-    
-            // Broadcast the new comment to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveNewComment", comment);
+
     
             return comment;
         }
@@ -81,8 +78,7 @@ namespace ASTREE_PFE.Services
         {
             await _commentRepository.UpdateAsync(id, comment);
             
-            // Broadcast the updated comment to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedComment", comment);
+
         }
         
         public async Task DeleteCommentAsync(string id)
@@ -95,8 +91,7 @@ namespace ASTREE_PFE.Services
                 // Remove comment from post
                 await _postRepository.RemoveCommentAsync(comment.PostId, id);
                 
-                // Broadcast the deleted comment ID to all connected clients
-                await _feedHub.Clients.All.SendAsync("ReceiveDeletedComment", id);
+
             }
         }
         
@@ -110,20 +105,19 @@ namespace ASTREE_PFE.Services
             
             await _commentRepository.AddReplyAsync(commentId, reply);
             
-            // Broadcast the new reply to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveNewReply", reply, commentId);
+ 
         }
         
         public async Task UpdateReplyAsync(string commentId, string replyId, Comment updatedReply) {
             await _commentRepository.UpdateReplyAsync(commentId, replyId, updatedReply);
-            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedReply", updatedReply, commentId);
+
         }
         
         public async Task DeleteReplyAsync(string commentId, string replyId) {
             var comment = await _commentRepository.GetByIdAsync(commentId);
             if (comment != null) {
                 await _commentRepository.DeleteReplyAsync(commentId, replyId);
-                await _feedHub.Clients.All.SendAsync("ReceiveDeletedReply", replyId, commentId);
+  
             }
         }
     }

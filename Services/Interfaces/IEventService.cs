@@ -9,6 +9,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto);
         Task<EventResponseDTO> GetEventByIdAsync(string id);
         Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync();
+        Task<IEnumerable<BirthdayResponseDTO>> GetRecentBirthdaysAsync(int count );
         Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto);
         Task<bool> DeleteEventAsync(string id);
         

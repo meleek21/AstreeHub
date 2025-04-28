@@ -70,6 +70,8 @@ namespace ASTREE_PFE.DTOs
     public class EventResponseDTO
     {
         public string Id { get; set; } = null!;
+        public bool IsBirthdayEvent { get; set; } 
+        public BirthdayResponseDTO BirthdayDetails { get; set; }
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
         public DateTime EventDateTime { get; set; }
