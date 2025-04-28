@@ -16,15 +16,13 @@ namespace ASTREE_PFE.Services
     {
         private readonly IReactionRepository _reactionRepository;
         private readonly IPostService _postService;
-        private readonly IHubContext<FeedHub> _feedHub;
         private readonly INotificationService _notificationService;
 
-        public ReactionService(IReactionRepository reactionRepository, IPostService postService, IHubContext<FeedHub> feedHub, 
+        public ReactionService(IReactionRepository reactionRepository, IPostService postService,
             INotificationService notificationService)
         {
             _reactionRepository = reactionRepository;
             _postService = postService;
-            _feedHub = feedHub;
             _notificationService = notificationService;
         }
 
@@ -113,13 +111,6 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
             request.Type);
     }
     
-    // Broadcast the new reaction to all connected clients
-    await _feedHub.Clients.All.SendAsync("ReceiveNewReaction", reaction);
-    
-    // Broadcast updated reaction summary
-    var summary = await GetReactionsSummaryForPostAsync(request.PostId);
-    await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", request.PostId, summary);
-    
     return reaction;
 }
 
@@ -140,15 +131,8 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
                 await _postService.UpdateReactionCountAsync(existingReaction.PostId, previousType, request.Type);
             }
             
-            // Broadcast the updated reaction to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedReaction", existingReaction);
+
             
-            // Broadcast updated reaction summary
-            if (!string.IsNullOrEmpty(existingReaction.PostId))
-            {
-                var summary = await GetReactionsSummaryForPostAsync(existingReaction.PostId);
-                await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", existingReaction.PostId, summary);
-            }
             return existingReaction;
         }
 
@@ -164,12 +148,11 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
                 await _postService.DecrementReactionCountAsync(postId, reaction.Type);
                 await _reactionRepository.DeleteAsync(reaction.Id);
                 
-                // Broadcast the deleted reaction to all connected clients
-                await _feedHub.Clients.All.SendAsync("ReceiveReactionDeleted", new { ReactionId = id, PostId = postId });
+
                 
                 // Broadcast updated reaction summary
                 var summary = await GetReactionsSummaryForPostAsync(postId);
-                await _feedHub.Clients.All.SendAsync("ReceiveReactionSummary", postId, summary);
+
             }
         }
 

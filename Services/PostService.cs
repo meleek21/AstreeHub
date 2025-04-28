@@ -15,7 +15,6 @@ namespace ASTREE_PFE.Services
     {
         private readonly IPostRepository _postRepository;
         private readonly IFileService _fileService;
-        private readonly IHubContext<FeedHub> _feedHub;
         private readonly IReactionRepository _reactionRepository;
         private readonly ICommentRepository _commentRepository;
         private readonly IChannelRepository _channelRepository; // Added dependency
@@ -25,7 +24,7 @@ namespace ASTREE_PFE.Services
         public PostService(
             IPostRepository postRepository,
             IFileService fileService,
-            IHubContext<FeedHub> feedHub,
+            
             IReactionRepository reactionRepository,
             ICommentRepository commentRepository,
             IChannelRepository channelRepository, // Added parameter
@@ -34,7 +33,7 @@ namespace ASTREE_PFE.Services
         {
             _postRepository = postRepository;
             _fileService = fileService;
-            _feedHub = feedHub;
+  
             _reactionRepository = reactionRepository;
             _commentRepository = commentRepository;
             _channelRepository = channelRepository; // Assign injected repository
@@ -160,16 +159,12 @@ public async Task<Post> CreatePostAsync(Post post)
             {
                 // Department-specific channel post
                 string departmentGroupId = channel.DepartmentId.Value.ToString();
-                await _feedHub.Clients.Group(departmentGroupId).SendAsync("ReceiveNewPost", post);
+
             }
-            else
-            {
-                // General channel post
-                await _feedHub.Clients.All.SendAsync("ReceiveNewPost", post);
-            }
+
         }
     }
-    // We don't send notifications for regular feed posts
+
 
     return post;
 }
@@ -192,8 +187,8 @@ public async Task<Post> CreatePostAsync(Post post)
                 }
             }
 
-            // Broadcast the updated post to all connected clients
-            await _feedHub.Clients.All.SendAsync("ReceiveUpdatedPost", post);
+
+
         }
 
         public async Task DeletePostAsync(string id)
@@ -224,7 +219,7 @@ public async Task<Post> CreatePostAsync(Post post)
                 await _postRepository.DeleteAsync(id);
 
                 // Broadcast the deleted post ID to all connected clients
-                await _feedHub.Clients.All.SendAsync("ReceiveDeletedPost", id);
+    
             }
         }
 

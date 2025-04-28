@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
-import connectionManager from '../services/connectionManager';
 import PostCard from '../components/PostCard';
 import CreatePost from '../components/CreatePost';
 import Comment from '../components/Comments/Comment';
@@ -15,7 +14,6 @@ function ChannelFeed() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [signalRConnected, setSignalRConnected] = useState(false);
   const { user } = useAuth();
   const observerTarget = useRef(null);
 
@@ -76,7 +74,7 @@ function ChannelFeed() {
     }
   };
 
-  // Initialize SignalR connection and fetch initial posts
+  // Initialize and fetch initial posts
   useEffect(() => {
     fetchPosts(true);
   }, [channelId]);
@@ -103,135 +101,12 @@ function ChannelFeed() {
     };
   }, [hasMore, loadingMore, loading]);
 
-  // Initialize real-time connection
-  useEffect(() => {
-    let isComponentMounted = true;
-
-    const setupRealTimeConnection = async () => {
-      try {
-        setError(null); // Reset error state before attempting connection
-        if (!isComponentMounted) return; // Prevent connection if component is unmounting
-
-        connectionManager.onConnectionChange((connected) => {
-          if (isComponentMounted) {
-            setSignalRConnected(connected);
-            if (connected) {
-              setError(null); // Clear any previous connection errors
-            }
-          }
-        });
-
-        connectionManager.onNewPost(async (newPost) => {
-          if (newPost.channelId === channelId) {
-            try {
-              // Fetch author information for the new post
-              const authorResponse = await postsAPI.getPostById(newPost.id);
-              const postWithAuthor = authorResponse.data;
-              if (postWithAuthor && postWithAuthor.authorName) {
-                setPosts((prevPosts) => {
-                  const postExists = prevPosts.some(post => post.id === postWithAuthor.id);
-                  if (postExists) {
-                    console.log('Post already exists, not adding duplicate:', postWithAuthor.id);
-                    return prevPosts;
-                  }
-                  return [postWithAuthor, ...prevPosts];
-                });
-              } else {
-                console.error('Post received without author information');
-                toast.error('Erreur lors de la récupération des détails de la publication');
-              }
-            } catch (error) {
-              console.error('Error fetching post details:', error);
-              toast.error('Erreur lors de la récupération des détails de la publication');
-            }
-          }
-        });
-
-        connectionManager.onUpdatedPost((updatedPost) => {
-          if (updatedPost.channelId === channelId) {
-            setPosts((prevPosts) =>
-              prevPosts.map((post) =>
-                post.id === updatedPost.id ? updatedPost : post
-              )
-            );
-          }
-        });
-
-        connectionManager.onDeletedPost((deletedPostId) => {
-          setPosts((prevPosts) =>
-            prevPosts.filter((post) => post.id !== deletedPostId)
-          );
-        });
-
-        connectionManager.onNewComment((comment) => {
-          setPosts((prevPosts) => {
-            return prevPosts.map((post) => {
-              if (post.id === comment.postId) {
-                const updatedComments = [...(post.comments || []), comment];
-                return { ...post, comments: updatedComments };
-              }
-              return post;
-            });
-          });
-        });
-
-        connectionManager.onUpdatedComment((comment) => {
-          setPosts((prevPosts) => {
-            return prevPosts.map((post) => {
-              if (post.id === comment.postId) {
-                const updatedComments = (post.comments || []).map((c) =>
-                  c.id === comment.id ? comment : c
-                );
-                return { ...post, comments: updatedComments };
-              }
-              return post;
-            });
-          });
-        });
-
-        connectionManager.onDeletedComment((commentId) => {
-          setPosts((prevPosts) => {
-            return prevPosts.map((post) => {
-              const updatedComments = (post.comments || []).filter((c) => c.id !== commentId);
-              return { ...post, comments: updatedComments };
-            });
-          });
-        });
-      } catch (error) {
-        console.error('Error setting up real-time connection:', error);
-        setError('Failed to initialize real-time updates');
-      }
-    };
-
-    setupRealTimeConnection();
-
-    return () => {
-      isComponentMounted = false;
-      connectionManager.offNewPost();
-      connectionManager.offUpdatedPost();
-      connectionManager.offDeletedPost();
-      connectionManager.offNewComment();
-      connectionManager.offUpdatedComment();
-      connectionManager.offDeletedComment();
-      connectionManager.offConnectionChange();
-    };
-  }, [channelId]);
-
-  if (loading) {
-    return <div className="loading-container">Loading posts...</div>;
-  }
-
-
-  if (error) {
-    return <div className="error-container">{error}</div>;
-  }
-
   // Function to handle post deletion
   const handleDeletePost = async (postId) => {
     try {
       await postsAPI.deletePost(postId);
       toast.success('Publication supprimée avec succès !');
-      // No need to update state here as SignalR will handle it
+      fetchPosts(true); // Refresh posts after deletion
     } catch (err) {
       console.error('Erreur lors de la suppression de la publication :', err);
       toast.error('Échec de la suppression de la publication. Veuillez réessayer.');
@@ -243,11 +118,20 @@ function ChannelFeed() {
     try {
       await postsAPI.updatePost(postId, updatedData);
       toast.success('Publication mise à jour avec succès !');
+      fetchPosts(true); // Refresh posts after update
     } catch (err) {
       console.error('Erreur lors de la mise à jour de la publication :', err);
       toast.error('Échec de la mise à jour de la publication. Veuillez réessayer.');
     }
   };
+
+  if (loading) {
+    return <div className="loading-container">Loading posts...</div>;
+  }
+
+  if (error) {
+    return <div className="error-container">{error}</div>;
+  }
 
   return (
     <div className="feed-container">
