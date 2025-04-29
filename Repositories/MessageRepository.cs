@@ -51,21 +51,14 @@ namespace ASTREE_PFE.Repositories
             await _messages.ReplaceOneAsync(m => m.Id == id, message);
         }
 
-        public async Task UpdateMessageStatusAsync(string id, string status, DateTime? readAt = null)
+        public async Task UpdateMessageReadStatusAsync(string id, bool isRead, DateTime? readAt = null)
         {
-            var update = Builders<Message>.Update;
-            var updates = new List<UpdateDefinition<Message>>();
+            var filter = Builders<Message>.Filter.Eq(m => m.Id, id);
+            var update = Builders<Message>.Update
+                .Set(m => m.IsRead, isRead)
+                .Set(m => m.ReadAt, readAt ?? DateTime.UtcNow);
 
-            if (status == "read")
-            {
-                updates.Add(update.Set(m => m.IsRead, true));
-                updates.Add(update.Set(m => m.ReadAt, readAt ?? DateTime.UtcNow));
-            }
-
-            if (updates.Any())
-            {
-                await _messages.UpdateOneAsync(m => m.Id == id, update.Combine(updates));
-            }
+            await _messages.UpdateOneAsync(filter, update);
         }
 
         public async Task DeleteMessageAsync(string id)

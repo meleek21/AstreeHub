@@ -11,7 +11,7 @@ namespace ASTREE_PFE.Repositories.Interfaces
         Task<IEnumerable<Message>> FindMessagesAsync(Expression<Func<Message, bool>> predicate);
         Task CreateMessageAsync(Message message);
         Task UpdateMessageAsync(string id, Message message);
-        Task UpdateMessageStatusAsync(string id, string status, DateTime? readAt = null);
+        Task UpdateMessageReadStatusAsync(string id, bool isRead, DateTime? readAt = null);
         Task DeleteMessageAsync(string id);
         Task<int> GetUnreadMessagesCountAsync(string recipientId);
     }

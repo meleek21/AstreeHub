@@ -29,8 +29,8 @@ namespace ASTREE_PFE.DTOs
     public class MessageStatusUpdateDto
     {
         public string MessageId { get; set; } = null!;
-        public string Status { get; set; } = null!; // "read", "delivered", etc.
         public string UserId { get; set; } = null!;
+        public bool IsRead { get; set; }
     }
 
     public class ConversationDto

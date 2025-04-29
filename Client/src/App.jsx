@@ -8,11 +8,11 @@ import Home from './pages/Home';
 import Feed from './pages/Feed';
 import ChannelsList from './pages/ChannelsList';
 import ChannelFeed from './pages/ChannelFeed';
-import Chat from './components/Chat/Chat';
 import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
 import Calendar from './pages/Calendar';
+import ChatContainer from './components/Messages/ChatContainer';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -47,8 +47,8 @@ function App() {
               <Route path="/profile/edit/:userId" element={<ErrorBoundary><EditableProfile /></ErrorBoundary>} />
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
               <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
-              <Route path="/chat" element={<ErrorBoundary><Chat /></ErrorBoundary>} />
-              {/* Add more private routes here */}
+              <Route path="/messages" element={<ErrorBoundary><ChatContainer /></ErrorBoundary>} />
+              
             </Route>
 
             {/* Redirect to home if no route matches */}

@@ -116,9 +116,10 @@
 }
 
 .view-comments-button {
-  padding: 8px 16px;
+  padding: 10px 16px;
   border-radius: 15px;
   font-size: 15px;
+  letter-spacing: 1px;
   background: var(--accent);
   color: var(--background);
   font-weight: 700;
@@ -135,61 +136,72 @@
   box-shadow: 0 4px 8px rgba(37, 58, 130, 0.2);
 }
 
-/* Files Section */
+/* Enhanced Files Section */
 .post-files {
-  margin-top: 16px;
-  padding: 12px;
-  background-color: rgba(192, 224, 255, 0.1);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.post-files h4 {
-  font-size: 0.95em;
-  color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-top: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0;
 }
 
 .file-item {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  background-color: white;
-  border-radius: 8px;
+  flex-direction: column;
+  background: white;
+  border-radius: 12px;
   border: 1px solid var(--border);
-  margin-bottom: 8px;
-  transition: var(--transition);
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .file-item:hover {
-  box-shadow: var(--shadow-sm);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-light);
 }
 
 .post-image {
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 8px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
-  cursor: pointer;
-  transition: var(--transition);
+  transition: transform 0.3s ease;
 }
 
-.post-image:hover {
-  transform: scale(1.02);
+.file-item:hover .post-image {
+  transform: scale(1.05);
 }
 
 .file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size:1rem;
+  padding: 4px;
   color: var(--primary);
   text-decoration: none;
-  transition: var(--transition);
+  transition: color 0.2s ease;
 }
 
 .file-link:hover {
-  color: var(--primary-light);
-  text-decoration: underline;
+  color: var(--primary);
 }
 
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .post-files {
+    gap: 0.75rem;
+  }
+  
+  .file-item {
+    width: 150px;
+  }
+  
+  .file-preview {
+    height: 100px;
+  }
+}
 /* Edit Mode */
 .edit-mode {
   margin: 12px 0;
