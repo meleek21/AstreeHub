@@ -134,12 +134,12 @@ namespace ASTREE_PFE.Hubs
                 var statusDto = new MessageStatusUpdateDto
                 {
                     MessageId = messageId,
-                    Status = "read",
+                    IsRead = true,
                     UserId = userId
                 };
                 
                 // Use the updated service method signature
-                var success = await _messageService.UpdateMessageStatusAsync(messageId, "read", userId);
+                var success = await _messageService.UpdateMessageReadStatusAsync(messageId, true, userId);
                 if (success)
                 {
                     // Notify the sender that their message was read

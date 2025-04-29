@@ -42,7 +42,7 @@ namespace ASTREE_PFE.Controllers
         {
             var lastSeen = await _userOnlineStatusService.GetLastSeenTimeAsync(userId);
             if (lastSeen == null)
-                return ("Offline");
+                return ("Hors ligne");
 
             var duration = GetHumanReadableDuration(lastSeen.Value);
             return Ok(duration);
@@ -58,7 +58,7 @@ namespace ASTREE_PFE.Controllers
         [HttpPost("{userId}/activity")]
         public async Task<ActionResult> UpdateUserActivity(string userId)
         {
-            // Replace UpdateLastActivityAsync with UpdateUserHeartbeatAsync
+            // Remplacer UpdateLastActivityAsync par UpdateUserHeartbeatAsync
             await _userOnlineStatusService.UpdateUserHeartbeatAsync(userId);
             return Ok();
         }
@@ -68,17 +68,17 @@ namespace ASTREE_PFE.Controllers
             var timeDifference = DateTime.UtcNow - lastSeenTime;
 
             if (timeDifference.TotalMinutes < 1)
-                return "Just now";
+                return "À l'instant";
             if (timeDifference.TotalMinutes < 60)
-                return $"{(int)timeDifference.TotalMinutes} minute(s) ago";
+                return $"{(int)timeDifference.TotalMinutes}m";
             if (timeDifference.TotalHours < 24)
-                return $"{(int)timeDifference.TotalHours} hour(s) ago";
+                return $"{(int)timeDifference.TotalHours}h";
             if (timeDifference.TotalDays < 30)
-                return $"{(int)timeDifference.TotalDays} day(s) ago";
+                return $"{(int)timeDifference.TotalDays}j";
             if (timeDifference.TotalDays < 365)
-                return $"{(int)(timeDifference.TotalDays / 30)} month(s) ago";
+                return $"{(int)(timeDifference.TotalDays / 30)} mois";
 
-            return $"{(int)(timeDifference.TotalDays / 365)} year(s) ago";
+            return $"{(int)(timeDifference.TotalDays / 365)} an(s)";
         }
     }
 }

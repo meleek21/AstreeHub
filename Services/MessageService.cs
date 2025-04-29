@@ -99,15 +99,15 @@ namespace ASTREE_PFE.Services
             return await MapToMessageResponseDtoAsync(message);
         }
 
-        public async Task<bool> UpdateMessageStatusAsync(string messageId, string status, string userId)
-        {
-            var message = await _messageRepository.GetMessageByIdAsync(messageId);
-            if (message == null)
-                return false;
+        public async Task<bool> UpdateMessageReadStatusAsync(string messageId, bool isRead, string userId)
+{
+    var message = await _messageRepository.GetMessageByIdAsync(messageId);
+    if (message == null || message.SenderId == userId)
+        return false;
 
-            await _messageRepository.UpdateMessageStatusAsync(messageId, status, DateTime.UtcNow);
-            return true;
-        }
+    await _messageRepository.UpdateMessageReadStatusAsync(messageId, isRead, DateTime.UtcNow);
+    return true;
+}
 
         public async Task<bool> DeleteMessageAsync(string id)
         {
@@ -258,7 +258,8 @@ namespace ASTREE_PFE.Services
                 ? await _messageRepository.GetMessageByIdAsync(conversation.LastMessageId)
                 : null;
 
-            return new ConversationDto
+            int unreadCount = await _messageRepository.FindMessagesAsync(m => m.ConversationId == conversation.Id && m.SenderId != currentUserId && !m.IsRead).ContinueWith(t => t.Result.Count());
+return new ConversationDto
             {
                 Id = conversation.Id,
                 Title = !conversation.IsGroup
@@ -268,8 +269,49 @@ namespace ASTREE_PFE.Services
                 Participants = participantDtos,
                 LastMessage = lastMessage != null ? await MapToMessageResponseDtoAsync(lastMessage) : null,
                 CreatedAt = conversation.CreatedAt,
-                UpdatedAt = conversation.UpdatedAt
+                UpdatedAt = conversation.UpdatedAt,
+                UnreadCount = unreadCount
             };
+        }
+
+        public async Task<bool> EditMessageAsync(string messageId, MessageCreateDto messageDto)
+        {
+            var message = await _messageRepository.GetMessageByIdAsync(messageId);
+            if (message == null || message.SenderId != messageDto.UserId)
+                return false;
+            // Only allow editing within 5 minutes
+            if ((DateTime.UtcNow - message.Timestamp).TotalMinutes > 5 || message.IsUnsent)
+                return false;
+            message.Content = messageDto.Content;
+            message.IsEdited = true;
+            message.EditedAt = DateTime.UtcNow;
+            await _messageRepository.UpdateMessageAsync(messageId, message);
+            return true;
+        }
+
+        public async Task<bool> UnsendMessageAsync(string messageId, string userId)
+        {
+            var message = await _messageRepository.GetMessageByIdAsync(messageId);
+            if (message == null || message.SenderId != userId || (DateTime.UtcNow - message.Timestamp).TotalMinutes > 5)
+                return false;
+
+            message.IsUnsent = true;
+            message.Content = "This message was unsent.";
+            await _messageRepository.UpdateMessageAsync(messageId, message);
+            return true;
+        }
+
+        public async Task<bool> SoftDeleteMessageAsync(string messageId, string userId)
+        {
+            var message = await _messageRepository.GetMessageByIdAsync(messageId);
+            if (message == null)
+                return false;
+            if (!message.DeletedForUsers.Contains(userId))
+            {
+                message.DeletedForUsers.Add(userId);
+                await _messageRepository.UpdateMessageAsync(messageId, message);
+            }
+            return true;
         }
     }
 }

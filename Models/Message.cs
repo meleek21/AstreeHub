@@ -29,6 +29,15 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string ConversationId { get; set; } = null!;
         
+        // Soft delete: track which users have deleted this message
+        public List<string> DeletedForUsers { get; set; } = new List<string>();
+        
+        // Edit/Unsend support
+        public bool IsEdited { get; set; } = false;
+        public bool IsUnsent { get; set; } = false;
+        public DateTime? EditedAt { get; set; }
+        public DateTime? UnsentAt { get; set; }
+        
         [BsonIgnore]
         public virtual Conversation Conversation { get; set; } = null!;
     }

@@ -113,23 +113,52 @@ export const channelsAPI = {
 // Messages API service
 export const messagesAPI = {
   // Conversation endpoints
-  getUserConversations: () => api.get('/message/conversations'),
-  getConversationById: (conversationId) => api.get(`/message/conversations/${conversationId}`),
-  getConversationMessages: (conversationId, skip = 0, limit = 50) => 
-    api.get(`/message/conversations/${conversationId}/messages?skip=${skip}&limit=${limit}`),
-  createGroupConversation: (participantIds, title) => 
-    api.post('/message/conversations', { participantIds, title }),
-  getOrCreateConversationWithUser: (otherUserId) =>
-    api.get(`/message/conversations/with-user/${otherUserId}`),
-  createGroupConversation: (participantIds, title) => 
-    api.post('/message/conversations', { participantIds, title, isGroup: participantIds.length > 1 }),
+  getUserConversations: (userId) => api.get(`/message/users/${userId}/conversations`),
+  getConversation: (conversationId, userId) => api.get(`/message/conversations/${conversationId}?userId=${userId}`),
+  getConversationMessages: (conversationId, userId, skip = 0, limit = 50) => 
+    api.get(`/message/conversations/${conversationId}/messages`, { 
+      params: { 
+        userId,
+        skip,
+        limit
+      }
+    }),
   
   // Message endpoints
   sendMessage: (messageData) => api.post('/message/messages', messageData),
-  updateMessageStatus: (messageId, status) => 
-    api.put(`/message/messages/${messageId}/status`, { status }),
+  markMessageAsRead: (messageId, statusDto) => api.put(`/message/messages/${messageId}/read-status`, statusDto),
   deleteMessage: (messageId) => api.delete(`/message/messages/${messageId}`),
-  getUnreadMessagesCount: () => api.get('/message/unread-count')
+  // Message endpoints
+  editMessage: (messageId, messageData) => api.put(`/message/messages/${messageId}/edit`, messageData, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+}),
+
+unsendMessage: (messageId, userId) => api.delete(`/message/messages/${messageId}/unsend`, {
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  data: JSON.stringify(userId)
+}),
+
+softDeleteMessage: (messageId, userId) => api.put(`/message/messages/${messageId}/soft-delete`, JSON.stringify(userId), {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+}),
+  // Group conversation endpoints
+  createConversation: (conversationData) => api.post('/message/conversations', conversationData),
+  
+  // Unread messages
+  getUnreadMessagesCount: (userId) => api.get(`/message/users/${userId}/unread-messages/count`),
+
+  // Attachment upload endpoint
+  uploadMessageAttachment: (formData) => api.post('/message/upload-message-attachment', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 };
 
 // Comments API service

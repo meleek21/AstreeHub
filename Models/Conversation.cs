@@ -24,5 +24,8 @@ namespace ASTREE_PFE.Models
         public string? Title { get; set; } // For group conversations
         
         public bool IsGroup { get; set; } = false;
+
+        // Soft delete: track which users have deleted this conversation
+        public List<string> DeletedForUsers { get; set; } = new List<string>();
     }
 }
