@@ -31,7 +31,7 @@ const EmojiPicker = ({ onSelect, show, setShow }) => {
         type="button"
         className="emoji-picker-button"
         onClick={() => setShow(!show)}
-        aria-label="Select emoji"
+        aria-label="Sélectionner un emoji"
       >
         <lord-icon 
           src="https://cdn.lordicon.com/xlayapaf.json" 

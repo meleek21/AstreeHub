@@ -111,14 +111,14 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
           />
-          <p>{fileName} ({formatFileSize(fileSize)})</p>
+          <p>{fileName}</p>
         </motion.div>
       );
     } else if (fileType === 'application/pdf') {
       return (
         <div className="file-item">
           <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="file-link">
-            {fileName} ({formatFileSize(fileSize)})
+            {fileName}
           </a>
         </div>
       );
@@ -126,7 +126,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       return (
         <div className="file-item">
           <a href={fileUrl} download={fileName} className="file-link">
-            {fileName} ({formatFileSize(fileSize)})
+            {fileName}
           </a>
         </div>
       );
@@ -157,7 +157,11 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
                 aria-label="Options"
                 onClick={toggleMenu}
               >
-                ⋮
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="5" cy="12" r="2"/>
+        <circle cx="12" cy="12" r="2"/>
+        <circle cx="19" cy="12" r="2"/>
+      </svg>
               </button>
               {isMenuOpen && (
                 <div className="post-edit-options">
@@ -210,7 +214,6 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       {/* Attached Files */}
       {(post.files?.length > 0 || post.Files?.length > 0) && (
         <div className="post-files">
-          <h4>Fichiers joints :</h4>
           {(post.files || post.Files || []).map((file) => (
             <div key={file.id}>{renderFile(file)}</div>
           ))}
