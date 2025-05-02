@@ -18,5 +18,11 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<bool> EditMessageAsync(string messageId, MessageCreateDto messageDto);
         Task<bool> UnsendMessageAsync(string messageId, string userId);
         Task<bool> SoftDeleteMessageAsync(string messageId, string userId);
+        Task<bool> DeleteConversationAsync(string conversationId, string userId);
+        Task<bool> PermanentlyDeleteGroupAsync(string conversationId, string userId);
+        Task<bool> AddParticipantToGroupAsync(string conversationId, string userId, string newParticipantId);
+        Task<bool> RemoveParticipantFromGroupAsync(string conversationId, string userId, string participantId);
+        Task<bool> LeaveGroupAsync(string conversationId, string userId);
+        Task<List<string>> GetParticipantsByConversationIdAsync(string conversationId);
     }
 }

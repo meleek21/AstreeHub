@@ -57,7 +57,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
         const response = await eventsAPI.getAllDepartments();
         setDepartments(response.data);
       } catch (error) {
-        toast.error('Failed to load departments');
+        toast.error('Échec du chargement des départements');
       }
     };
 
@@ -70,7 +70,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
           setSelectedDepartment(deptResponse.data.id);
         }
       } catch (error) {
-        console.error('Failed to fetch user department:', error);
+        console.error("Échec de la récupération du département de l'utilisateur :", error);
       }
     };
 
@@ -137,7 +137,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
       );
       setSearchResults(filteredResults);
     } catch (error) {
-      toast.error('Failed to search employees');
+      toast.error('Échec de la recherche des employés');
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +155,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
       );
       setDepartmentEmployees(filteredResults);
     } catch (error) {
-      toast.error('Failed to fetch department employees');
+      toast.error('Échec de la récupération des employés du département');
     } finally {
       setIsLoading(false);
     }
@@ -173,10 +173,10 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
     try {
       setIsSending(true);
       await eventsAPI.inviteAll(event.id);
-      toast.success('Invitations sent to all employees');
+      toast.success('Invitations envoyées à tous les employés');
       onUpdate();
     } catch (error) {
-      toast.error('Failed to send invitations');
+      toast.error("Échec de l'envoi des invitations");
     } finally {
       setIsSending(false);
     }
@@ -184,17 +184,17 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
 
   const handleInviteDepartment = async () => {
     if (!selectedDepartment) {
-      toast.error('Please select a department');
+      toast.error('Veuillez sélectionner un département');
       return;
     }
 
     try {
       setIsSending(true);
       await eventsAPI.inviteDepartment(event.id, selectedDepartment);
-      toast.success('Invitations sent to department employees');
+      toast.success('Invitations envoyées aux employés du département');
       onUpdate();
     } catch (error) {
-      toast.error('Failed to send invitations');
+      toast.error("Échec de l'envoi des invitations");
     } finally {
       setIsSending(false);
     }
@@ -202,7 +202,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
 
   const handleInviteSelected = async () => {
     if (selectedEmployees.length === 0) {
-      toast.error('Please select at least one employee');
+      toast.error('Veuillez sélectionner au moins un employé');
       return;
     }
 
@@ -210,11 +210,11 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
       setIsSending(true);
       const employeeIds = selectedEmployees.map(emp => emp.id);
       await eventsAPI.inviteMultiple(event.id, employeeIds);
-      toast.success(`Invitations sent to ${selectedEmployees.length} employees`);
+      toast.success(`Invitations envoyées à ${selectedEmployees.length} employés`);
       setSelectedEmployees([]);
       onUpdate();
     } catch (error) {
-      toast.error('Failed to send invitations');
+      toast.error("Échec de l'envoi des invitations");
     } finally {
       setIsSending(false);
     }
@@ -223,20 +223,20 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
   const handleAddAttendee = async (employee) => {
     try {
       await eventsAPI.addAttendee(event.id, { employeeId: employee.id });
-      toast.success(`${employee.name} added to event`);
+      toast.success(`${employee.name} ajouté à l'événement`);
       onUpdate();
     } catch (error) {
-      toast.error(`Failed to add ${employee.name}`);
+      toast.error(`Échec de l'ajout de ${employee.name}`);
     }
   };
 
   const handleRemoveAttendee = async (attendeeId) => {
     try {
       await eventsAPI.removeAttendee(event.id, attendeeId);
-      toast.success('Attendee removed');
+      toast.success('Participant supprimé');
       onUpdate();
     } catch (error) {
-      toast.error('Failed to remove attendee');
+      toast.error('Échec de la suppression du participant');
     }
   };
 
@@ -248,10 +248,10 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
       await eventsAPI.updateAttendanceStatus(event.id, user.id, newStatus);
       await fetchStatusCounts();
       onUpdate();
-      toast.success(`Invitation ${newStatus.toLowerCase()}`);
+      toast.success(`Invitation ${newStatus.toLowerCase() === 'accepted' ? 'acceptée' : 'refusée'}`);
     } catch (error) {
       setUserAttendanceStatus(prev => ({ ...prev, status: 'Pending', isFinal: false }));
-      toast.error(`Failed to update status`);
+      toast.error(`Échec de la mise à jour du statut`);
     }
   };
 
@@ -263,7 +263,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
     <div className="attendee-management">
       <h3>
         <FontAwesomeIcon icon={faUsers} className="mr-2" />
-        Attendees ({attendees.length})
+        Participants ({attendees.length})
       </h3>
       
       {!event.isOpenEvent && attendees.length > 0 && (
@@ -272,7 +272,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
 
       {isOrganizer && !event.isOpenEvent && (
         <div className="invitation-options mb-3">
-          <h4>Send Invitations</h4>
+          <h4>Envoyer des invitations</h4>
           <InvitationModeSelector 
             inviteMode={inviteMode} 
             setInviteMode={setInviteMode} 
@@ -340,8 +340,8 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
         {attendees.length === 0 && (
           <div className="no-attendees">
             {event.isOpenEvent 
-              ? "This is an open event - no RSVP needed"
-              : "No attendees yet"}
+              ? "Ceci est un événement ouvert - aucune confirmation requise"
+              : "Aucun participant pour le moment"}
           </div>
         )}
       </div>

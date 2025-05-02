@@ -164,5 +164,57 @@ namespace ASTREE_PFE.Controllers
                 return Forbid();
             return Ok();
         }
+
+        [HttpPut("conversations/{conversationId}/soft-delete")]
+        public async Task<IActionResult> SoftDeleteConversation(string conversationId, [FromBody] string userId)
+        {
+            var result = await _messageService.DeleteConversationAsync(conversationId, userId);
+            if (!result)
+                return Forbid();
+            return Ok();
+        }
+
+        [HttpDelete("conversations/{conversationId}/permanent")]
+        public async Task<IActionResult> PermanentlyDeleteGroup(string conversationId, [FromQuery] string userId)
+        {
+            var success = await _messageService.PermanentlyDeleteGroupAsync(conversationId, userId);
+            if (!success)
+                return Forbid();
+            return NoContent();
+        }
+
+        [HttpPost("conversations/{conversationId}/participants")]
+        public async Task<IActionResult> AddParticipant(string conversationId, [FromQuery] string userId, [FromQuery] string newParticipantId)
+        {
+            var success = await _messageService.AddParticipantToGroupAsync(conversationId, userId, newParticipantId);
+            if (!success)
+                return Forbid();
+            return Ok();
+        }
+
+        [HttpGet("conversations/{conversationId}/participants")]
+        public async Task<IActionResult> GetParticipants(string conversationId)
+        {
+            var participants = await _messageService.GetParticipantsByConversationIdAsync(conversationId);
+            return Ok(participants);
+        }
+
+        [HttpDelete("conversations/{conversationId}/participants/{participantId}")]
+        public async Task<IActionResult> RemoveParticipant(string conversationId, string participantId, [FromQuery] string userId)
+        {
+            var success = await _messageService.RemoveParticipantFromGroupAsync(conversationId, userId, participantId);
+            if (!success)
+                return Forbid();
+            return Ok();
+        }
+
+        [HttpPost("conversations/{conversationId}/leave")]
+        public async Task<IActionResult> LeaveGroup(string conversationId, [FromQuery] string userId)
+        {
+            var success = await _messageService.LeaveGroupAsync(conversationId, userId);
+            if (!success)
+                return Forbid();
+            return Ok();
+        }
     }
 }

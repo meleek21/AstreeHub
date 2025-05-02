@@ -27,5 +27,8 @@ namespace ASTREE_PFE.Models
 
         // Soft delete: track which users have deleted this conversation
         public List<string> DeletedForUsers { get; set; } = new List<string>();
+        
+        // Group creator (for group management)
+        public string? CreatorId { get; set; }
     }
 }

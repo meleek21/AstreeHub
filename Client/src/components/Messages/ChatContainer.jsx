@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { messagesAPI } from '../../services/apiServices';
 import ConversationList from './ConversationList';
-import ChatWindow from './ChatWindow';
+import ChatWindow from './ChatWindow/ChatWindow';
 import '../../assets/Css/Chat.css';
 import {useAuth} from '../../Context/AuthContext';
 import connectionManager from '../../services/connectionManager';
+import ConfirmationModal from '../ConfirmationModal';
 
 const ChatContainer = () => {
   const { user: currentUser } = useAuth();
@@ -13,6 +14,7 @@ const ChatContainer = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [confirmModal, setConfirmModal] = useState({ open: false, onConfirm: null, title: '', message: '' });
 
   useEffect(() => {
     if (!currentUser || !currentUser.id) return;
@@ -42,7 +44,7 @@ const ChatContainer = () => {
       const response = await messagesAPI.getUserConversations(currentUser.id);
       setConversations(response.data);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error('Erreur lors de la récupération des conversations :', error);
     }
   };
 
@@ -52,7 +54,7 @@ const ChatContainer = () => {
       const response = await messagesAPI.getUnreadMessagesCount(currentUser.id);
       setUnreadCount(response.data.count);
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('Erreur lors de la récupération du nombre de messages non lus :', error);
     }
   };
 
@@ -85,7 +87,7 @@ const ChatContainer = () => {
       })));
       fetchUnreadCount();
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Erreur lors de la récupération des messages :', error);
     } finally {
       setLoading(false);
     }
@@ -101,8 +103,8 @@ const ChatContainer = () => {
         const response = await messagesAPI.uploadMessageAttachment(formData);
         attachmentUrl = response.data.fileUrl || response.data.FileUrl;
       } catch (error) {
-        console.error('Attachment upload failed:', error);
-        alert('Failed to upload attachment.');
+        console.error('Échec du téléversement de la pièce jointe :', error);
+        alert('Échec du téléversement de la pièce jointe.');
         return;
       }
     }
@@ -114,7 +116,7 @@ const ChatContainer = () => {
     };
     console.log('Sending message:', newMessage);
     if (!newMessage.conversationId || !newMessage.userId || (!newMessage.content && !newMessage.attachmentUrl)) {
-      alert('Missing required fields');
+      alert('Champs requis manquants');
       return;
     }
     console.log('Sending message payload:', JSON.stringify(newMessage, null, 2));
@@ -129,67 +131,129 @@ const ChatContainer = () => {
       });
       setMessages(prev => [...prev, response.data]);
     } catch (error) {
-      alert('Failed to send message');
+      alert("Échec de l'envoi du message");
     }
   };
 
-  // Handler for editing a message
-const handleEditMessage = async (messageId, messageData) => {
-  try {
-    await messagesAPI.editMessage(messageId, messageData);
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, content: messageData.content, isEdited: true } : m
-    ));
-  } catch (error) {
-    alert('Failed to edit message');
-  }
-};
+  const handleEditMessage = async (messageId, messageData) => {
+    try {
+      await messagesAPI.editMessage(messageId, messageData);
+      setMessages(prev => prev.map(m => 
+        m.id === messageId ? { ...m, content: messageData.content, isEdited: true } : m
+      ));
+    } catch (error) {
+      alert('Échec de la modification du message');
+    }
+  };
 
-// Handler for unsending a message
-const handleUnsendMessage = async (messageId, userId) => {
-  if (!window.confirm('Are you sure you want to unsend this message?')) return;
-  try {
-    await messagesAPI.unsendMessage(messageId, userId);
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, isUnsent: true } : m
-    ));
-  } catch (error) {
-    console.error('Error unsending message:', error);
-    alert('Failed to unsend message. Please try again later.');
-  }
-};
+  const handleUnsendMessage = async (messageId, userId) => {
+    setConfirmModal({
+      open: true,
+      title: "Annuler l'envoi du message",
+      message: "Êtes-vous sûr de vouloir annuler l'envoi de ce message ?",
+      onConfirm: async () => {
+        setConfirmModal(modal => ({ ...modal, open: false }));
+        try {
+          await messagesAPI.unsendMessage(messageId, userId);
+          setMessages(prev => prev.map(m => 
+            m.id === messageId ? { ...m, isUnsent: true } : m
+          ));
+        } catch (error) {
+          console.error("Erreur lors de l'annulation de l'envoi du message :", error);
+          alert("Échec de l'annulation de l'envoi du message. Veuillez réessayer plus tard.");
+        }
+      }
+    });
+  };
 
-// Handler for soft deleting a message
-const handleSoftDeleteMessage = async (messageId, userId) => {
-  if (!window.confirm('Delete this message for you?')) return;
-  try {
-    await messagesAPI.softDeleteMessage(messageId, userId);
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, deletedForUsers: [...(m.deletedForUsers || []), userId] } : m
-    ));
-  } catch (error) {
-    console.error('Error deleting message:', error);
-    alert('Failed to delete message. Please try again later.');
-  }
-};
+  const handleSoftDeleteMessage = async (messageId, userId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer le message',
+      message: 'Supprimer ce message pour vous ?',
+      onConfirm: async () => {
+        setConfirmModal(modal => ({ ...modal, open: false }));
+        try {
+          await messagesAPI.softDeleteMessage(messageId, userId);
+          setMessages(prev => prev.map(m => 
+            m.id === messageId ? { ...m, deletedForUsers: [...(m.deletedForUsers || []), userId] } : m
+          ));
+        } catch (error) {
+          console.error('Erreur lors de la suppression du message :', error);
+          alert('Échec de la suppression du message. Veuillez réessayer plus tard.');
+        }
+      }
+    });
+  };
+
+  const handleDeleteGroup = async (conversationId, userId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer le groupe',
+      message: 'Êtes-vous sûr de vouloir supprimer définitivement ce groupe ?',
+      onConfirm: async () => {
+        setConfirmModal(modal => ({ ...modal, open: false }));
+        try {
+          await messagesAPI.permanentlyDeleteGroup(conversationId, userId);
+          setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+          setSelectedConversation(null);
+          setMessages([]);
+          fetchUnreadCount();
+        } catch (error) {
+          console.error('Échec de la suppression du groupe :', error);
+        }
+      }
+    });
+  };
+
+  const handleSoftDeleteConversation = async (conversationId, userId) => {
+    setConfirmModal({
+      open: true,
+      title: 'Supprimer la conversation',
+      message: 'Supprimer cette conversation pour vous ?',
+      onConfirm: async () => {
+        setConfirmModal(modal => ({ ...modal, open: false }));
+        try {
+          await messagesAPI.softDeleteConversation(conversationId, userId);
+          setConversations(prev => prev.filter(conv => conv.id !== conversationId));
+          setSelectedConversation(null);
+          setMessages([]);
+          fetchUnreadCount();
+        } catch (error) {
+          console.error('Erreur lors de la suppression de la conversation :', error);
+          alert('Échec de la suppression de la conversation. Veuillez réessayer plus tard.');
+        }
+      }
+    });
+  };
 
   return (
     <div className="chat-container">
-      <ConversationList 
+      <ConversationList
         conversations={conversations}
         unreadCount={unreadCount}
         currentUser={currentUser}
         onSelectConversation={handleSelectConversation}
       />
-      <ChatWindow
-        conversation={selectedConversation}
-        messages={messages}
-        loading={loading}
-        currentUser={currentUser}
-        onSendMessage={handleSendMessage}
-        onEditMessage={handleEditMessage}
-        onUnsendMessage={handleUnsendMessage}
-        onSoftDeleteMessage={handleSoftDeleteMessage}
+        <ChatWindow
+          conversation={selectedConversation}
+          messages={messages}
+          loading={loading}
+          currentUser={currentUser}
+          onSendMessage={handleSendMessage}
+          onEditMessage={handleEditMessage}
+          onUnsendMessage={handleUnsendMessage}
+          onSoftDeleteMessage={handleSoftDeleteMessage}
+          onSoftDeleteConversation={handleSoftDeleteConversation}
+          handleDeleteGroup={handleDeleteGroup}
+        />
+    
+      <ConfirmationModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal(modal => ({ ...modal, open: false }))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
       />
     </div>
   );

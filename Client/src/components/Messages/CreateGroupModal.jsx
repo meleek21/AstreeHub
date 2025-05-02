@@ -13,12 +13,37 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFocused, setIsFocused] = useState({
+    groupName: false,
+    search: false
+  });
   
   const filteredParticipants = participants.filter(user => 
     `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const modalRef = useRef(null);
+  const groupNameRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      // Focus on group name input when modal opens
+      if (groupNameRef.current) {
+        groupNameRef.current.focus();
+      }
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -33,8 +58,16 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
       const response = await userAPI.getAllEmployees();
       setParticipants(response.data.filter(u => u.id !== currentUser.id));
     } catch (error) {
-      toast.error('Failed to load users');
+      showErrorToast('Échec du chargement des utilisateurs. Veuillez réessayer.');
     }
+  };
+
+  const showErrorToast = (message) => {
+    toast.error(message);
+  };
+
+  const showSuccessToast = (message) => {
+    toast.success(message);
   };
 
   const handleUserSelect = (userId) => {
@@ -45,23 +78,32 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!groupName.trim() || selectedUsers.length < 2) {
-      toast.error('Group name and at least 2 participants are required.');
+    
+    if (!groupName.trim()) {
+      showErrorToast('Le nom du groupe est requis');
       return;
     }
+    
+    if (selectedUsers.length < 2) {
+      showErrorToast('Veuillez sélectionner au moins 2 participants');
+      return;
+    }
+    
     setLoading(true);
     try {
       const payload = {
         Title: groupName,
-        ParticipantIds: selectedUsers,
-        UserId: currentUser.id
+        ParticipantIds: [...selectedUsers, currentUser.id],
+        CreatorId: currentUser.id,
+        IsGroup: true
       };
+      console.log(payload);
       const response = await messagesAPI.createConversation(payload);
-      toast.success('Group chat created!');
+      showSuccessToast('Groupe de discussion créé avec succès !');
       onGroupCreated?.(response.data);
       onClose();
     } catch (error) {
-      toast.error('Failed to create group chat');
+      showErrorToast(error.response?.data?.message || 'Échec de la création du groupe de discussion');
     } finally {
       setLoading(false);
     }
@@ -74,7 +116,7 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
       <div className="post-editor-overlay">
         <div className="post-editor-content" ref={modalRef}>
           <div className="post-editor-header">
-            <h1>Create Group Chat</h1>
+            <h1>Créer un groupe de discussion</h1>
             <FontAwesomeIcon
               icon={faTimes}
               className="close-icon"
@@ -83,55 +125,77 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
           </div>
           
           <form onSubmit={handleSubmit} className="post-editor-textarea-container">
-            <div className="form-group">
-              <label>Group Name</label>
+            <div className={`form-group floating-label ${groupName || isFocused.groupName ? 'has-value' : ''}`}>
               <input
+                ref={groupNameRef}
                 type="text"
                 value={groupName}
                 onChange={e => setGroupName(e.target.value)}
+                onFocus={() => setIsFocused(prev => ({...prev, groupName: true}))}
+                onBlur={() => setIsFocused(prev => ({...prev, groupName: false}))}
                 required
-                placeholder="Enter group name"
+                className="floating-input"
               />
-            </div>
-            <div className="form-group">
-              <label>Select Participants</label>
-              <input
-                type="text"
-                placeholder="Search participants..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
-              <div className="participants-list">
-                {filteredParticipants.map(user => (
-                  <label key={user.id} className="participant-item">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => handleUserSelect(user.id)}
-                      disabled={loading}
-                    />
-                    <UserBadge userId={user.id} />
-                  </label>
-                ))}
-              </div>
+              <label className="floating-label-text">Nom du groupe</label>
+              <span className="floating-label-highlight"></span>
             </div>
             
-            <div className="post-editor-actions">
+            <div className={`form-group floating-label ${searchQuery || isFocused.search ? 'has-value' : ''}`}>
+              <input
+                type="text"
+                placeholder=" "
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsFocused(prev => ({...prev, search: true}))}
+                onBlur={() => setIsFocused(prev => ({...prev, search: false}))}
+                className="floating-input search-input"
+              />
+              <label className="floating-label-text">Rechercher des participants</label>
+              <span className="floating-label-highlight"></span>
+            </div>
+            
+            <div className="participants-list">
+              {filteredParticipants.length > 0 ? (
+                filteredParticipants.map(user => (
+                  <label key={user.id} className="participant-item">
+                    <div className="user-badge-wrapper">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.includes(user.id)}
+                        onChange={() => handleUserSelect(user.id)}
+                        disabled={loading}
+                      />
+                      <UserBadge userId={user.id} />
+                    </div>
+                  </label>
+                ))
+              ) : (
+                <div className="no-participants">
+                  {searchQuery ? 'Aucun participant correspondant trouvé' : 'Chargement des participants...'}
+                </div>
+              )}
+            </div>
+            
+            <div className="group-editor-actions">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={loading}
                 className="delete-draft-button"
               >
-                Cancel
+                Annuler
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="submit-button"
               >
-                {loading ? 'Creating...' : 'Create Group'}
+                {loading ? (
+                  <>
+                    <span className="loading-spinner"></span>
+                    Création en cours...
+                  </>
+                ) : 'Créer le groupe'}
               </button>
             </div>
           </form>
