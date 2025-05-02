@@ -44,30 +44,32 @@ namespace ASTREE_PFE.Services
             _logger = logger; // Assign logger
         }
 
-        public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
+
+
+public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
         {
             var @event = _mapper.Map<Event>(eventDto);
             await _eventRepository.CreateAsync(@event);
 
-            // Notification logic
-            if (@event.IsOpenEvent || @event.Type == EventType.Birthday)
-            {
-                var allEmployees = await _employeeService.GetAllEmployeesAsync();
-                var recipientIds = allEmployees.Select(e => e.Id).ToList();
-                // Exclude the organizer if they are part of all employees
-                if (!string.IsNullOrEmpty(@event.Organizer))
-                {
-                    recipientIds.Remove(@event.Organizer);
-                }
-                // Create notification for each recipient
-                foreach (var recipientId in recipientIds)
-                {
-                    await _notificationService.CreateEventInvitationNotificationAsync(@event.Organizer ?? "System", recipientId, @event.Id, @event.Title, @event.EventDateTime);
-                }
-            }
-
-            return _mapper.Map<EventResponseDTO>(@event);
+    // Notification logic - Skip for birthday events
+    if (@event.IsOpenEvent && @event.Type != EventType.Birthday)
+    {
+        var allEmployees = await _employeeService.GetAllEmployeesAsync();
+        var recipientIds = allEmployees.Select(e => e.Id).ToList();
+        // Exclude the organizer if they are part of all employees
+        if (!string.IsNullOrEmpty(@event.Organizer))
+        {
+            recipientIds.Remove(@event.Organizer);
         }
+        // Create notification for each recipient
+        foreach (var recipientId in recipientIds)
+        {
+            await _notificationService.CreateEventInvitationNotificationAsync(@event.Organizer ?? "System", recipientId, @event.Id, @event.Title, @event.EventDateTime);
+        }
+    }
+
+    return _mapper.Map<EventResponseDTO>(@event);
+}
 
         public async Task<EventResponseDTO> GetEventByIdAsync(string id)
         {
@@ -78,7 +80,7 @@ namespace ASTREE_PFE.Services
             return _mapper.Map<EventResponseDTO>(@event);
         }
 
-public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
+        public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
         {
             // 1. Get all regular events
             var events = await _eventRepository.GetAllAsync();
@@ -172,32 +174,10 @@ public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
     return recentBirthdays;
 }
 
-        public async Task GenerateBirthdayEventsAsync()
-        {
-            var employees = await _employeeRepository.GetAllAsync();
-            var currentYear = DateTime.Now.Year;
-            // Removed redundant allEmployees fetch, notification handled in CreateEventAsync
+// Modified GenerateBirthdayEventsAsync method - just this method needs to change
 
-            foreach (var employee in employees)
-            {
-                var birthdayEventDto = new EventCreateDTO // Corrected variable name
-                {
-                    Title = $"{employee.FullName}'s Birthday",
-                    Type = EventType.Birthday,
-                    EventDateTime = new DateTime(currentYear, employee.DateOfBirth.Month, employee.DateOfBirth.Day),
-                    IsRecurring = true,
-                    AssociatedEmployeeId = employee.Id,
-                    Description = "Annual birthday celebration"
-                };
 
-                if (!await _eventRepository.ExistsForEmployeeAsync(employee.Id, birthdayEventDto.EventDateTime))
-                {
-                    await CreateEventAsync(birthdayEventDto);
-                }
-            }
-        }
-
-public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto)
+        public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto)
 {
     var existingEvent = await _eventRepository.GetByIdAsync(id);
     if (existingEvent == null)
@@ -256,7 +236,7 @@ public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO e
 }
 
 // Improved DeleteEventAsync method
-public async Task<bool> DeleteEventAsync(string id)
+        public async Task<bool> DeleteEventAsync(string id)
 {
     var eventToDelete = await _eventRepository.GetByIdAsync(id);
     if (eventToDelete == null)
@@ -554,7 +534,7 @@ public async Task<bool> DeleteEventAsync(string id)
 
             return success;
         }
-public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
+        public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
 {
     var employees = await _employeeService.GetEmployeesByBirthDateAsync(DateTime.Today);
     return employees.Select(e => new BirthdayResponseDTO
@@ -569,7 +549,7 @@ public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
     });
 }
 
-public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
+        public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
 {
     var allEmployees = await _employeeService.GetAllEmployeesAsync();
     var today = DateTime.Today;
@@ -598,7 +578,7 @@ public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
     return closestBirthdays;
 }
 
-public async Task<IEnumerable<BirthdayEventDTO>> GetBirthdayEventsAsync(int month)
+    public async Task<IEnumerable<BirthdayEventDTO>> GetBirthdayEventsAsync(int month)
 {
     var employees = await _employeeService.GetEmployeesByBirthMonthAsync(month);
     return employees.Select(e => new BirthdayEventDTO
