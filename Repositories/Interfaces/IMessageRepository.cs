@@ -14,5 +14,6 @@ namespace ASTREE_PFE.Repositories.Interfaces
         Task UpdateMessageReadStatusAsync(string id, bool isRead, DateTime? readAt = null);
         Task DeleteMessageAsync(string id);
         Task<int> GetUnreadMessagesCountAsync(string recipientId);
+        Task DeleteMessagesByConversationIdAsync(string conversationId);
     }
 }

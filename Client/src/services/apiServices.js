@@ -52,6 +52,11 @@ export const authAPI = {
 };
 
 // Posts API service
+export const conversationsAPI = {
+  createConversation: (conversationData) => api.post('/conversations', conversationData),
+  getConversation: (id) => api.get(`/conversations/${id}`),
+};
+
 export const postsAPI = {
   getAllPosts: (lastItemId, limit = 10) => api.get(`/post?lastItemId=${lastItemId || ''}&limit=${limit}`),
   getChannelPosts: (channelId, lastItemId, limit = 10) => api.get(`/post/channel/${channelId}?lastItemId=${lastItemId || ''}&limit=${limit}`),
@@ -114,7 +119,7 @@ export const channelsAPI = {
 export const messagesAPI = {
   // Conversation endpoints
   getUserConversations: (userId) => api.get(`/message/users/${userId}/conversations`),
-  getConversation: (conversationId, userId) => api.get(`/message/conversations/${conversationId}?userId=${userId}`),
+  getConversation: (conversationId, userId) => api.get(`/message/conversations/${conversationId}?userId=${userId}`).then(res => ({ ...res.data, creatorId: res.data.creatorId })),
   getConversationMessages: (conversationId, userId, skip = 0, limit = 50) => 
     api.get(`/message/conversations/${conversationId}/messages`, { 
       params: { 
@@ -147,7 +152,12 @@ softDeleteMessage: (messageId, userId) => api.put(`/message/messages/${messageId
     'Content-Type': 'application/json'
   }
 }),
-  // Group conversation endpoints
+  softDeleteConversation: (conversationId, userId) => api.put(`/message/conversations/${conversationId}/soft-delete`, JSON.stringify(userId), {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }),
+
   createConversation: (conversationData) => api.post('/message/conversations', conversationData),
   
   // Unread messages
@@ -158,7 +168,15 @@ softDeleteMessage: (messageId, userId) => api.put(`/message/messages/${messageId
     headers: {
       'Content-Type': 'multipart/form-data'
     }
-  })
+  }),
+
+  // Group management endpoints
+  permanentlyDeleteGroup: (conversationId, userId) => api.delete(`/message/conversations/${conversationId}/permanent`, {
+    params: { userId }
+  }),
+  addParticipant: (conversationId, userId, newParticipantId) => api.post(`/message/conversations/${conversationId}/participants?userId=${userId}&newParticipantId=${newParticipantId}`),
+  leaveGroup: (conversationId, userId) => api.post(`/message/conversations/${conversationId}/leave?userId=${userId}`),
+  getParticipants: (conversationId) => api.get(`/message/conversations/${conversationId}/participants`)
 };
 
 // Comments API service

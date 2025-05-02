@@ -66,6 +66,11 @@ namespace ASTREE_PFE.Repositories
             await _messages.DeleteOneAsync(m => m.Id == id);
         }
 
+        public async Task DeleteMessagesByConversationIdAsync(string conversationId)
+        {
+            await _messages.DeleteManyAsync(m => m.ConversationId == conversationId);
+        }
+
         public async Task<int> GetUnreadMessagesCountAsync(string userId)
         {
             var conversations = await _conversationCollection
