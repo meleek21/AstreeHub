@@ -74,14 +74,14 @@ const UserList = () => {
   }
 
   return (
-    <div className={styles.userListContainer}>
-      <h2 className={styles.userListTitle}>User List</h2>
-      <div className={styles.userList}>
+    <div className="userListContainer">
+      <h2 className="userListTitle">User List</h2>
+      <div className="userList">
         {sortedUsers.length > 0 ? (
           sortedUsers.map((user) => (
             <div
               key={user.id}
-              className={styles.userListItem}
+              className="userListItem"
               onClick={() => handleUserClick(user)}
               tabIndex={0}
               role="button"
