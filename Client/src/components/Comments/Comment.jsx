@@ -217,12 +217,6 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
       <Toaster position="top-right" />
       <h3 className="comment-title">Commentaires</h3>
       
-      {isAuthenticated && (
-        <CommentForm 
-          onCreateComment={handleCreateComment} 
-        />
-      )}
-      
       <CommentsList
         comments={comments}
         userId={userId}
@@ -236,6 +230,11 @@ const Comment = ({ postId, userId, isAuthenticated, token }) => {
         onDeleteComment={handleDeleteComment}
         setEditingCommentContent={setEditingCommentContent}
       />
+      {isAuthenticated && (
+        <CommentForm 
+          onCreateComment={handleCreateComment} 
+        />
+      )}
     </div>
   );
 };

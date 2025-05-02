@@ -8,10 +8,12 @@ namespace ASTREE_PFE.Repositories
     public class ConversationRepository : IConversationRepository
     {
         private readonly IMongoCollection<Conversation> _conversations;
+        private readonly IMessageRepository _messageRepository;
         
-        public ConversationRepository(IMongoDatabase database)
+        public ConversationRepository(IMongoDatabase database, IMessageRepository messageRepository)
         {
             _conversations = database.GetCollection<Conversation>("Conversations");
+            _messageRepository = messageRepository;
         }
         
         public async Task<IEnumerable<Conversation>> GetAllConversationsAsync()
@@ -27,7 +29,7 @@ namespace ASTREE_PFE.Repositories
         public async Task<IEnumerable<Conversation>> GetConversationsByParticipantIdAsync(string participantId)
         {
             return await _conversations
-                .Find(c => c.Participants.Contains(participantId))
+                .Find(c => c.Participants.Contains(participantId) && (c.DeletedForUsers == null || !c.DeletedForUsers.Contains(participantId)))
                 .SortByDescending(c => c.UpdatedAt)
                 .ToListAsync();
         }
@@ -83,9 +85,84 @@ namespace ASTREE_PFE.Repositories
             await _conversations.UpdateOneAsync(c => c.Id == conversationId, update);
         }
         
-        public async Task DeleteConversationAsync(string id)
+        public async Task DeleteConversationAsync(string id, string userId)
         {
-            await _conversations.DeleteOneAsync(c => c.Id == id);
+            var conversation = await _conversations.Find(c => c.Id == id).FirstOrDefaultAsync();
+            if (conversation == null) return;
+            if (conversation.DeletedForUsers == null)
+                conversation.DeletedForUsers = new List<string>();
+            if (!conversation.DeletedForUsers.Contains(userId))
+                conversation.DeletedForUsers.Add(userId);
+            // If all participants have deleted, remove conversation
+            if (conversation.DeletedForUsers.Count == conversation.Participants.Count)
+            {
+                await _messageRepository.DeleteMessagesByConversationIdAsync(id);
+                await _conversations.DeleteOneAsync(c => c.Id == id);
+            }
+            else
+            {
+                await _conversations.ReplaceOneAsync(c => c.Id == id, conversation);
+            }
+        }
+
+        public async Task<bool> PermanentlyDeleteGroupAsync(string conversationId, string userId)
+        {
+            var conversation = await _conversations.Find(c => c.Id == conversationId).FirstOrDefaultAsync();
+            if (conversation == null || !conversation.IsGroup || conversation.CreatorId != userId)
+                return false;
+            await _messageRepository.DeleteMessagesByConversationIdAsync(conversationId);
+            await _conversations.DeleteOneAsync(c => c.Id == conversationId);
+            return true;
+        }
+
+        public async Task<bool> AddParticipantAsync(string conversationId, string userId, string newParticipantId)
+        {
+            var conversation = await _conversations.Find(c => c.Id == conversationId).FirstOrDefaultAsync();
+            if (conversation == null || !conversation.IsGroup || !conversation.Participants.Contains(userId))
+                return false;
+            if (!conversation.Participants.Contains(newParticipantId))
+            {
+                conversation.Participants.Add(newParticipantId);
+                await _conversations.ReplaceOneAsync(c => c.Id == conversationId, conversation);
+            }
+            return true;
+        }
+
+        public async Task<bool> RemoveParticipantAsync(string conversationId, string userId, string participantId)
+        {
+            var conversation = await _conversations.Find(c => c.Id == conversationId).FirstOrDefaultAsync();
+            if (conversation == null || !conversation.IsGroup || conversation.CreatorId != userId)
+                return false;
+            if (conversation.Participants.Contains(participantId))
+            {
+                conversation.Participants.Remove(participantId);
+                await _conversations.ReplaceOneAsync(c => c.Id == conversationId, conversation);
+            }
+            return true;
+        }
+
+        public async Task<bool> LeaveGroupAsync(string conversationId, string userId)
+        {
+            var conversation = await _conversations.Find(c => c.Id == conversationId).FirstOrDefaultAsync();
+            if (conversation == null || !conversation.IsGroup || !conversation.Participants.Contains(userId))
+                return false;
+            conversation.Participants.Remove(userId);
+            if (conversation.Participants.Count == 0)
+            {
+                await _messageRepository.DeleteMessagesByConversationIdAsync(conversationId);
+                await _conversations.DeleteOneAsync(c => c.Id == conversationId);
+            }
+            else
+            {
+                await _conversations.ReplaceOneAsync(c => c.Id == conversationId, conversation);
+            }
+            return true;
+        }
+        
+        public async Task<List<string>> GetParticipantsByConversationIdAsync(string conversationId)
+        {
+            var conversation = await _conversations.Find(c => c.Id == conversationId).FirstOrDefaultAsync();
+            return conversation?.Participants ?? new List<string>();
         }
     }
 }

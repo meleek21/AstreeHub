@@ -79,16 +79,15 @@ const CommentItem = ({
         )}
       </div>
       
-      <ReplyForm 
-        onAddReply={(content) => onAddReply(comment.id, content)} 
-      />
-      
       <RepliesList
         replies={comment.replies || []}
         userId={userId}
         parentId={comment.id}
         onEditReply={onEditReply}
         onDeleteReply={onDeleteReply}
+      />
+      <ReplyForm 
+        onAddReply={(content) => onAddReply(comment.id, content)} 
       />
     </li>
   );

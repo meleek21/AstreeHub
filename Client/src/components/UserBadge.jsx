@@ -91,12 +91,26 @@ const UserBadge = ({ userId }) => {
             }}
           />
         )}
+        {!isOnline && formattedLastSeen && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '-10px',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              backgroundColor: '#f0f0f0',
+              fontSize: '0.7em',
+              color: '#666',
+            }}
+          >
+            {formattedLastSeen}
+          </div>
+        )}
       </div>
       <div>
         <div style={{ fontWeight: 'bold', color: '#0047AB' }}>{`${userInfo.firstName} ${userInfo.lastName}`}</div>
-        <div style={{ color: '#666666', fontSize: '0.8em' }}>
-          {isOnline ? 'Online' : formattedLastSeen || 'Offline'}
-        </div>
+        
       </div>
     </div>
   );

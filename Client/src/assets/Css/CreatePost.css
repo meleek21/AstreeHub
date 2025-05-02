@@ -129,7 +129,7 @@
 
 .close-icon {
   cursor: pointer;
-  color: var(--text-secondary);
+  color: white;
   font-size: 1.5rem;
   transition: var(--transition);
 }

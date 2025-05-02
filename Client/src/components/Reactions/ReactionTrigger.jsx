@@ -43,7 +43,7 @@ const ReactionTrigger = ({
     <div
       className="reaction-trigger"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => setTimeout(() => setIsHovered(false), 5000)}
     >
       <Tooltip 
         title={currentReaction?.name} 
@@ -57,10 +57,10 @@ const ReactionTrigger = ({
             </>
           ) : (
             <lord-icon
-    src="https://cdn.lordicon.com/msyeyaka.json"
-    trigger="morph"
-    stroke="bold"
-    state="hover-up" style={{ width: '35px', height: '35px' }}/> 
+              src="https://cdn.lordicon.com/msyeyaka.json"
+              trigger="morph"
+              stroke="bold"
+              state="hover-up" style={{ width: '35px', height: '35px' }}/> 
           )}
         </button>
       </Tooltip>

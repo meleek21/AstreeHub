@@ -29,12 +29,13 @@ namespace ASTREE_PFE.DTOs
     public class MessageStatusUpdateDto
     {
         public string MessageId { get; set; } = null!;
-        public string Status { get; set; } = null!; // "read", "delivered", etc.
         public string UserId { get; set; } = null!;
+        public bool IsRead { get; set; }
     }
 
     public class ConversationDto
     {
+        public string CreatorId { get; set; }
         public string Id { get; set; } = null!;
         public List<ParticipantDto> Participants { get; set; } = new List<ParticipantDto>();
         public MessageResponseDto? LastMessage { get; set; }
@@ -57,8 +58,8 @@ namespace ASTREE_PFE.DTOs
     {
         public List<string> ParticipantIds { get; set; } = new List<string>();
         public string? Title { get; set; }
+        public string CreatorId { get; set; } = null!;
         public bool IsGroup { get; set; }
-        public string UserId { get; set; } = null!;
     }
     
     public class GetConversationRequestDto

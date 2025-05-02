@@ -30,28 +30,23 @@ const CommentForm = ({ onCreateComment }) => {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Ajouter un commentaire..."
-          rows="3"
-          aria-label="Comment input"
           className="comment-textarea"
         />
       </div>
-      <div className="comment-form-actions">
-        <div className="actions-group">
-          <EmojiPicker 
-            onSelect={handleEmojiSelect}
-            show={showEmojiPicker}
-            setShow={setShowEmojiPicker}
-          />
-          <button 
-            type="submit"
-            className="send-button"
-            disabled={!newComment.trim()}
-            aria-disabled={!newComment.trim()}
-          >
-            <FontAwesomeIcon icon={faPaperPlane} />
-          </button>
-        </div>
-      </div>
+      
+      <EmojiPicker 
+        onSelect={handleEmojiSelect}
+        show={showEmojiPicker}
+        setShow={setShowEmojiPicker}
+      />
+      
+      <button 
+        type="submit"
+        className="send-button"
+        disabled={!newComment.trim()}
+      >
+        <FontAwesomeIcon icon={faPaperPlane} />
+      </button>
     </form>
   );
 };
