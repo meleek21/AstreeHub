@@ -77,6 +77,9 @@ namespace ASTREE_PFE.Services
                 IsRead = false,
                 AttachmentUrl = messageDto.AttachmentUrl,
                 ConversationId = messageDto.ConversationId,
+                DeletedForUsers = new List<string>(),
+                IsEdited = false,
+                IsUnsent = false
             };
 
             await _messageRepository.CreateMessageAsync(message);

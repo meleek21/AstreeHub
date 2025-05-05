@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import EmojiPicker from '../../EmojiPicker';
-
+import connectionManager from '../../../services/connectionManager'; // Import connectionManager
+import { debounce } from 'lodash'; // Import debounce
 
 const MessageInput = ({ 
   messageText, 
@@ -15,16 +16,58 @@ const MessageInput = ({
 }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const typingTimeoutRef = useRef(null); // Ref to store timeout ID
+
+  // Debounced function to send typing indicator
+  const sendTypingIndicatorDebounced = useCallback(
+    debounce((convId) => {
+      if (convId) {
+        connectionManager.sendTypingIndicator(convId)
+          .catch(err => console.error("Failed to send typing indicator:", err));
+      }
+    }, 500), // Send indicator after 500ms of inactivity
+    [] // Empty dependency array ensures the debounced function is created only once
+  );
 
   const handleInputChange = (e) => {
-    setMessageText(e.target.value);
-    if (conversation && currentUser) {
-      connectionManager.sendTypingIndicator && connectionManager.sendTypingIndicator(conversation.id);
+    const newText = e.target.value;
+    setMessageText(newText);
+
+    // Send typing indicator if text is not empty and conversation exists
+    if (newText.trim() && conversation && currentUser) {
+      sendTypingIndicatorDebounced(conversation.id);
     }
+
+    // Clear previous timeout if user continues typing
+    // if (typingTimeoutRef.current) {
+    //   clearTimeout(typingTimeoutRef.current);
+    // }
+
+    // Set a new timeout to potentially send a 'stop typing' event later if needed
+    // Note: The current setup relies on the receiver's timeout to clear the indicator
+    // typingTimeoutRef.current = setTimeout(() => {
+    //   // Optionally send a 'stop typing' event if the backend supports it
+    //   // connectionManager.stopTypingIndicator(conversation.id);
+    // }, 3000); // Example: stop after 3 seconds of inactivity
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // Cancel any pending debounced calls on unmount
+      sendTypingIndicatorDebounced.cancel();
+    };
+  }, [sendTypingIndicatorDebounced]);
 
   const handleEmojiSelect = (emoji) => {
     setMessageText(prev => prev + (emoji.native || ''));
+    // Trigger typing indicator when emoji is added
+    if (conversation && currentUser) {
+      sendTypingIndicatorDebounced(conversation.id);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -59,7 +102,7 @@ const MessageInput = ({
           <input
             type="text"
             value={messageText}
-            onChange={handleInputChange}
+            onChange={handleInputChange} // Use updated handler
             onKeyDown={handleKeyDown}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
