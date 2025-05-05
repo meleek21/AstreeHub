@@ -34,6 +34,9 @@ class ConnectionManager {
     this.handleUserActivity = this.handleUserActivity.bind(this);
     this.sendHeartbeat = this.sendHeartbeat.bind(this);
     this.checkInactivity = this.checkInactivity.bind(this);
+    this.invokeHub = this.invokeHub.bind(this);
+    this.ensureUserConnection = this.ensureUserConnection.bind(this);
+    this.ensureMessageConnection = this.ensureMessageConnection.bind(this);
   }
 
   // --- State Management ---
@@ -89,9 +92,9 @@ class ConnectionManager {
     // Initial heartbeat
     this.sendHeartbeat();
 
-    // Set up heartbeat interval
+    // Set up heartbeat interval using an arrow function to ensure 'this' context
     this.heartbeatIntervalId = setInterval(
-      this.sendHeartbeat,
+      () => this.sendHeartbeat(), // Use arrow function to preserve 'this'
       this.HEARTBEAT_INTERVAL
     );
 
@@ -219,7 +222,6 @@ class ConnectionManager {
   }
 
   // --- Unified Start/Stop ---
-  // In connectionManager.js - enhance the start method
   async start() {
     if (this.state === ConnectionState.CONNECTED) {
       console.log("Connection manager already started.");
@@ -498,10 +500,18 @@ class ConnectionManager {
 
     // Use connection.off().on() pattern to ensure handlers are correctly (re)applied
     if (connectionType === "user") {
-      // Example: Register user-specific handlers using callbacks object
+      // Fix for userstatuschanged case sensitivity issue
       if (callbacks.onUserStatusChange) {
+        // First, remove any existing handlers to avoid duplicates
         connection.off("UserStatusChanged");
+        connection.off("userstatuschanged");
+        
+        // Register with both case variations to ensure compatibility
         connection.on("UserStatusChanged", (userId, isOnline, lastSeen) => {
+          callbacks.onUserStatusChange(userId, isOnline, lastSeen);
+        });
+        
+        connection.on("userstatuschanged", (userId, isOnline, lastSeen) => {
           callbacks.onUserStatusChange(userId, isOnline, lastSeen);
         });
       }
@@ -509,95 +519,221 @@ class ConnectionManager {
       // Register message-specific handlers using callbacks object
       if (callbacks.onReceiveMessage) {
         connection.off("ReceiveMessage");
+        connection.off("receivemessage");
         connection.on("ReceiveMessage", callbacks.onReceiveMessage);
+        connection.on("receivemessage", callbacks.onReceiveMessage);
       }
+      
       if (callbacks.onMessageRead) {
         connection.off("MessageRead");
+        connection.off("messageread");
         connection.on("MessageRead", callbacks.onMessageRead);
+        connection.on("messageread", callbacks.onMessageRead);
       }
+      
       if (callbacks.onUserTyping) {
         connection.off("UserTyping");
+        connection.off("usertyping");
+        // Register with both case variations to ensure compatibility
         connection.on("UserTyping", callbacks.onUserTyping);
+        connection.on("usertyping", callbacks.onUserTyping);
       }
-      // Add other message hub event handlers here
+      
+      if (callbacks.onMessageEdited) {
+        connection.off("MessageEdited");
+        connection.off("messageedited");
+        connection.on("MessageEdited", callbacks.onMessageEdited);
+        connection.on("messageedited", callbacks.onMessageEdited);
+      }
+      
+      if (callbacks.onMessageUnsent) {
+        connection.off("MessageUnsent");
+        connection.off("messageunsent");
+        connection.on("MessageUnsent", callbacks.onMessageUnsent);
+        connection.on("messageunsent", callbacks.onMessageUnsent);
+      }
+      
+      if (callbacks.onMessageDeleted) {
+        connection.off("MessageDeleted");
+        connection.off("messagedeleted");
+        connection.on("MessageDeleted", callbacks.onMessageDeleted);
+        connection.on("messagedeleted", callbacks.onMessageDeleted);
+      }
     }
   }
 
-  // --- Method Invocation ---
-  async invokeHub(connectionType, methodName, ...args) {
-    const connection =
-      connectionType === "user" ? this.userConnection : this.messageConnection;
-    const hubName = connectionType === "user" ? "User" : "Message";
+  // --- Message Hub Event Handling ---
+  registerMessageHandler(eventName, callback) {
+    if (!this.messageCallbacks[eventName]) {
+      this.messageCallbacks[eventName] = new Set();
+    }
+    this.messageCallbacks[eventName].add(callback);
+
+    // Ensure the SignalR handler is registered only once
+    if (this.messageConnection && this.messageCallbacks[eventName].size === 1) {
+      // Register with original case
+      this.messageConnection.on(eventName, (...args) => {
+        this.messageCallbacks[eventName].forEach(cb => cb(...args));
+      });
+      
+      // Register with lowercase version too
+      const lowerCaseEventName = eventName.toLowerCase();
+      if (lowerCaseEventName !== eventName) {
+        this.messageConnection.on(lowerCaseEventName, (...args) => {
+          this.messageCallbacks[eventName].forEach(cb => cb(...args));
+        });
+      }
+    }
+  }
+
+  unregisterMessageHandler(eventName, callback) {
+    if (this.messageCallbacks[eventName]) {
+      this.messageCallbacks[eventName].delete(callback);
+      if (this.messageCallbacks[eventName].size === 0 && this.messageConnection) {
+        // Clean up both case variations
+        this.messageConnection.off(eventName);
+        this.messageConnection.off(eventName.toLowerCase());
+      }
+    }
+  }
+
+  // --- Connection Readiness Checks ---
+  async ensureUserConnection() {
+    if (this.userConnection && this.userConnection.state === "Connected") {
+      return; // Already connected
+    }
+    if (!this.userConnectionPromise) {
+      console.warn("User connection start not initiated, attempting to start...");
+      // Optionally trigger start if not already in progress, or throw error
+      await this.start(); // Start connection if not already in progress
+    }
+    console.log("Waiting for user connection to be ready...");
+    await this.userConnectionPromise;
+    if (!this.userConnection || this.userConnection.state !== "Connected") {
+      throw new Error("Failed to establish user connection.");
+    }
+    console.log("User connection is ready.");
+  }
+
+  async ensureMessageConnection() {
+    if (this.messageConnection && this.messageConnection.state === "Connected") {
+      return; // Already connected
+    }
+    if (!this.messageConnectionPromise) {
+      console.warn("Message connection start not initiated, attempting to start...");
+      // Optionally trigger start if not already in progress
+      await this.start(); // Start connection if not already in progress
+    }
+    console.log("Waiting for message connection to be ready...");
+    await this.messageConnectionPromise;
+    if (!this.messageConnection || this.messageConnection.state !== "Connected") {
+      throw new Error("Failed to establish message connection.");
+    }
+    console.log("Message connection is ready.");
+  }
+
+  // --- Invoke Hub Methods ---
+  async invokeHub(hubType, methodName, ...args) {
+    let connection;
+    let connectionName;
+
+    if (hubType === "user") {
+      await this.ensureUserConnection(); // Ensure connection is ready
+      connection = this.userConnection;
+      connectionName = "UserHub";
+    } else if (hubType === "message") {
+      await this.ensureMessageConnection(); // Ensure connection is ready
+      connection = this.messageConnection;
+      connectionName = "MessageHub";
+    } else {
+      console.error(`Invalid hub type specified: ${hubType}`);
+      throw new Error(`Invalid hub type: ${hubType}`);
+    }
 
     if (!connection || connection.state !== "Connected") {
-      console.warn(
-        `${hubName} hub connection not ready for ${methodName}. Attempting to ensure connection...`
-      );
-      try {
-        await this.start(); // Ensure connections are attempted/re-established
-        const updatedConnection =
-          connectionType === "user"
-            ? this.userConnection
-            : this.messageConnection;
-        if (!updatedConnection || updatedConnection.state !== "Connected") {
-          throw new Error(
-            `${hubName} hub connection failed or not ready after attempt for invoking ${methodName}`
-          );
-        }
-        // If connection re-established, use the new connection object
-        return await updatedConnection.invoke(methodName, ...args);
-      } catch (error) {
-        console.error(
-          `Error ensuring connection for ${hubName} hub method ${methodName}:`,
-          error
-        );
-        throw error; // Re-throw the error after attempting to connect
-      }
+      console.error(`Cannot invoke ${methodName}, ${connectionName} connection not ready.`);
+      throw new Error(`${connectionName} connection not available`);
     }
-    // If already connected, proceed with invocation
+
     try {
+      console.debug(`Invoking ${methodName} on ${connectionName} with args:`, args);
       return await connection.invoke(methodName, ...args);
-    } catch (error) {
-      console.error(
-        `Error invoking ${hubName} hub method ${methodName}:`,
-        error
-      );
-      // Potentially check for specific error types (e.g., connection closed during invoke)
-      throw error;
+    } catch (err) {
+      console.error(`Error invoking ${methodName} on ${connectionName}:`, err);
+      // Handle specific errors, e.g., re-authentication
+      throw err;
     }
   }
 
+  // --- Specific User Hub Methods ---
   async invokeUserHub(methodName, ...args) {
     return this.invokeHub("user", methodName, ...args);
   }
 
+  // --- Specific Message Hub Methods ---
   async invokeMessageHub(methodName, ...args) {
     return this.invokeHub("message", methodName, ...args);
   }
 
   // --- Specific Message Hub Methods ---
-  async sendMessage(content, conversationId, attachmentUrl = null) {
-    return this.invokeMessageHub("sendMessage", {
-      content,
-      conversationId,
-      attachmentUrl,
-    });
+  async sendMessage(messageDto) {
+    try {
+      console.log(`Sending message to conversation ${messageDto.conversationId}`, messageDto);
+      return await this.invokeHub("message", "SendMessage", messageDto);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      throw error;
+    }
   }
 
   async markMessageAsRead(messageId) {
-    return this.invokeMessageHub("markMessageAsRead", messageId);
+    return this.invokeHub("message", "MarkMessageAsRead", messageId);
   }
 
   async sendTypingIndicator(conversationId) {
-    return this.invokeMessageHub("sendTypingIndicator", conversationId);
+    return this.invokeHub("message", "SendTypingIndicator", conversationId);
+  }
+
+  async stopTypingIndicator(conversationId) {
+    // Client-side handling for typing indicator timeout
+    console.log("Client stopped typing indicator display for", conversationId);
+  }
+
+  async editMessage(editDto) {
+    try {
+      console.log(`Editing message ${editDto.messageId}`, editDto);
+      // Try both case variations to ensure compatibility with server implementation
+      try {
+        return await this.invokeHub("message", "EditMessage", editDto.messageId, editDto.updatedContent);
+      } catch (error) {
+        // If the first attempt fails, try with lowercase method name
+        if (error.message && error.message.includes("Unauthorized")) {
+          console.warn("Authorization error with EditMessage, checking message ownership...");
+          throw error; // Re-throw the authorization error as it's a legitimate error
+        }
+        // Try lowercase version as fallback for other errors
+        return await this.invokeHub("message", "editmessage", editDto.messageId, editDto.updatedContent);
+      }
+    } catch (error) {
+      console.error("Error editing message:", error);
+      throw error;
+    }
+  }
+
+  async unsendMessage(messageId) {
+    return this.invokeHub("message", "UnsendMessage", messageId);
+  }
+
+  async deleteMessage(messageId) {
+    return this.invokeHub("message", "DeleteMessageForUser", messageId);
   }
 
   async joinConversation(conversationId) {
-    return this.invokeMessageHub("joinConversation", conversationId);
+    return this.invokeHub("message", "JoinConversation", conversationId);
   }
 
   async leaveConversation(conversationId) {
-    return this.invokeMessageHub("leaveConversation", conversationId);
+    return this.invokeHub("message", "LeaveConversation", conversationId);
   }
 
   // --- Getters ---
@@ -609,11 +745,10 @@ class ConnectionManager {
     return this.state;
   }
 
+  // --- Event Registration Methods ---
   // User Status Change Callbacks
   onUserStatusChange(callback) {
-    // This is a new, cleaner signature that matches what the server sends
     this.userCallbacks.onUserStatusChange = (userId, isOnline, lastSeen) => {
-      // Ensure timestamp is properly passed to the callback
       callback(userId, isOnline, lastSeen);
     };
 
@@ -626,6 +761,7 @@ class ConnectionManager {
     delete this.userCallbacks.onUserStatusChange;
     if (this.userConnection?.state === "Connected") {
       this.userConnection.off("UserStatusChanged");
+      this.userConnection.off("userstatuschanged");
     }
   }
 
@@ -633,11 +769,10 @@ class ConnectionManager {
   onReceiveMessage(callback) {
     this.messageCallbacks.onReceiveMessage = callback;
     if (this.messageConnection?.state === "Connected") {
-      this.setupEventHandlers(
-        this.messageConnection,
-        "message",
-        this.messageCallbacks
-      );
+      this.messageConnection.off("ReceiveMessage");
+      this.messageConnection.off("receivemessage");
+      this.messageConnection.on("ReceiveMessage", callback);
+      this.messageConnection.on("receivemessage", callback);
     }
   }
 
@@ -645,17 +780,17 @@ class ConnectionManager {
     delete this.messageCallbacks.onReceiveMessage;
     if (this.messageConnection?.state === "Connected") {
       this.messageConnection.off("ReceiveMessage");
+      this.messageConnection.off("receivemessage");
     }
   }
 
   onMessageRead(callback) {
     this.messageCallbacks.onMessageRead = callback;
     if (this.messageConnection?.state === "Connected") {
-      this.setupEventHandlers(
-        this.messageConnection,
-        "message",
-        this.messageCallbacks
-      );
+      this.messageConnection.off("MessageRead");
+      this.messageConnection.off("messageread");
+      this.messageConnection.on("MessageRead", callback);
+      this.messageConnection.on("messageread", callback);
     }
   }
 
@@ -663,17 +798,17 @@ class ConnectionManager {
     delete this.messageCallbacks.onMessageRead;
     if (this.messageConnection?.state === "Connected") {
       this.messageConnection.off("MessageRead");
+      this.messageConnection.off("messageread");
     }
   }
 
   onUserTyping(callback) {
     this.messageCallbacks.onUserTyping = callback;
     if (this.messageConnection?.state === "Connected") {
-      this.setupEventHandlers(
-        this.messageConnection,
-        "message",
-        this.messageCallbacks
-      );
+      this.messageConnection.off("UserTyping");
+      this.messageConnection.off("usertyping");
+      this.messageConnection.on("UserTyping", callback);
+      this.messageConnection.on("usertyping", callback);
     }
   }
 
@@ -681,6 +816,61 @@ class ConnectionManager {
     delete this.messageCallbacks.onUserTyping;
     if (this.messageConnection?.state === "Connected") {
       this.messageConnection.off("UserTyping");
+      this.messageConnection.off("usertyping");
+    }
+  }
+
+  onMessageEdited(callback) {
+    this.messageCallbacks.onMessageEdited = callback;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageEdited");
+      this.messageConnection.off("messageedited");
+      this.messageConnection.on("MessageEdited", callback);
+      this.messageConnection.on("messageedited", callback);
+    }
+  }
+
+  offMessageEdited() {
+    delete this.messageCallbacks.onMessageEdited;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageEdited");
+      this.messageConnection.off("messageedited");
+    }
+  }
+
+  onMessageUnsent(callback) {
+    this.messageCallbacks.onMessageUnsent = callback;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageUnsent");
+      this.messageConnection.off("messageunsent");
+      this.messageConnection.on("MessageUnsent", callback);
+      this.messageConnection.on("messageunsent", callback);
+    }
+  }
+
+  offMessageUnsent() {
+    delete this.messageCallbacks.onMessageUnsent;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageUnsent");
+      this.messageConnection.off("messageunsent");
+    }
+  }
+
+  onMessageDeleted(callback) {
+    this.messageCallbacks.onMessageDeleted = callback;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageDeleted");
+      this.messageConnection.off("messagedeleted");
+      this.messageConnection.on("MessageDeleted", callback);
+      this.messageConnection.on("messagedeleted", callback);
+    }
+  }
+
+  offMessageDeleted() {
+    delete this.messageCallbacks.onMessageDeleted;
+    if (this.messageConnection?.state === "Connected") {
+      this.messageConnection.off("MessageDeleted");
+      this.messageConnection.off("messagedeleted");
     }
   }
 }
