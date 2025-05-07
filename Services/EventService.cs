@@ -44,7 +44,9 @@ namespace ASTREE_PFE.Services
             _logger = logger; // Assign logger
         }
 
-        public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
+
+
+public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
         {
             var @event = _mapper.Map<Event>(eventDto);
             // Always derive type from category
@@ -69,8 +71,8 @@ namespace ASTREE_PFE.Services
                 }
             }
 
-            return _mapper.Map<EventResponseDTO>(@event);
-        }
+    return _mapper.Map<EventResponseDTO>(@event);
+}
 
         public async Task<EventResponseDTO> GetEventByIdAsync(string id)
         {
@@ -81,6 +83,7 @@ namespace ASTREE_PFE.Services
             return _mapper.Map<EventResponseDTO>(@event);
         }
 
+        public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
         public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
         {
             var events = await _eventRepository.GetAllAsync();
@@ -196,7 +199,7 @@ namespace ASTREE_PFE.Services
         }
         
 
-public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto)
+        public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto)
 {
     var existingEvent = await _eventRepository.GetByIdAsync(id);
     if (existingEvent == null)
@@ -262,7 +265,7 @@ public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO e
 }
 
 // Improved DeleteEventAsync method
-public async Task<bool> DeleteEventAsync(string id)
+        public async Task<bool> DeleteEventAsync(string id)
 {
     var eventToDelete = await _eventRepository.GetByIdAsync(id);
     if (eventToDelete == null)
@@ -560,7 +563,7 @@ public async Task<bool> DeleteEventAsync(string id)
 
             return success;
         }
-public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
+        public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
 {
     var employees = await _employeeService.GetEmployeesByBirthDateAsync(DateTime.Today);
     return employees.Select(e => new BirthdayResponseDTO
@@ -575,7 +578,7 @@ public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
     });
 }
 
-public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
+        public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
 {
     var allEmployees = await _employeeService.GetAllEmployeesAsync();
     var today = DateTime.Today;
@@ -604,7 +607,7 @@ public async Task<IEnumerable<BirthdayResponseDTO>> GetClosestBirthdaysAsync()
     return closestBirthdays;
 }
 
-public async Task<IEnumerable<BirthdayEventDTO>> GetBirthdayEventsAsync(int month)
+    public async Task<IEnumerable<BirthdayEventDTO>> GetBirthdayEventsAsync(int month)
 {
     var employees = await _employeeService.GetEmployeesByBirthMonthAsync(month);
     return employees.Select(e => new BirthdayEventDTO

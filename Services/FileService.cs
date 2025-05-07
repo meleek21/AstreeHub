@@ -82,12 +82,34 @@ namespace ASTREE_PFE.Services
         {
             try
             {
+                // If the list is empty, return all files
+                if (fileIds == null || fileIds.Count == 0)
+                {
+                    return await _files.Find(_ => true).ToListAsync();
+                }
+                
                 var filter = Builders<FileModel>.Filter.In(f => f.Id, fileIds);
                 return await _files.Find(filter).ToListAsync();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error fetching files by IDs: {FileIds}", string.Join(", ", fileIds));
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Finds a file by its URL.
+        /// </summary>
+        public async Task<FileModel> FindFileByUrlAsync(string fileUrl)
+        {
+            try
+            {
+                return await _files.Find(f => f.FileUrl == fileUrl).FirstOrDefaultAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error finding file by URL: {FileUrl}", fileUrl);
                 throw;
             }
         }
