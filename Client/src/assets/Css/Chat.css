@@ -1,8 +1,37 @@
 .chat-container {
   display: flex;
-  height: 80vh;
+  height: 100vh;
   width: 100%;
-  background: transparent;
+  background-color: #f5f7fb;
+  overflow: hidden;
+  position: relative;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+/* Adjust width distribution for the three components */
+.chat-sidebar {
+  flex: 0 0 280px;
+  border-left: 1px solid #e1e4e8;
+  border-right: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  order: 3; /* Move to the end of flex container */
+}
+
+.conversation-list-container {
+  flex: 0 0 320px;
+  border-right: 1px solid #e1e4e8;
+  z-index: 5;
+  order: 1; /* First item in the flex container */
+}
+
+.chat-window {
+  flex: 1;
+  min-width: 0; /* Prevent flex items from overflowing */
+  z-index: 1;
+  order: 2; /* Middle item in the flex container */
 }
 
 .post-editor-overlay {
