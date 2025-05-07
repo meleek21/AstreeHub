@@ -47,10 +47,13 @@ namespace ASTREE_PFE.Services
         public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
         {
             var @event = _mapper.Map<Event>(eventDto);
+            // Always derive type from category
+            var derivedType = Event.GetEventType(eventDto.Category);
+            @event.Type = derivedType;
             await _eventRepository.CreateAsync(@event);
 
             // Notification logic
-            if (@event.IsOpenEvent || @event.Type == EventType.Birthday)
+            if (@event.IsOpenEvent || @event.Type == EventType.Anniversaire)
             {
                 var allEmployees = await _employeeService.GetAllEmployeesAsync();
                 var recipientIds = allEmployees.Select(e => e.Id).ToList();
@@ -78,130 +81,134 @@ namespace ASTREE_PFE.Services
             return _mapper.Map<EventResponseDTO>(@event);
         }
 
-public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
+        public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
         {
-            // 1. Get all regular events
             var events = await _eventRepository.GetAllAsync();
-            var eventDtos = _mapper.Map<List<EventResponseDTO>>(events);
-
-            // 2. Get recent birthdays using existing method
-            var recentBirthdays = await GetRecentBirthdaysAsync(4);
-
-            // 3. Convert birthdays to EventResponseDTO format
-            var birthdayEvents = recentBirthdays.Select(b => new EventResponseDTO
-            {
-                IsBirthdayEvent = true,
-                BirthdayDetails = b,
-                Title = $"{b.FullName}'s Birthday",
-                Description = "Birthday Celebration",
-                EventDateTime = b.NextBirthday,
-                EndDateTime = b.NextBirthday.AddHours(1),
-                Location = "Office",
-                Organizer = "System",
-                Category = EventCategory.Birthday,
-                IsOpenEvent = true
-            });
-
-            // 4. Merge and order by date
-            return eventDtos
-                .Concat(birthdayEvents)
-                .OrderBy(e => e.EventDateTime);
+            return _mapper.Map<List<EventResponseDTO>>(events);
         }
 
         public async Task<IEnumerable<BirthdayResponseDTO>> GetRecentBirthdaysAsync(int count = 4)
-{
-    var allEmployees = await _employeeService.GetAllEmployeesAsync();
-    var today = DateTime.Today;
+        {
+            var allEmployees = await _employeeService.GetAllEmployeesAsync();
+            var today = DateTime.Today;
 
-    var recentBirthdays = allEmployees
-        .Select(e => {
+            var recentBirthdays = allEmployees
+                .Select(e => {
             // Calculate this year's birthday
-            var thisBirthday = new DateTime(today.Year, e.DateOfBirth.Month, e.DateOfBirth.Day);
+                var thisBirthday = new DateTime(today.Year, e.DateOfBirth.Month, e.DateOfBirth.Day);
             
             // If the birthday has already passed this year, calculate days since
-            if (thisBirthday < today)
-            {
-                int daysSince = (today - thisBirthday).Days;
-                return new BirthdayResponseDTO
+                if (thisBirthday < today)
                 {
-                    EmployeeId = e.Id,
-                    FullName = e.FullName,
-                    DateOfBirth = e.DateOfBirth,
-                    Age = today.Year - e.DateOfBirth.Year,
-                    ProfilePictureUrl = e.ProfilePictureUrl,
-                    NextBirthday = thisBirthday,
-                    DaysUntilNextBirthday = -daysSince // Negative value indicates past date
-                };
-            }
+                    int daysSince = (today - thisBirthday).Days;
+                    return new BirthdayResponseDTO
+                    {
+                        EmployeeId = e.Id,
+                        FullName = e.FullName,
+                        DateOfBirth = e.DateOfBirth,
+                        Age = today.Year - e.DateOfBirth.Year,
+                        ProfilePictureUrl = e.ProfilePictureUrl,
+                        NextBirthday = thisBirthday,
+                        DaysUntilNextBirthday = -daysSince // Negative value indicates past date
+                    };
+                }
             // If birthday is today
-            else if (thisBirthday == today)
-            {
-                return new BirthdayResponseDTO
+                else if (thisBirthday == today)
                 {
-                    EmployeeId = e.Id,
-                    FullName = e.FullName,
-                    DateOfBirth = e.DateOfBirth,
-                    Age = today.Year - e.DateOfBirth.Year,
-                    ProfilePictureUrl = e.ProfilePictureUrl,
-                    NextBirthday = thisBirthday,
-                    DaysUntilNextBirthday = 0
-                };
-            }
+                    return new BirthdayResponseDTO
+                    {
+                        EmployeeId = e.Id,
+                        FullName = e.FullName,
+                        DateOfBirth = e.DateOfBirth,
+                        Age = today.Year - e.DateOfBirth.Year,
+                        ProfilePictureUrl = e.ProfilePictureUrl,
+                        NextBirthday = thisBirthday,
+                        DaysUntilNextBirthday = 0
+                    };
+                }
             // If birthday is in the future this year, calculate last year's birthday
-            else
-            {
-                var lastBirthday = thisBirthday.AddYears(-1);
-                int daysSince = (today - lastBirthday).Days;
-                return new BirthdayResponseDTO
+                else
                 {
-                    EmployeeId = e.Id,
-                    FullName = e.FullName,
-                    DateOfBirth = e.DateOfBirth,
-                    Age = today.Year - e.DateOfBirth.Year - 1,
-                    ProfilePictureUrl = e.ProfilePictureUrl,
-                    NextBirthday = lastBirthday,
-                    DaysUntilNextBirthday = -daysSince // Negative value indicates past date
-                };
-            }
-        })
-        .Where(b => b.DaysUntilNextBirthday <= 0) // Only include past birthdays (including today)
-        .OrderByDescending(b => b.NextBirthday) // Order by most recent first
-        .Take(count)
-        .ToList();
-
-    return recentBirthdays;
-}
+                    var lastBirthday = thisBirthday.AddYears(-1);
+                    int daysSince = (today - lastBirthday).Days;
+                    return new BirthdayResponseDTO
+                    {
+                        EmployeeId = e.Id,
+                        FullName = e.FullName,
+                        DateOfBirth = e.DateOfBirth,
+                        Age = today.Year - e.DateOfBirth.Year - 1,
+                        ProfilePictureUrl = e.ProfilePictureUrl,
+                        NextBirthday = lastBirthday,
+                        DaysUntilNextBirthday = -daysSince // Negative value indicates past date
+                    };
+                }
+            })
+            .Where(b => b.DaysUntilNextBirthday <= 0) // Only include past birthdays (including today)
+            .OrderByDescending(b => b.NextBirthday) // Order by most recent first
+            .Take(count)
+            .ToList();
+            return recentBirthdays;
+        }
 
         public async Task GenerateBirthdayEventsAsync()
         {
-            var employees = await _employeeRepository.GetAllAsync();
-            var currentYear = DateTime.Now.Year;
-            // Removed redundant allEmployees fetch, notification handled in CreateEventAsync
-
-            foreach (var employee in employees)
+            try
             {
-                var birthdayEventDto = new EventCreateDTO // Corrected variable name
+                var employees = (await _employeeRepository.GetAllAsync()).ToList();
+                var currentYear = DateTime.Now.Year;
+                var currentDate = DateTime.Now.Date;
+                var batchSize = 20;
+                for (int i = 0; i < employees.Count; i += batchSize)
                 {
-                    Title = $"{employee.FullName}'s Birthday",
-                    Type = EventType.Birthday,
-                    EventDateTime = new DateTime(currentYear, employee.DateOfBirth.Month, employee.DateOfBirth.Day),
-                    IsRecurring = true,
-                    AssociatedEmployeeId = employee.Id,
-                    Description = "Annual birthday celebration"
-                };
-
-                if (!await _eventRepository.ExistsForEmployeeAsync(employee.Id, birthdayEventDto.EventDateTime))
-                {
-                    await CreateEventAsync(birthdayEventDto);
+                    var batch = employees.Skip(i).Take(batchSize).ToList();
+                    foreach (var employee in batch)
+                    {
+                        var birthdayDate = new DateTime(currentYear, employee.DateOfBirth.Month, employee.DateOfBirth.Day);
+                        if (birthdayDate < currentDate)
+                            continue;
+                        if (await _eventRepository.ExistsForEmployeeAsync(employee.Id, birthdayDate))
+                        {
+                            _logger.LogInformation($"Birthday event already exists for {employee.FullName} on {birthdayDate:d}");
+                            continue;
+                        }
+                        var birthdayEventDto = new EventCreateDTO
+                        {
+                            Title = $"C'est l'anniversaire de {employee.FullName}!",
+                            Description = "Célébrons l'anniversaire!",
+                            Category = EventCategory.Anniversaire,
+                            EventDateTime = birthdayDate,
+                            EndDateTime = birthdayDate.AddHours(1),
+                            Location = "",
+                            Organizer = "System",
+                            IsRecurring = true,
+                            IsOpenEvent = true,
+                            AssociatedEmployeeId = employee.Id
+                        };
+                        await CreateEventAsync(birthdayEventDto);
+                        _logger.LogInformation($"Created birthday event for {employee.FullName} on {birthdayDate:d}");
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating birthday events");
+            }
         }
+        
 
 public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO eventDto)
 {
     var existingEvent = await _eventRepository.GetByIdAsync(id);
     if (existingEvent == null)
         throw new KeyNotFoundException($"Event with ID {id} not found.");
+
+    // Always set Type using GetEventType(Category) if category is provided
+    if (eventDto.Category.HasValue)
+    {
+        var derivedType = Event.GetEventType(eventDto.Category.Value);
+        existingEvent.Type = derivedType;
+        existingEvent.Category = eventDto.Category.Value;
+    }
 
     // Store original details for comparison if needed for notifications
     var originalTitle = existingEvent.Title;
@@ -226,7 +233,6 @@ public async Task<EventResponseDTO> UpdateEventAsync(string id, EventUpdateDTO e
             // For open events, notify all employees
             var allEmployees = await _employeeService.GetAllEmployeesAsync();
             var recipientIds = allEmployees.Select(e => e.Id).ToList();
-            
             // Create notification for each recipient
             await _notificationService.CreateEventUpdateNotificationAsync(
                 existingEvent.Id, 
@@ -400,7 +406,7 @@ public async Task<bool> DeleteEventAsync(string id)
                 throw new InvalidOperationException("Cannot change attendance status after it has been finalized.");
 
             // If the status is Accepted or Declined, mark it as final
-            bool markAsFinal = status == AttendanceStatus.Accepted || status == AttendanceStatus.Declined;
+            bool markAsFinal = status == AttendanceStatus.Accepté || status == AttendanceStatus.Refusé;
 
             // Update attendance status first
             var statusUpdated = await _eventRepository.UpdateAttendanceStatusAsync(eventId, employeeId, status);
@@ -415,7 +421,7 @@ public async Task<bool> DeleteEventAsync(string id)
                 }
 
                 // Notify organizer if status is Accepted
-                if (status == AttendanceStatus.Accepted && !string.IsNullOrEmpty(@event.Organizer))
+                if (status == AttendanceStatus.Accepté && !string.IsNullOrEmpty(@event.Organizer))
                 {
                     // Need employee's name for a better notification message
                     var attendee = await _employeeService.GetEmployeeByIdAsync(employeeId);
@@ -435,9 +441,9 @@ public async Task<bool> DeleteEventAsync(string id)
 
             var counts = new Dictionary<AttendanceStatus, int>
             {
-                { AttendanceStatus.Accepted, 0 },
-                { AttendanceStatus.Declined, 0 },
-                { AttendanceStatus.Pending, 0 }
+                { AttendanceStatus.Accepté, 0 },
+                { AttendanceStatus.Refusé, 0 },
+                { AttendanceStatus.EnAttente, 0 }
             };
 
             foreach (var status in @event.AttendeeStatuses.Values)
@@ -449,7 +455,7 @@ public async Task<bool> DeleteEventAsync(string id)
             var pendingCount = @event.Attendees.Count - @event.AttendeeStatuses.Count;
             if (pendingCount > 0)
             {
-                counts[AttendanceStatus.Pending] += pendingCount;
+                counts[AttendanceStatus.EnAttente] += pendingCount;
             }
 
             return counts;

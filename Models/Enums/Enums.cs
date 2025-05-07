@@ -4,13 +4,79 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace ASTREE_PFE.Models
 {
     public enum EventType
-    {
-        General,
-        Holiday,
-        Meeting,
-        Birthday
-    }
+{
+    Général,         // Événements non catégorisés
+    Réunion,        // Toutes les catégories liées aux réunions
+    Formation,      // Événements d'apprentissage et de développement
+    ÉvénementEntreprise,   // Événements à l'échelle de l'organisation
+    Anniversaire,
+    Personnel,      // Événements personnels des employés
+    Technique      // Événements liés à l'IT/aux systèmes
+}
 
+public enum EventCategory
+{
+    // Sous type Réunion
+        [BsonRepresentation(BsonType.String)]
+        RéunionÉquipe,
+        [BsonRepresentation(BsonType.String)]
+        RéunionDépartement,
+        [BsonRepresentation(BsonType.String)]
+        RéunionClient,
+        [BsonRepresentation(BsonType.String)]
+        EntretienIndividuel,
+
+        // Sous type Formation
+        [BsonRepresentation(BsonType.String)]
+        Atelier,
+        [BsonRepresentation(BsonType.String)]
+        Certification,
+        [BsonRepresentation(BsonType.String)]
+        Séminaire,
+
+        // Sous type ÉvénementEntreprise
+        [BsonRepresentation(BsonType.String)]
+        Conférence,
+        [BsonRepresentation(BsonType.String)]
+        TeamBuilding,
+        [BsonRepresentation(BsonType.String)]
+        FêteEntreprise,
+
+        // Sous type Personnel
+        [BsonRepresentation(BsonType.String)]
+        Anniversaire,
+        [BsonRepresentation(BsonType.String)]
+        AnniversaireTravail,
+        [BsonRepresentation(BsonType.String)]
+        Absence,
+
+        // Sous type Technique
+        [BsonRepresentation(BsonType.String)]
+        MaintenanceSystème,
+        [BsonRepresentation(BsonType.String)]
+        Déploiement,
+
+        // Sous type Général
+        [BsonRepresentation(BsonType.String)]
+        Autre,
+        [BsonRepresentation(BsonType.String)]
+        Urgence
+}
+
+public enum EventStatus
+    {
+        [BsonRepresentation(BsonType.String)]
+        ÀVenir,
+        [BsonRepresentation(BsonType.String)]
+        Planifié,
+        [BsonRepresentation(BsonType.String)]
+        EnCours,
+        [BsonRepresentation(BsonType.String)]
+        Terminé,
+        [BsonRepresentation(BsonType.String)]
+        Annulé
+    }
+    
     public enum ReactionType
     {
         [BsonRepresentation(BsonType.String)]
@@ -41,44 +107,14 @@ namespace ASTREE_PFE.Models
         Suspended
     }
 
-    public enum EventCategory
-    {
-        [BsonRepresentation(BsonType.String)]
-        Meeting,
-        [BsonRepresentation(BsonType.String)]
-        Training,
-        [BsonRepresentation(BsonType.String)]
-        Conference,
-        [BsonRepresentation(BsonType.String)]
-        TeamBuilding,
-        [BsonRepresentation(BsonType.String)]
-        Other,
-        [BsonRepresentation(BsonType.String)]
-        Birthday
-    }
-
-    public enum EventStatus
-    {
-        [BsonRepresentation(BsonType.String)]
-        Upcoming,
-        [BsonRepresentation(BsonType.String)]
-        Scheduled,
-        [BsonRepresentation(BsonType.String)]
-        InProgress,
-        [BsonRepresentation(BsonType.String)]
-        Completed,
-        [BsonRepresentation(BsonType.String)]
-        Cancelled
-    }
-
     public enum AttendanceStatus
     {
         [BsonRepresentation(BsonType.String)]
-        Pending,
+        EnAttente,
         [BsonRepresentation(BsonType.String)]
-        Accepted,
+        Accepté,
         [BsonRepresentation(BsonType.String)]
-        Declined
+        Refusé
     }
 
     public enum NotificationType

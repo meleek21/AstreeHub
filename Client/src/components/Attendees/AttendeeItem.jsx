@@ -1,5 +1,5 @@
 import React from 'react';
-import UserBadge from './UserBadge';
+import UserBadge from '../UserBadge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faUserMinus } from '@fortawesome/free-solid-svg-icons';
 
@@ -8,48 +8,49 @@ const AttendeeItem = ({
   isOrganizer,
   isEditing,
   user,
-  userAttendanceStatus,
+  status,
+  isFinal,
   handleStatusChange,
   handleRemoveAttendee,
   event
 }) => {
-  const getStatus = () => attendeeId === user.id ? userAttendanceStatus.status : 'Pending';
-
+  console.log('is final', isFinal);
   return (
     <div className="attendee-item">
       <div className="attendee-info">
         <UserBadge userId={attendeeId} showBirthday={true} />
       </div>
       <div className="attendee-actions">
-        {isOrganizer && user.id === attendeeId ? (
+        {(user.id === attendeeId && event && !event.isOpenEvent) ? (
           <div className="btn-group btn-group-sm ml-2">
             <button 
-              className={`btn ${getStatus() === 'Accepted' ? 'btn-success active' : 'btn-outline-success'}`}
-              onClick={() => handleStatusChange('Accepted')}
-              disabled={userAttendanceStatus.isFinal}
+              className={`btn accepted${status === 'Accepté' ? 'btn-success active' : 'btn-outline-success'}`}
+              onClick={() => handleStatusChange('Accepté')}
+              disabled={isFinal}
             >
               <FontAwesomeIcon icon={faCheck} />
-              <span className="button-text">Accept</span>
+              <span className="button-text">Accepter</span>
             </button>
             <button 
-              className={`btn ${getStatus() === 'Declined' ? 'btn-danger active' : 'btn-outline-danger'}`}
-              onClick={() => handleStatusChange('Declined')}
-              disabled={userAttendanceStatus.isFinal}
+              className={`btn ${status === 'Refusé' ? 'btn-danger active' : 'btn-outline-danger'}`}
+              onClick={() => handleStatusChange('Refusé')}
+              disabled={isFinal}
             >
               <FontAwesomeIcon icon={faTimes} />
-              <span className="button-text">Decline</span>
+              <span className="button-text">Refuser</span>
             </button>
           </div>
         ) : isOrganizer && isEditing ? (
           <button 
-            className="btn btn-sm btn-danger"
+            className="cancel-btn"
             onClick={() => handleRemoveAttendee(attendeeId)}
           >
-            <FontAwesomeIcon icon={faUserMinus} /> Remove
+            <FontAwesomeIcon icon={faUserMinus} /> Supprimer
           </button>
         ) : null}
       </div>
     </div>
   );
 };
+
 export default AttendeeItem;

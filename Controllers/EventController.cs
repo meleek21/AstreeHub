@@ -17,6 +17,7 @@ namespace ASTREE_PFE.Controllers
         private readonly IEventService _eventService;
         private readonly IEmployeeService _employeeService;
         private readonly IGoogleCalendarService _googleCalendarService;
+        private readonly ILogger<EventController> _logger;
 
         /// <summary>
         /// Initializes a new instance of the EventController class.
@@ -24,11 +25,12 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventService">Service for managing events</param>
         /// <param name="employeeService">Service for managing employees</param>
         /// <param name="googleCalendarService">Service for Google Calendar integration</param>
-        public EventController(IEventService eventService, IEmployeeService employeeService, IGoogleCalendarService googleCalendarService)
+        public EventController(IEventService eventService, IEmployeeService employeeService, IGoogleCalendarService googleCalendarService, ILogger<EventController> logger)
         {
             _eventService = eventService;
             _employeeService = employeeService;
             _googleCalendarService = googleCalendarService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -72,7 +74,7 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        
         /// <summary>
         /// Retrieves all events in the system.
         /// </summary>
@@ -224,7 +226,7 @@ namespace ASTREE_PFE.Controllers
                 if (!@event.Attendees.Contains(userId))
                     return NotFound($"User with ID {userId} is not an attendee of this event.");
 
-                var status = @event.AttendeeStatuses.GetValueOrDefault(userId, AttendanceStatus.Pending);
+                var status = @event.AttendeeStatuses.GetValueOrDefault(userId, AttendanceStatus.EnAttente);
                 var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(userId, false);
 
                 return Ok(new AttendanceStatusResponseDTO
@@ -260,7 +262,7 @@ namespace ASTREE_PFE.Controllers
                 if (!@event.Attendees.Contains(employeeId))
                     return NotFound($"Employee with ID {employeeId} is not an attendee of this event.");
 
-                var status = @event.AttendeeStatuses.GetValueOrDefault(employeeId, AttendanceStatus.Pending);
+                var status = @event.AttendeeStatuses.GetValueOrDefault(employeeId, AttendanceStatus.EnAttente);
                 var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(employeeId, false);
 
                 var response = new AttendanceStatusResponseDTO
@@ -456,6 +458,33 @@ namespace ASTREE_PFE.Controllers
         }
 
         /// <summary>
+        /// Generates birthday events for all employees in the system.
+        /// </summary>
+        /// <returns>200 OK on success, 400 if generation fails.</returns>
+        [HttpPost("generate-birthdays")]
+        public async Task<ActionResult> GenerateBirthdayEvents()
+        {
+            try
+            {
+                // Prevent duplicate birthday events
+                var allEvents = await _eventService.GetAllEventsAsync();
+                // Assuming EventResponseDTO has a property to identify birthday events, e.g., IsBirthdayEvent or Category
+                bool birthdayEventsExist = allEvents.Any(e => e.Category == EventCategory.Anniversaire);
+                if (birthdayEventsExist)
+                {
+                    return BadRequest("Birthday events already exist. Generation aborted to prevent duplicates.");
+                }
+                await _eventService.GenerateBirthdayEventsAsync();
+                return Ok("Birthday events generated successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to generate birthday events");
+                return BadRequest($"Failed to generate birthday events: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Invites all employees from a department to an event.
         /// </summary>
         /// <param name="eventId">Event ID</param>
@@ -503,6 +532,8 @@ namespace ASTREE_PFE.Controllers
         {
             try
             {
+                // Debug log: log received payload
+                Console.WriteLine($"[InviteMultiple] eventId: {eventId}, employeeIds: {string.Join(",", employeeIds ?? new List<string>())}");
                 // Check if event exists
                 var existingEvent = await _eventService.GetEventByIdAsync(eventId);
                 if (existingEvent == null)
