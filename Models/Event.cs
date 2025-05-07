@@ -26,7 +26,7 @@ namespace ASTREE_PFE.Models
     public string Description { get; set; }
 
     [BsonElement("eventType")]
-    public EventType Type { get; set; } = EventType.General;
+    public EventType Type { get; set; } = EventType.Général;
 
     [BsonElement("isRecurring")]
     public bool IsRecurring { get; set; }
@@ -69,10 +69,42 @@ namespace ASTREE_PFE.Models
 
     // Status of the event (e.g., Upcoming, Ongoing, Completed)
     [BsonElement("status")]
-    public EventStatus Status { get; set; } = EventStatus.Upcoming;
+    public EventStatus Status { get; set; } = EventStatus.ÀVenir;
 
     // Indicates whether the event is open to everyone
     [BsonElement("isOpenEvent")]
     public bool IsOpenEvent { get; set; } = false;
+
+    public static EventType GetEventType(EventCategory category)
+    {
+        switch (category)
+        {
+            case EventCategory.RéunionÉquipe:
+            case EventCategory.RéunionDépartement:
+            case EventCategory.RéunionClient:
+            case EventCategory.EntretienIndividuel:
+                return EventType.Réunion;
+            case EventCategory.Atelier:
+            case EventCategory.Certification:
+            case EventCategory.Séminaire:
+                return EventType.Formation;
+            case EventCategory.Conférence:
+            case EventCategory.TeamBuilding:
+            case EventCategory.FêteEntreprise:
+                return EventType.ÉvénementEntreprise;
+            case EventCategory.Anniversaire:
+            case EventCategory.AnniversaireTravail:
+            case EventCategory.Absence:
+                return EventType.Personnel;
+            case EventCategory.MaintenanceSystème:
+            case EventCategory.Déploiement:
+                return EventType.Technique;
+            case EventCategory.Autre:
+            case EventCategory.Urgence:
+                return EventType.Général;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(category), category, null);
+        }
+    }
 }
 }

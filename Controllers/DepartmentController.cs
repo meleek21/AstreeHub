@@ -29,7 +29,6 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "ADMIN,DIRECTOR,SUPERADMIN")]
         public async Task<ActionResult<IEnumerable<DepartmentResponseDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();

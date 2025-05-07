@@ -1,0 +1,236 @@
+/* ClosestBirthdays.css */
+.closest-birthdays-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    padding: 24px 20px 16px 20px;
+    margin: 0 auto 24px auto;
+    max-width: 600px;
+    transition: var(--transition);
+    animation: fadeIn 0.5s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .closest-birthdays-title {
+    display: flex;
+    align-items: center;
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--primary);
+    transition: var(--transition-fast);
+  }
+  
+  .closest-birthdays-title:hover {
+    color: var(--accent);
+  }
+  
+  .closest-birthdays-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 18px;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--primary-lighter);
+  }
+  
+  .closest-birthdays-scroll::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .closest-birthdays-scroll::-webkit-scrollbar-track {
+    background: var(--primary-lighter);
+    border-radius: 10px;
+  }
+  
+  .closest-birthdays-scroll::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+    transition: var(--transition-fast);
+  }
+  
+  .closest-birthdays-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-alt);
+  }
+  
+  .birthday-card {
+    background: var(--primary-lighter);
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    min-width: 180px;
+    max-width: 200px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .birthday-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: var(--transition);
+  }
+  
+  .birthday-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-5px);
+  }
+  
+  .birthday-card:hover::before {
+    transform: scaleX(1);
+  }
+  
+  .birthday-avatar {
+    background: var(--accent);
+    color: var(--text-on-dark);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.7rem;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .birthday-card:hover .birthday-avatar {
+    transform: rotate(10deg) scale(1.1);
+    background: var(--gradient-accent);
+  }
+  
+  .birthday-avatar::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    transition: var(--transition);
+  }
+  
+  .birthday-card:hover .birthday-avatar::after {
+    opacity: 0.4;
+  }
+  
+  .birthday-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+  }
+  
+  .birthday-name {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.08rem;
+    transition: var(--transition-fast);
+  }
+  
+  .birthday-card:hover .birthday-name {
+    color: var(--accent);
+  }
+  
+  .birthday-date {
+    color: var(--text-secondary);
+    font-size: 0.98rem;
+    transition: var(--transition-fast);
+  }
+  
+  .birthday-card:hover .birthday-date {
+    color: var(--primary);
+  }
+  
+  .birthday-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 2px solid var(--text-on-dark);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+  }
+  
+  .birthday-card:hover .birthday-avatar-img {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(253, 137, 22, 0.3);
+  }
+  
+  .birthday-wish {
+    color: var(--accent);
+    font-size: 1.02rem;
+    font-weight: 600;
+    margin-top: 4px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: var(--transition);
+  }
+  
+  .birthday-card:hover .birthday-wish {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .closest-birthdays-loading,
+  .closest-birthdays-error,
+  .closest-birthdays-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    padding: 18px 0;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+  
+  @media (max-width: 700px) {
+    .closest-birthdays-container {
+      padding: 16px 12px 12px 12px;
+      max-width: 100vw;
+      border-radius: 0;
+      box-shadow: none;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .birthday-card {
+      min-width: 150px;
+      max-width: 160px;
+      padding: 12px 8px;
+    }
+    
+    .birthday-avatar {
+      width: 50px;
+      height: 50px;
+      font-size: 1.4rem;
+    }
+    
+    .closest-birthdays-title {
+      font-size: 1.2rem;
+      justify-content: center;
+    }
+    
+    .closest-birthdays-scroll {
+      gap: 12px;
+    }
+  }

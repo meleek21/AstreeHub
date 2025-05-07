@@ -11,8 +11,6 @@ namespace ASTREE_PFE.DTOs
 
     public class EventCreateDTO
     {
-        [Required]
-        public EventType Type { get; set; } = EventType.General;
 
         [Required]
         [StringLength(100, MinimumLength = 5)]
@@ -36,11 +34,13 @@ namespace ASTREE_PFE.DTOs
         [StringLength(50)]
         public string Organizer { get; set; } = null!;
 
+        [Required]
         public EventCategory Category { get; set; }
 
         public bool IsOpenEvent { get; set; } = false;
 
         public bool IsRecurring { get; set; }
+        
         public string AssociatedEmployeeId { get; set; }
     }
 
@@ -79,6 +79,7 @@ namespace ASTREE_PFE.DTOs
         public string Location { get; set; } = null!;
         public string Organizer { get; set; } = null!;
         public EventCategory Category { get; set; }
+        public EventType Type { get; set; } // Added to expose event type
         public List<string> Attendees { get; set; } = new List<string>();
         public EventStatus Status { get; set; }
         public bool IsOpenEvent { get; set; }

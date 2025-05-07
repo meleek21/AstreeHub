@@ -6,15 +6,15 @@ const StatusSummary = ({ statusCounts }) => (
   <div className="status-summary">
     <div className="status-badge accepted">
       <FontAwesomeIcon icon={faCheck} />
-      <span>{statusCounts.Accepted} Accepted</span>
+      <span>{statusCounts.Accepté} Accepté</span>
     </div>
     <div className="status-badge declined">
       <FontAwesomeIcon icon={faTimes} />
-      <span>{statusCounts.Declined} Declined</span>
+      <span>{statusCounts.Refusé} Refusé</span>
     </div>
     <div className="status-badge pending">
       <FontAwesomeIcon icon={faQuestion} />
-      <span>{statusCounts.Pending} Pending</span>
+      <span>{statusCounts.EnAttente} En Attente</span>
     </div>
   </div>
 );

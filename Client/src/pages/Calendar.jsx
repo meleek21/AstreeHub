@@ -3,17 +3,33 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import EventForm from '../components/EventForm';
-import EventDetails from '../components/EventDetails';
+import EventForm from '../components/Event/EventForm';
+import EventDetails from '../components/Event/EventDetails';
+import EventSideBar from '../components/EventSideBar';
+import ModalPortal from '../components/ModalPortal';
 import { eventsAPI } from '../services/apiServices';
 import '../assets/Css/Calendar.css';
 
 const Calendar = () => {
+  const getEventTypeColor = (type) => {
+    const typeColors = {
+      'Général': '#3788d8',
+      'Réunion': '#2c3e50',
+      'Formation': '#27ae60',
+      'ÉvénementEntreprise': '#8e44ad',
+      'Personnel': '#e67e22',
+      'Anniversaire': '#e74c3c',
+      'Technique': '#3498db'
+    };
+    return typeColors[type] || typeColors['Général'];
+  };
+
   const [selectedDate, setSelectedDate] = useState(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const [birthdays, setBirthdays] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchEvents();
@@ -25,7 +41,7 @@ const Calendar = () => {
       const response = await eventsAPI.getAllEvents();
       setEvents(response.data);
     } catch (error) {
-      console.error('Failed to fetch events:', error);
+      console.error('Échec de la récupération des événements:', error);
     }
   };
 
@@ -34,17 +50,22 @@ const Calendar = () => {
       const response = await eventsAPI.GetTodaysBirthdays();
       setBirthdays(response.data);
     } catch (error) {
-      console.error('Failed to fetch birthdays:', error);
+      console.error('Échec de la récupération des anniversaires:', error);
     }
   };
 
-  // Convert events to FullCalendar format
+  const filteredEvents = events.filter(event => 
+    event.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const calendarEvents = [
-    ...events.map(event => ({
+    ...filteredEvents.map(event => ({
       id: event.id,
       title: event.title,
       start: event.eventDateTime,
       end: event.endDateTime,
+      backgroundColor: getEventTypeColor(event.type),
+      borderColor: getEventTypeColor(event.type),
       extendedProps: {
         description: event.description,
         location: event.location,
@@ -52,12 +73,13 @@ const Calendar = () => {
         isOpenEvent: event.isOpenEvent,
         attendees: event.attendees || [],
         organizerName: event.organizerName,
-        organizer: event.organizer
+        organizer: event.organizer,
+        type: event.type || 'Général'
       }
     })),
     ...birthdays.map(birthday => ({
       id: `birthday-${birthday.employeeId}`,
-      title: `${birthday.firstName} ${birthday.lastName}'s Birthday`,
+      title: `Anniversaire de ${birthday.firstName} ${birthday.lastName}`,
       start: birthday.birthDate,
       allDay: true,
       backgroundColor: '#ff7675',
@@ -80,7 +102,8 @@ const Calendar = () => {
       id: info.event.id,
       title: info.event.title,
       eventDateTime: info.event.start,
-      endDateTime: info.event.end
+      endDateTime: info.event.end,
+      type: info.event.extendedProps.type || 'Général'
     });
   };
 
@@ -94,46 +117,85 @@ const Calendar = () => {
     setSelectedEvent(null);
   };
 
+  const handleSearchChange = (term) => {
+    setSearchTerm(term);
+  };
+
   return (
-    <div className="calendar-container">
-      <FullCalendar
-        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-        }}
-        events={calendarEvents}
-        dateClick={handleDateClick}
-        eventClick={handleEventClick}
-        height="auto"
-        nowIndicator={true}
-        editable={true}
-        selectable={true}
-        eventDisplay="block"
-        eventColor="#3788d8"
-      />
+    <div className="calendar-app-container">
+      <div className="calendar-main-content">
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+          }}
+          events={calendarEvents}
+          dateClick={handleDateClick}
+          eventClick={handleEventClick}
+          height="auto"
+          nowIndicator={true}
+          editable={true}
+          selectable={true}
+          eventDisplay="block"
+          eventColor="#3788d8"
+          dayMaxEventRows={3} // Limit visible events per day
+          dayMaxEvents={3}    // Show "+ more" if exceeded
+
+          aspectRatio={1.5}   // Width/height ratio
+          locale="fr"
+          buttonText={{
+            today: "Aujourd'hui",
+            month: 'Mois',
+          }}
+          dayHeaderFormat={{ weekday: 'short' }}
+          dayHeaderContent={(arg) => {
+            return <div className="day-header">{arg.text}</div>;
+          }}
+          dayCellContent={(arg) => {
+            return <div className="day-number">{arg.dayNumberText}</div>;
+          }}
+          eventContent={(arg) => {
+            return (
+              <div className="calendar-event" style={{ backgroundColor: arg.backgroundColor }}>
+                {arg.event.title}
+              </div>
+            );
+          }}
+        />
+      </div>
+
+      <EventSideBar onSearchChange={handleSearchChange} onCreateEvent={() => setShowEventForm(true)} />
 
       {showEventForm && (
-        <div className="event-form-sidebar">
-          <EventForm 
-            selectedDate={selectedDate} 
-            onClose={() => setShowEventForm(false)}
-            onEventCreated={handleEventCreated}
-          />
-        </div>
+        <ModalPortal>
+          <div className="post-editor-overlay" onClick={() => setShowEventForm(false)}>
+            <div className="post-editor-content" onClick={e => e.stopPropagation()}>
+              <EventForm 
+                selectedDate={selectedDate} 
+                onClose={() => setShowEventForm(false)}
+                onEventCreated={handleEventCreated}
+              />
+            </div>
+          </div>
+        </ModalPortal>
       )}
 
       {selectedEvent && (
-        <div className="event-details-sidebar">
-          <EventDetails 
-            event={selectedEvent}
-            onClose={() => setSelectedEvent(null)}
-            onDelete={handleEventDeleted}
-            onUpdate={fetchEvents}
-          />
-        </div>
+        <ModalPortal>
+          <div className="post-editor-overlay" onClick={() => setSelectedEvent(null)}>
+            <div  onClick={e => e.stopPropagation()}>
+              <EventDetails 
+                event={selectedEvent}
+                onClose={() => setSelectedEvent(null)}
+                onDelete={handleEventDeleted}
+                onUpdate={fetchEvents}
+              />
+            </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

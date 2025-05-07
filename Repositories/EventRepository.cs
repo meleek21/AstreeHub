@@ -37,7 +37,7 @@ namespace ASTREE_PFE.Repositories
         public async Task<IEnumerable<Event>> GetUpcomingEventsAsync()
         {
             var filter = Builders<Event>.Filter.And(
-                Builders<Event>.Filter.Eq(e => e.Status, EventStatus.Upcoming),
+                Builders<Event>.Filter.Eq(e => e.Status, EventStatus.ÀVenir),
                 Builders<Event>.Filter.Gt(e => e.EventDateTime, DateTime.UtcNow)
             );
             return await _events.Find(filter).ToListAsync();
@@ -46,8 +46,8 @@ namespace ASTREE_PFE.Repositories
         public async Task<IEnumerable<Event>> GetBirthdayEventsAsync(int month)
         {
             var filter = Builders<Event>.Filter.And(
-                Builders<Event>.Filter.Eq(e => e.Type, EventType.Birthday),
-                Builders<Event>.Filter.Gte(e => e.EventDateTime, new DateTime(DateTime.Now.Year, month, 1)) & Builders<Event>.Filter.Lt(e => e.EventDateTime, new DateTime(DateTime.Now.Year, month, 1).AddMonths(1))
+                Builders<Event>.Filter.Eq(e => e.Type, EventType.Anniversaire),
+                Builders<Event>.Filter.Eq(e => e.EventDateTime.Month, month)
             );
             return await _events.Find(filter).ToListAsync();
         }
@@ -73,7 +73,7 @@ namespace ASTREE_PFE.Repositories
             var filter = Builders<Event>.Filter.Eq(e => e.Id, eventId);
             var updates = Builders<Event>.Update.Combine(
                 Builders<Event>.Update.AddToSet(e => e.Attendees, employeeId),
-                Builders<Event>.Update.Set(e => e.AttendeeStatuses[employeeId], AttendanceStatus.Pending)
+                Builders<Event>.Update.Set(e => e.AttendeeStatuses[employeeId], AttendanceStatus.EnAttente)
             );
             var result = await _events.UpdateOneAsync(filter, updates);
             return result.ModifiedCount > 0;

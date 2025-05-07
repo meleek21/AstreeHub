@@ -303,9 +303,9 @@ namespace ASTREE_PFE.Services
         {
             return status switch
             {
-                AttendanceStatus.Accepted => "Accepted",
-                AttendanceStatus.Declined => "Declined",
-                AttendanceStatus.Pending => "Pending",
+                AttendanceStatus.Accepté => "Accepté",
+                AttendanceStatus.Refusé => "Refusé",
+                AttendanceStatus.EnAttente => "EnAttente",
                 _ => "Updated"
             };
         }

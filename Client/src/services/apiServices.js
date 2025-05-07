@@ -211,7 +211,11 @@ export const eventsAPI = {
   // Bulk invitation endpoints
   inviteAll: (eventId) => api.post(`/event/${eventId}/invite-all`),
   inviteDepartment: (eventId, departmentId) => api.post(`/event/invite-department/${eventId}/${departmentId}`),
-  inviteMultiple: (eventId, employeeIds) => api.post(`/event/${eventId}/invite-multiple`, { employeeIds }),
+  inviteMultiple: (eventId, employeeIds) => api.post(`/event/${eventId}/invite-multiple`, employeeIds),
+  inviteSelected: (eventId, employeeIds) => {
+    console.log('inviteSelected payload:', employeeIds);
+    return api.post(`/event/${eventId}/invite-multiple`, employeeIds);
+  },
 
   getAttendanceStatusCounts: (eventId) => api.get(`/event/${eventId}/attendance-counts`),
   getUpcomingEvents: () => api.get('/event/upcoming'),
@@ -223,5 +227,10 @@ export const eventsAPI = {
   GetTodaysBirthdays: () => api.get('/event/birthdays/today'),
   GetClosestBirthdays: () => api.get('/event/birthdays/closest'),
   GetBirthdaysByMonth: (month) => api.get(`/event/birthdays/month/${month}`),
+};
+
+
+export const departmentAPI = {
+  getEmployeesInDepartment: (departmentId) => api.get(`/Department/${departmentId}/employees`)
 };
 
