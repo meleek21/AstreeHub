@@ -14,7 +14,8 @@ const ChatWindow = ({
   onEditMessage,
   onUnsendMessage,
   onSoftDeleteMessage,
-  onSoftDeleteConversation
+  onSoftDeleteConversation,
+  onLeaveGroup
 }) => {
   const [messageText, setMessageText] = useState('');
   const [attachment, setAttachment] = useState(null);
@@ -97,13 +98,11 @@ const ChatWindow = ({
   return (
     <div className="chat-window">
       <ChatHeader 
-        conversation={conversation}
+        conversation={conversation} 
         currentUser={currentUser}
         typingUsers={typingUsers}
         onSoftDeleteConversation={onSoftDeleteConversation}
-        showGroupMenu={showGroupMenu}
-        setShowGroupMenu={setShowGroupMenu}
-        refreshConversations={typeof onSoftDeleteConversation === 'function' ? onSoftDeleteConversation : () => {}}
+        refreshConversations={onLeaveGroup}
       />
 
       <div className="messages-container" ref={messagesContainerRef}>
