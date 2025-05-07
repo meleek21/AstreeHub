@@ -13,18 +13,24 @@ namespace ASTREE_PFE.Services
         private readonly IConversationRepository _conversationRepository;
         private readonly IEmployeeRepository _employeeRepository;
         private readonly INotificationService _notificationService;
+        private readonly IFileService _fileService;
+        private readonly ICloudinaryService _cloudinaryService;
 
         public MessageService(
             IMessageRepository messageRepository,
             IConversationRepository conversationRepository,
             IEmployeeRepository employeeRepository,
-            INotificationService notificationService
+            INotificationService notificationService,
+            IFileService fileService,
+            ICloudinaryService cloudinaryService
             )
         {
             _messageRepository = messageRepository;
             _conversationRepository = conversationRepository;
             _employeeRepository = employeeRepository;
             _notificationService = notificationService;
+            _fileService = fileService;
+            _cloudinaryService = cloudinaryService;
         }
 
         public async Task<MessageResponseDto> GetMessageByIdAsync(string id)
@@ -118,7 +124,29 @@ namespace ASTREE_PFE.Services
             if (message == null)
                 return false;
                 
-
+            // Check if the message has an attachment and delete it
+            if (!string.IsNullOrEmpty(message.AttachmentUrl))
+            {
+                try
+                {
+                    // Find the file with matching URL
+                    var file = await _fileService.FindFileByUrlAsync(message.AttachmentUrl);
+                    
+                    if (file != null)
+                    {
+                        // Delete from Cloudinary
+                        await _cloudinaryService.DeleteFileAsync(file.PublicId);
+                        
+                        // Delete from database
+                        await _fileService.DeleteFileAsync(file.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but continue with message deletion
+                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                }
+            }
 
             await _messageRepository.DeleteMessageAsync(id);
             return true;
@@ -308,8 +336,34 @@ return new ConversationDto
             if (message == null || message.SenderId != userId || (DateTime.UtcNow - message.Timestamp).TotalMinutes > 5)
                 return false;
 
+            // Check if the message has an attachment
+            if (!string.IsNullOrEmpty(message.AttachmentUrl))
+            {
+                try
+                {
+                    // Find the file with matching URL using the dedicated method
+                    var file = await _fileService.FindFileByUrlAsync(message.AttachmentUrl);
+                    
+                    if (file != null)
+                    {
+                        // Delete from Cloudinary using the public ID stored in the file record
+                        await _cloudinaryService.DeleteFileAsync(file.PublicId);
+                        
+                        // Delete from database
+                        await _fileService.DeleteFileAsync(file.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but continue with message unsend
+                    Console.WriteLine($"Error deleting file: {ex.Message}");
+                }
+            }
+
             message.IsUnsent = true;
             message.Content = "This message was unsent.";
+            message.AttachmentUrl = null; // Remove the attachment URL
+            message.UnsentAt = DateTime.UtcNow;
             await _messageRepository.UpdateMessageAsync(messageId, message);
             return true;
         }
