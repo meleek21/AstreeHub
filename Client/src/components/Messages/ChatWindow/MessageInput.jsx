@@ -21,7 +21,9 @@ const MessageInput = ({
   // Debounced function to send typing indicator
   const sendTypingIndicatorDebounced = useCallback(
     debounce((convId) => {
-      if (convId) {
+      // Only send typing indicator if the conversation ID is a valid MongoDB ObjectId
+      // MongoDB ObjectIds are 24-character hex strings
+      if (convId && /^[0-9a-f]{24}$/.test(convId)) {
         connectionManager.sendTypingIndicator(convId)
           .catch(err => console.error("Failed to send typing indicator:", err));
       }

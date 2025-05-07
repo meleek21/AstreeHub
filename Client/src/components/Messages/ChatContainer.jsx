@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { messagesAPI } from '../../services/apiServices';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow/ChatWindow';
+import ChatSidebar from './ChatSidebar';
 import '../../assets/Css/Chat.css';
 import {useAuth} from '../../Context/AuthContext';
 import connectionManager from '../../services/connectionManager';
@@ -15,6 +16,7 @@ const ChatContainer = () => {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [confirmModal, setConfirmModal] = useState({ open: false, onConfirm: null, title: '', message: '' });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const fetchConversations = useCallback(async () => {
     if (!currentUser || !currentUser.id) return;
@@ -184,49 +186,104 @@ const ChatContainer = () => {
     }
   };
 
-  const handleSendMessage = async (messageText, attachment) => {
-    if (!selectedConversation || !currentUser || !currentUser.id) return;
-    let attachmentUrl = null;
-    if (attachment) {
-      try {
-        const formData = new FormData();
-        formData.append('file', attachment);
-        // Use the API service for upload, not SignalR
-        const response = await messagesAPI.uploadMessageAttachment(formData);
-        attachmentUrl = response.data.fileUrl || response.data.FileUrl;
-      } catch (error) {
-        console.error('Échec du téléversement de la pièce jointe :', error);
-        alert('Échec du téléversement de la pièce jointe.');
-        return;
-      }
-    }
-    const messageContent = messageText.trim();
-    if (!messageContent && !attachmentUrl) {
-      alert('Message cannot be empty');
+// Fix for the handleSendMessage function in ChatContainer.jsx
+const handleSendMessage = async (messageText, attachment) => {
+  if (!selectedConversation || !currentUser || !currentUser.id) return;
+  let attachmentUrl = null;
+  
+  // Handle file attachment upload if present
+  if (attachment) {
+    try {
+      const formData = new FormData();
+      formData.append('file', attachment);
+      // Use the API service for upload, not SignalR
+      const response = await messagesAPI.uploadMessageAttachment(formData);
+      attachmentUrl = response.data.fileUrl || response.data.FileUrl;
+    } catch (error) {
+      console.error('Échec du téléversement de la pièce jointe :', error);
+      alert('Échec du téléversement de la pièce jointe.');
       return;
     }
-
-    const messageDto = {
-      content: messageContent,
-      conversationId: selectedConversation.id,
-      // UserId will be set by the backend Hub based on the connection's identity
-      attachmentUrl
-    };
-
-    console.log('Invoking SendMessage via SignalR:', messageDto);
+  }
+  
+  // If this is a temporary conversation, create it first
+  // If this is a temporary conversation, create it first
+  let conversationId = selectedConversation.id;
+  
+  // Check if the conversation ID is a valid MongoDB ObjectId (24-character hex string)
+  const isValidMongoId = /^[0-9a-f]{24}$/.test(conversationId);
+  
+  if (selectedConversation.isTemporary || !isValidMongoId) {
     try {
-      // Use ConnectionManager to send via SignalR
-      await connectionManager.sendMessage(messageDto);
-      // The message will be added to state via the onReceiveMessage listener
-      // No need to call setMessages here directly
-      console.log('SendMessage invoked successfully.');
-      // Refresh conversation list to show new last message immediately
-      fetchConversations();
+      // Find the other participant (not the current user)
+      const otherParticipant = selectedConversation.participants.find(
+        p => p.id !== currentUser.id
+      );
+      
+      // Create the conversation with the correctly structured DTO
+      const createConvResponse = await messagesAPI.createConversation({
+        participantIds: [currentUser.id, otherParticipant.id],
+        creatorId: currentUser.id,
+        isGroup: false,
+        title: "" // Empty string instead of null
+      });
+      
+      conversationId = createConvResponse.data.id;
+      
+      // Update the conversation in state
+      const newConversation = {
+        ...selectedConversation,
+        id: conversationId,
+        isTemporary: false
+      };
+      
+      setSelectedConversation(newConversation);
+      
+      // Add to conversations list
+      setConversations(prev => [newConversation, ...prev]);
+      
+      // Join the conversation's SignalR group
+      try {
+        await connectionManager.joinConversation(conversationId);
+        console.log(`Joined SignalR group for conversation: ${conversationId}`);
+      } catch (err) {
+        console.warn(`Failed to join SignalR group: ${err.message}`);
+        // Non-fatal error, continue with message sending
+      }
     } catch (error) {
-      console.error("Échec de l'envoi du message via SignalR:", error);
-      alert("Échec de l'envoi du message");
+      console.error('Error creating conversation:', error);
+      alert('Failed to create conversation.');
+      return;
     }
+  
+  }
+  const messageContent = messageText.trim();
+  if (!messageContent && !attachmentUrl) {
+    alert('Message cannot be empty');
+    return;
+  }
+
+  const messageDto = {
+    content: messageContent,
+    conversationId: conversationId, // Using the resolved conversationId
+    // UserId will be set by the backend Hub based on the connection's identity
+    attachmentUrl
   };
+
+  console.log('Invoking SendMessage via SignalR:', messageDto);
+  try {
+    // Use ConnectionManager to send via SignalR
+    await connectionManager.sendMessage(messageDto);
+    // The message will be added to state via the onReceiveMessage listener
+    // No need to call setMessages here directly
+    console.log('SendMessage invoked successfully.');
+    // Refresh conversation list to show new last message immediately
+    fetchConversations();
+  } catch (error) {
+    console.error("Échec de l'envoi du message via SignalR:", error);
+    alert("Échec de l'envoi du message");
+  }
+};
 
   const handleEditMessage = async (messageId, newContent) => {
     // Optimistic UI update can be done here or rely solely on the listener
@@ -341,8 +398,39 @@ const ChatContainer = () => {
     });
   };
 
+  // Handle selecting an employee from the sidebar
+  const handleSelectEmployee = async (employee) => {
+    setSelectedEmployee(employee);
+    
+    // Check if a conversation already exists with this employee
+    const existingConversation = conversations.find(conv => {
+      if (conv.isGroup) return false;
+      return conv.participants.some(p => p.id === employee.id);
+    });
+    
+    if (existingConversation) {
+      // If conversation exists, select it
+      handleSelectConversation(existingConversation);
+    } else {
+      // If no conversation exists, create a temporary conversation object
+      // but don't create it in the backend until a message is sent
+      const tempConversation = {
+        id: 'temp_' + employee.id,
+        isGroup: false,
+        participants: [employee, currentUser],
+        lastMessage: '',
+        lastMessageTime: new Date(),
+        isTemporary: true // Flag to indicate this is not yet saved
+      };
+      
+      setSelectedConversation(tempConversation);
+      setMessages([]);
+    }
+  };
+  
   return (
     <div className="chat-container">
+      <ChatSidebar onSelectEmployee={handleSelectEmployee} />
       <ConversationList
         conversations={conversations}
         selectedConversationId={selectedConversation?.id}
@@ -350,20 +438,19 @@ const ChatContainer = () => {
         currentUser={currentUser}
         onSelectConversation={handleSelectConversation}
       />
-        <ChatWindow
-          key={selectedConversation?.id || 'empty'} // Add key to force re-render on conversation change
-          conversation={selectedConversation}
-          messages={messages.filter(msg => !(msg.deletedForUsers || []).includes(currentUser.id))}
-          loading={loading}
-          currentUser={currentUser}
-          onSendMessage={handleSendMessage}
-          onEditMessage={handleEditMessage}
-          onUnsendMessage={handleUnsendMessage}
-          onSoftDeleteMessage={handleSoftDeleteMessage}
-          // Pass down functions for group/conversation deletion if ChatWindow needs them
-          // onSoftDeleteConversation={handleSoftDeleteConversation}
-          // handleDeleteGroup={handleDeleteGroup}
-        />
+      <ChatWindow
+        key={selectedConversation?.id || 'empty'} // Add key to force re-render on conversation change
+        conversation={selectedConversation}
+        messages={messages.filter(msg => !(msg.deletedForUsers || []).includes(currentUser.id))}
+        loading={loading}
+        currentUser={currentUser}
+        onSendMessage={handleSendMessage}
+        onEditMessage={handleEditMessage}
+        onUnsendMessage={handleUnsendMessage}
+        onSoftDeleteMessage={handleSoftDeleteMessage}
+        onSoftDeleteConversation={handleSoftDeleteConversation}
+        onLeaveGroup={handleDeleteGroup}
+      />
 
       <ConfirmationModal
         isOpen={confirmModal.open}

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { userAPI, userOnlineStatusAPI } from '../../services/apiServices';
 import '../../assets/Css/ConversationList.css';
 import useOnlineStatus from '../../hooks/useOnlineStatus';
-import UserList from '../UserList';
+
 
 const ConversationList = ({ conversations, unreadCount, currentUser, onSelectConversation, onGroupCreated }) => {
   const { isUserOnline } = useOnlineStatus();
@@ -117,7 +117,7 @@ const ConversationList = ({ conversations, unreadCount, currentUser, onSelectCon
   };
 
   return (
-    <div className="conversation-list">
+    <div className="conversation-list-container">
       <div className="conversation-header">
         <h2>
           Messages 
@@ -204,7 +204,7 @@ const ConversationList = ({ conversations, unreadCount, currentUser, onSelectCon
                 
                 <div className="conversation-meta">
                   <div className="time">
-                    {format(new Date(conv.updatedAt), 'h:mm a')}
+                    {conv.updatedAt ? format(new Date(conv.updatedAt), 'h:mm a') : 'New'}
                   </div>
                   {conv.unreadCount > 0 && (
                     <motion.div 
@@ -230,7 +230,7 @@ const ConversationList = ({ conversations, unreadCount, currentUser, onSelectCon
             ) : (
               <>
                 <p>Aucune conversation pour le moment. Commencez une nouvelle discussion !</p>
-                <UserList />
+
               </>
             )}
           </motion.div>
