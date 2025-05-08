@@ -1,77 +1,94 @@
-using ASTREE_PFE.Models;
-using ASTREE_PFE.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
+using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 
 namespace ASTREE_PFE.Controllers
 {
     [Authorize]
-[ApiController]
-[Route("api/[controller]")]
-public class CommentController : ControllerBase
-{
-    private readonly ICommentService _commentService;
-    private readonly IEmployeeService _employeeService;
-
-    public CommentController(ICommentService commentService, IEmployeeService employeeService)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CommentController : ControllerBase
     {
-        _commentService = commentService;
-        _employeeService = employeeService;
-    }
+        private readonly ICommentService _commentService;
+        private readonly IEmployeeService _employeeService;
 
-    [HttpGet("post/{postId}")]
-    public async Task<ActionResult<IEnumerable<CommentResponseDTO>>> GetCommentsByPost(string postId)
-    {
-        if (!ObjectId.TryParse(postId, out _))
-            return BadRequest("Invalid post ID format");
-
-        var comments = await _commentService.GetCommentsByPostAsync(postId);
-        var authorIds = comments.Select(c => c.AuthorId)
-                               .Concat(comments.SelectMany(c => c.Replies).Select(r => r.AuthorId))
-                               .Distinct()
-                               .ToList();
-
-        var userInfoDict = new Dictionary<string, UserInfoDTO>();
-        foreach (var authorId in authorIds)
+        public CommentController(ICommentService commentService, IEmployeeService employeeService)
         {
-            var userInfo = (await _employeeService.GetUserInfoBatchAsync(new List<string> { authorId })).FirstOrDefault();
-            if (userInfo != null)
-            {
-                userInfoDict[authorId] = userInfo;
-            }
+            _commentService = commentService;
+            _employeeService = employeeService;
         }
 
-        var commentDtos = comments.Select(comment => new CommentResponseDTO
+        [HttpGet("post/{postId}")]
+        public async Task<ActionResult<IEnumerable<CommentResponseDTO>>> GetCommentsByPost(
+            string postId
+        )
         {
-            Id = comment.Id,
-            Content = comment.Content,
-            AuthorId = comment.AuthorId,
-            AuthorName = userInfoDict.ContainsKey(comment.AuthorId) ? $"{userInfoDict[comment.AuthorId].FirstName} {userInfoDict[comment.AuthorId].LastName}" : string.Empty,
-            AuthorProfilePicture = userInfoDict.ContainsKey(comment.AuthorId) ? userInfoDict[comment.AuthorId].ProfilePictureUrl : string.Empty,
-            CreatedAt = comment.Timestamp,
-            UpdatedAt = comment.UpdatedAt,
-            Replies = comment.Replies?.Select(reply => new ReplyResponseDTO
-            {
-                Id = reply.Id,
-                Content = reply.Content,
-                AuthorId = reply.AuthorId,
-                AuthorName = userInfoDict.ContainsKey(reply.AuthorId) ? $"{userInfoDict[reply.AuthorId].FirstName} {userInfoDict[reply.AuthorId].LastName}" : string.Empty,
-                AuthorProfilePicture = userInfoDict.ContainsKey(reply.AuthorId) ? userInfoDict[reply.AuthorId].ProfilePictureUrl : string.Empty,
-                CreatedAt = reply.Timestamp,
-                UpdatedAt = reply.UpdatedAt
-            }).ToList()
-        }).ToList();
+            if (!ObjectId.TryParse(postId, out _))
+                return BadRequest("Invalid post ID format");
 
-        return Ok(commentDtos);
-    }
-    
+            var comments = await _commentService.GetCommentsByPostAsync(postId);
+            var authorIds = comments
+                .Select(c => c.AuthorId)
+                .Concat(comments.SelectMany(c => c.Replies).Select(r => r.AuthorId))
+                .Distinct()
+                .ToList();
+
+            var userInfoDict = new Dictionary<string, UserInfoDTO>();
+            foreach (var authorId in authorIds)
+            {
+                var userInfo = (
+                    await _employeeService.GetUserInfoBatchAsync(new List<string> { authorId })
+                ).FirstOrDefault();
+                if (userInfo != null)
+                {
+                    userInfoDict[authorId] = userInfo;
+                }
+            }
+
+            var commentDtos = comments
+                .Select(comment => new CommentResponseDTO
+                {
+                    Id = comment.Id,
+                    Content = comment.Content,
+                    AuthorId = comment.AuthorId,
+                    AuthorName = userInfoDict.ContainsKey(comment.AuthorId)
+                        ? $"{userInfoDict[comment.AuthorId].FirstName} {userInfoDict[comment.AuthorId].LastName}"
+                        : string.Empty,
+                    AuthorProfilePicture = userInfoDict.ContainsKey(comment.AuthorId)
+                        ? userInfoDict[comment.AuthorId].ProfilePictureUrl
+                        : string.Empty,
+                    CreatedAt = comment.Timestamp,
+                    UpdatedAt = comment.UpdatedAt,
+                    Replies = comment
+                        .Replies?.Select(reply => new ReplyResponseDTO
+                        {
+                            Id = reply.Id,
+                            Content = reply.Content,
+                            AuthorId = reply.AuthorId,
+                            AuthorName = userInfoDict.ContainsKey(reply.AuthorId)
+                                ? $"{userInfoDict[reply.AuthorId].FirstName} {userInfoDict[reply.AuthorId].LastName}"
+                                : string.Empty,
+                            AuthorProfilePicture = userInfoDict.ContainsKey(reply.AuthorId)
+                                ? userInfoDict[reply.AuthorId].ProfilePictureUrl
+                                : string.Empty,
+                            CreatedAt = reply.Timestamp,
+                            UpdatedAt = reply.UpdatedAt,
+                        })
+                        .ToList(),
+                })
+                .ToList();
+
+            return Ok(commentDtos);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<CommentResponseDTO>> GetComment(string id)
         {
@@ -82,7 +99,9 @@ public class CommentController : ControllerBase
             if (comment == null)
                 return NotFound();
 
-            var userInfo = (await _employeeService.GetUserInfoBatchAsync(new List<string> { comment.AuthorId })).FirstOrDefault();
+            var userInfo = (
+                await _employeeService.GetUserInfoBatchAsync(new List<string> { comment.AuthorId })
+            ).FirstOrDefault();
             var commentDto = new CommentResponseDTO
             {
                 Id = comment.Id,
@@ -92,23 +111,27 @@ public class CommentController : ControllerBase
                 AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                 CreatedAt = comment.Timestamp,
                 UpdatedAt = comment.UpdatedAt,
-                Replies = comment.Replies?.Select(r => new ReplyResponseDTO
-                {
-                    Id = r.Id,
-                    Content = r.Content,
-                    AuthorId = r.AuthorId,
-                    AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
-                    AuthorProfilePicture = userInfo?.ProfilePictureUrl,
-                    CreatedAt = r.Timestamp,
-                    UpdatedAt = r.UpdatedAt
-                }).ToList()
+                Replies = comment
+                    .Replies?.Select(r => new ReplyResponseDTO
+                    {
+                        Id = r.Id,
+                        Content = r.Content,
+                        AuthorId = r.AuthorId,
+                        AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                        AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                        CreatedAt = r.Timestamp,
+                        UpdatedAt = r.UpdatedAt,
+                    })
+                    .ToList(),
             };
 
             return Ok(commentDto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Comment>> CreateComment([FromBody] CommentCreateDto commentDto)
+        public async Task<ActionResult<Comment>> CreateComment(
+            [FromBody] CommentCreateDto commentDto
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -121,15 +144,22 @@ public class CommentController : ControllerBase
                 Content = commentDto.Content,
                 AuthorId = commentDto.AuthorId,
                 PostId = commentDto.PostId,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
             };
 
             var createdComment = await _commentService.CreateCommentAsync(comment);
-            return CreatedAtAction(nameof(GetComment), new { id = createdComment.Id }, createdComment);
+            return CreatedAtAction(
+                nameof(GetComment),
+                new { id = createdComment.Id },
+                createdComment
+            );
         }
 
         [HttpPost("{commentId}/reply")]
-        public async Task<ActionResult<Comment>> AddReply(string commentId, [FromBody] CommentCreateDto replyDto)
+        public async Task<ActionResult<Comment>> AddReply(
+            string commentId,
+            [FromBody] CommentCreateDto replyDto
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -145,7 +175,7 @@ public class CommentController : ControllerBase
                 Content = replyDto.Content,
                 AuthorId = replyDto.AuthorId,
                 PostId = replyDto.PostId,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
             };
 
             await _commentService.AddReplyAsync(commentId, reply);
@@ -153,7 +183,10 @@ public class CommentController : ControllerBase
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Comment>> UpdateComment(string id, [FromBody] CommentUpdateDto commentDto)
+        public async Task<ActionResult<Comment>> UpdateComment(
+            string id,
+            [FromBody] CommentUpdateDto commentDto
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -187,7 +220,11 @@ public class CommentController : ControllerBase
         }
 
         [HttpPut("{commentId}/reply/{replyId}")]
-        public async Task<ActionResult<Comment>> UpdateReply(string commentId, string replyId, [FromBody] CommentUpdateDto replyDto)
+        public async Task<ActionResult<Comment>> UpdateReply(
+            string commentId,
+            string replyId,
+            [FromBody] CommentUpdateDto replyDto
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -201,7 +238,7 @@ public class CommentController : ControllerBase
             var updatedReply = new Comment
             {
                 Content = replyDto.Content,
-                UpdatedAt = DateTime.UtcNow
+                UpdatedAt = DateTime.UtcNow,
             };
 
             await _commentService.UpdateReplyAsync(commentId, replyId, updatedReply);

@@ -11,7 +11,6 @@ namespace ASTREE_PFE.DTOs
 
     public class EventCreateDTO
     {
-
         [Required]
         [StringLength(100, MinimumLength = 5)]
         public string Title { get; set; } = null!;
@@ -40,7 +39,7 @@ namespace ASTREE_PFE.DTOs
         public bool IsOpenEvent { get; set; } = false;
 
         public bool IsRecurring { get; set; }
-        
+
         public string AssociatedEmployeeId { get; set; }
     }
 
@@ -70,7 +69,7 @@ namespace ASTREE_PFE.DTOs
     public class EventResponseDTO
     {
         public string Id { get; set; } = null!;
-        public bool IsBirthdayEvent { get; set; } 
+        public bool IsBirthdayEvent { get; set; }
         public BirthdayResponseDTO BirthdayDetails { get; set; }
         public string Title { get; set; } = null!;
         public string Description { get; set; } = null!;
@@ -83,8 +82,10 @@ namespace ASTREE_PFE.DTOs
         public List<string> Attendees { get; set; } = new List<string>();
         public EventStatus Status { get; set; }
         public bool IsOpenEvent { get; set; }
-        public Dictionary<string, AttendanceStatus> AttendeeStatuses { get; set; } = new Dictionary<string, AttendanceStatus>();
-        public Dictionary<string, bool> AttendeeStatusFinal { get; set; } = new Dictionary<string, bool>();
+        public Dictionary<string, AttendanceStatus> AttendeeStatuses { get; set; } =
+            new Dictionary<string, AttendanceStatus>();
+        public Dictionary<string, bool> AttendeeStatusFinal { get; set; } =
+            new Dictionary<string, bool>();
     }
 
     public class AttendeeUpdateDTO

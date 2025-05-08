@@ -1,9 +1,9 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services
 {
@@ -16,7 +16,8 @@ namespace ASTREE_PFE.Services
         public ChannelService(
             IChannelRepository channelRepository,
             IPostRepository postRepository,
-            IDepartmentRepository departmentRepository)
+            IDepartmentRepository departmentRepository
+        )
         {
             _channelRepository = channelRepository;
             _postRepository = postRepository;
@@ -49,10 +50,14 @@ namespace ASTREE_PFE.Services
             if (!channel.IsGeneral && channel.DepartmentId.HasValue)
             {
                 // Verify department exists
-                var department = await _departmentRepository.GetByIdAsync(channel.DepartmentId.Value);
+                var department = await _departmentRepository.GetByIdAsync(
+                    channel.DepartmentId.Value
+                );
                 if (department == null)
                 {
-                    throw new KeyNotFoundException($"Department with ID {channel.DepartmentId} not found");
+                    throw new KeyNotFoundException(
+                        $"Department with ID {channel.DepartmentId} not found"
+                    );
                 }
 
                 // Create channel if department doesn't have one
@@ -65,7 +70,9 @@ namespace ASTREE_PFE.Services
                 }
                 else
                 {
-                    throw new InvalidOperationException($"Department with ID {channel.DepartmentId} already has a channel");
+                    throw new InvalidOperationException(
+                        $"Department with ID {channel.DepartmentId} already has a channel"
+                    );
                 }
             }
 
@@ -90,17 +97,23 @@ namespace ASTREE_PFE.Services
                 // If new department is specified, ensure it doesn't already have a channel
                 if (channel.DepartmentId.HasValue)
                 {
-                    bool hasChannel = await _channelRepository.DepartmentHasChannelAsync(channel.DepartmentId.Value);
+                    bool hasChannel = await _channelRepository.DepartmentHasChannelAsync(
+                        channel.DepartmentId.Value
+                    );
                     if (hasChannel)
                     {
-                        throw new InvalidOperationException($"Department with ID {channel.DepartmentId} already has a channel");
+                        throw new InvalidOperationException(
+                            $"Department with ID {channel.DepartmentId} already has a channel"
+                        );
                     }
                 }
 
                 // Update old department to remove channel reference if applicable
                 if (existingChannel.DepartmentId.HasValue)
                 {
-                    var oldDepartment = await _departmentRepository.GetByIdAsync(existingChannel.DepartmentId.Value);
+                    var oldDepartment = await _departmentRepository.GetByIdAsync(
+                        existingChannel.DepartmentId.Value
+                    );
                     if (oldDepartment != null && oldDepartment.ChannelId == id)
                     {
                         oldDepartment.ChannelId = null;
@@ -111,7 +124,9 @@ namespace ASTREE_PFE.Services
                 // Update new department to add channel reference if applicable
                 if (channel.DepartmentId.HasValue)
                 {
-                    var newDepartment = await _departmentRepository.GetByIdAsync(channel.DepartmentId.Value);
+                    var newDepartment = await _departmentRepository.GetByIdAsync(
+                        channel.DepartmentId.Value
+                    );
                     if (newDepartment != null)
                     {
                         newDepartment.ChannelId = id;
@@ -135,7 +150,9 @@ namespace ASTREE_PFE.Services
             // Update department to remove channel reference if applicable
             if (channel.DepartmentId.HasValue)
             {
-                var department = await _departmentRepository.GetByIdAsync(channel.DepartmentId.Value);
+                var department = await _departmentRepository.GetByIdAsync(
+                    channel.DepartmentId.Value
+                );
                 if (department != null && department.ChannelId == id)
                 {
                     department.ChannelId = null;
@@ -156,7 +173,11 @@ namespace ASTREE_PFE.Services
             return await _channelRepository.DepartmentHasChannelAsync(departmentId);
         }
 
-        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetChannelPostsAsync(string channelId, string lastItemId = null, int limit = 10)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetChannelPostsAsync(string channelId, string lastItemId = null, int limit = 10)
         {
             // Ensure channel exists
             var channel = await _channelRepository.GetByIdAsync(channelId);

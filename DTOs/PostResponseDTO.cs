@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using ASTREE_PFE.Models;
 using System.ComponentModel.DataAnnotations;
+using ASTREE_PFE.Models;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Bson.Serialization.Options;
@@ -29,13 +29,10 @@ namespace ASTREE_PFE.DTOs
 
         public List<FileResponseDTO> Files { get; set; } = new List<FileResponseDTO>();
 
-
         public List<CommentResponseDTO> Comments { get; set; } = new List<CommentResponseDTO>();
 
         public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
 
-
         public string ChannelId { get; set; }
     }
 }
-

@@ -14,6 +14,5 @@ namespace ASTREE_PFE.DTOs
         public ReactionType Type { get; set; }
 
         public string? PostId { get; set; }
-
     }
 }

@@ -1,9 +1,9 @@
-using ASTREE_PFE.Data;
-using ASTREE_PFE.Models;
-using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ASTREE_PFE.Data;
+using ASTREE_PFE.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -18,15 +18,13 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<IEnumerable<Department>> GetAllAsync()
         {
-            return await _context.Departments
-                .Include(d => d.Director)
-                .ToListAsync();
+            return await _context.Departments.Include(d => d.Director).ToListAsync();
         }
 
         public async Task<Department> GetByIdAsync(int id)
         {
-            return await _context.Departments
-                .Include(d => d.Director)
+            return await _context
+                .Departments.Include(d => d.Director)
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
 
@@ -69,9 +67,7 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<IEnumerable<Employee>> GetEmployeesInDepartmentAsync(int departmentId)
         {
-            return await _context.Users
-                .Where(e => e.DepartmentId == departmentId)
-                .ToListAsync();
+            return await _context.Users.Where(e => e.DepartmentId == departmentId).ToListAsync();
         }
 
         public async Task<bool> AssignDirectorAsync(int departmentId, string employeeId)

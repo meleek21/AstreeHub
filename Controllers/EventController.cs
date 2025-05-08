@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
-using ASTREE_PFE.DTOs;
-using ASTREE_PFE.Services.Interfaces;
-using ASTREE_PFE.Models;
 using System.Security.Claims;
+using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
+using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -25,7 +25,12 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventService">Service for managing events</param>
         /// <param name="employeeService">Service for managing employees</param>
         /// <param name="googleCalendarService">Service for Google Calendar integration</param>
-        public EventController(IEventService eventService, IEmployeeService employeeService, IGoogleCalendarService googleCalendarService, ILogger<EventController> logger)
+        public EventController(
+            IEventService eventService,
+            IEmployeeService employeeService,
+            IGoogleCalendarService googleCalendarService,
+            ILogger<EventController> logger
+        )
         {
             _eventService = eventService;
             _employeeService = employeeService;
@@ -39,7 +44,9 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventDto">Event data including title, description, date, etc.</param>
         /// <returns>Newly created event with 201 status on success.</returns>
         [HttpPost("create")]
-        public async Task<ActionResult<EventResponseDTO>> CreateEvent([FromBody] EventCreateDTO eventDto)
+        public async Task<ActionResult<EventResponseDTO>> CreateEvent(
+            [FromBody] EventCreateDTO eventDto
+        )
         {
             try
             {
@@ -74,7 +81,7 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        
+
         /// <summary>
         /// Retrieves all events in the system.
         /// </summary>
@@ -100,7 +107,10 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventDto">Updated event data (partial updates supported)</param>
         /// <returns>Updated event with 200 status, or 404 if event not found.</returns>
         [HttpPut("update/{id}")]
-        public async Task<ActionResult<EventResponseDTO>> UpdateEvent(string id, [FromBody] EventUpdateDTO eventDto)
+        public async Task<ActionResult<EventResponseDTO>> UpdateEvent(
+            string id,
+            [FromBody] EventUpdateDTO eventDto
+        )
         {
             try
             {
@@ -164,10 +174,11 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventId">Event ID</param>
         /// <param name="attendeeDto">Contains employeeId of attendee</param>
         /// <returns>200 OK on success, 400 if event is open to all.</returns>
-
-
         [HttpPost("add-attendee/{eventId}")]
-        public async Task<ActionResult> AddAttendee(string eventId, [FromBody] AttendeeUpdateDTO attendeeDto)
+        public async Task<ActionResult> AddAttendee(
+            string eventId,
+            [FromBody] AttendeeUpdateDTO attendeeDto
+        )
         {
             try
             {
@@ -179,7 +190,10 @@ namespace ASTREE_PFE.Controllers
                 var employee = await _employeeService.GetEmployeeByIdAsync(attendeeDto.EmployeeId);
                 if (employee != null)
                 {
-                    await _googleCalendarService.AddEventToAttendeeCalendarAsync(eventId, employee.Email);
+                    await _googleCalendarService.AddEventToAttendeeCalendarAsync(
+                        eventId,
+                        employee.Email
+                    );
                 }
 
                 return Ok();
@@ -200,7 +214,9 @@ namespace ASTREE_PFE.Controllers
         /// <param name="eventId">Event ID</param>
         /// <returns>Dictionary of attendance status counts with 200 status, or 404 if event not found.</returns>
         [HttpGet("{eventId}/attendance-counts")]
-        public async Task<ActionResult<Dictionary<AttendanceStatus, int>>> GetAttendanceStatusCounts(string eventId)
+        public async Task<
+            ActionResult<Dictionary<AttendanceStatus, int>>
+        > GetAttendanceStatusCounts(string eventId)
         {
             try
             {
@@ -218,7 +234,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("{eventId}/user/{userId}/attendance-status")]
-        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetUserAttendanceStatus(string eventId, string userId)
+        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetUserAttendanceStatus(
+            string eventId,
+            string userId
+        )
         {
             try
             {
@@ -226,16 +245,21 @@ namespace ASTREE_PFE.Controllers
                 if (!@event.Attendees.Contains(userId))
                     return NotFound($"User with ID {userId} is not an attendee of this event.");
 
-                var status = @event.AttendeeStatuses.GetValueOrDefault(userId, AttendanceStatus.EnAttente);
+                var status = @event.AttendeeStatuses.GetValueOrDefault(
+                    userId,
+                    AttendanceStatus.EnAttente
+                );
                 var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(userId, false);
 
-                return Ok(new AttendanceStatusResponseDTO
-                {
-                    EventId = eventId,
-                    EmployeeId = userId,
-                    Status = status,
-                    IsFinal = isFinal
-                });
+                return Ok(
+                    new AttendanceStatusResponseDTO
+                    {
+                        EventId = eventId,
+                        EmployeeId = userId,
+                        Status = status,
+                        IsFinal = isFinal,
+                    }
+                );
             }
             catch (KeyNotFoundException ex)
             {
@@ -254,15 +278,23 @@ namespace ASTREE_PFE.Controllers
         /// <param name="employeeId">Employee ID</param>
         /// <returns>Attendance status details with 200 status, or 404 if not found.</returns>
         [HttpGet("{eventId}/attendee/{employeeId}/status")]
-        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetAttendanceStatus(string eventId, string employeeId)
+        public async Task<ActionResult<AttendanceStatusResponseDTO>> GetAttendanceStatus(
+            string eventId,
+            string employeeId
+        )
         {
             try
             {
                 var @event = await _eventService.GetEventByIdAsync(eventId);
                 if (!@event.Attendees.Contains(employeeId))
-                    return NotFound($"Employee with ID {employeeId} is not an attendee of this event.");
+                    return NotFound(
+                        $"Employee with ID {employeeId} is not an attendee of this event."
+                    );
 
-                var status = @event.AttendeeStatuses.GetValueOrDefault(employeeId, AttendanceStatus.EnAttente);
+                var status = @event.AttendeeStatuses.GetValueOrDefault(
+                    employeeId,
+                    AttendanceStatus.EnAttente
+                );
                 var isFinal = @event.AttendeeStatusFinal.GetValueOrDefault(employeeId, false);
 
                 var response = new AttendanceStatusResponseDTO
@@ -270,7 +302,7 @@ namespace ASTREE_PFE.Controllers
                     EventId = eventId,
                     EmployeeId = employeeId,
                     Status = status,
-                    IsFinal = isFinal
+                    IsFinal = isFinal,
                 };
 
                 return Ok(response);
@@ -319,11 +351,19 @@ namespace ASTREE_PFE.Controllers
         /// <param name="status">New attendance status (Accepted or Declined)</param>
         /// <returns>200 OK on success, 404 if event or attendee not found.</returns>
         [HttpPut("{eventId}/attendee/{employeeId}/status")]
-        public async Task<ActionResult> UpdateAttendanceStatus(string eventId, string employeeId, [FromBody] AttendanceStatusUpdateDTO statusDto)
+        public async Task<ActionResult> UpdateAttendanceStatus(
+            string eventId,
+            string employeeId,
+            [FromBody] AttendanceStatusUpdateDTO statusDto
+        )
         {
             try
             {
-                var result = await _eventService.UpdateAttendanceStatusAsync(eventId, employeeId, statusDto.Status);
+                var result = await _eventService.UpdateAttendanceStatusAsync(
+                    eventId,
+                    employeeId,
+                    statusDto.Status
+                );
                 if (result)
                     return Ok();
                 return BadRequest("Failed to update attendance status.");
@@ -362,7 +402,9 @@ namespace ASTREE_PFE.Controllers
         /// <param name="organizerId">Employee ID of the organizer</param>
         /// <returns>List of events with 200 status.</returns>
         [HttpGet("by-organizer/{organizerId}")]
-        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByOrganizer(string organizerId)
+        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByOrganizer(
+            string organizerId
+        )
         {
             try
             {
@@ -381,7 +423,9 @@ namespace ASTREE_PFE.Controllers
         /// <param name="category">Event category (Meeting, Training, etc.)</param>
         /// <returns>List of events with 200 status.</returns>
         [HttpGet("by-category/{category}")]
-        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByCategory(EventCategory category)
+        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByCategory(
+            EventCategory category
+        )
         {
             try
             {
@@ -419,7 +463,10 @@ namespace ASTREE_PFE.Controllers
         /// <param name="status">New status</param>
         /// <returns>200 OK on success, 404 if event not found.</returns>
         [HttpPut("update-status/{eventId}")]
-        public async Task<ActionResult> UpdateEventStatus(string eventId, [FromBody] EventStatus status)
+        public async Task<ActionResult> UpdateEventStatus(
+            string eventId,
+            [FromBody] EventStatus status
+        )
         {
             try
             {
@@ -444,7 +491,9 @@ namespace ASTREE_PFE.Controllers
         /// <param name="employeeId">Employee ID</param>
         /// <returns>List of events with 200 status.</returns>
         [HttpGet("by-attendee/{employeeId}")]
-        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByAttendee(string employeeId)
+        public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByAttendee(
+            string employeeId
+        )
         {
             try
             {
@@ -469,10 +518,14 @@ namespace ASTREE_PFE.Controllers
                 // Prevent duplicate birthday events
                 var allEvents = await _eventService.GetAllEventsAsync();
                 // Assuming EventResponseDTO has a property to identify birthday events, e.g., IsBirthdayEvent or Category
-                bool birthdayEventsExist = allEvents.Any(e => e.Category == EventCategory.Anniversaire);
+                bool birthdayEventsExist = allEvents.Any(e =>
+                    e.Category == EventCategory.Anniversaire
+                );
                 if (birthdayEventsExist)
                 {
-                    return BadRequest("Birthday events already exist. Generation aborted to prevent duplicates.");
+                    return BadRequest(
+                        "Birthday events already exist. Generation aborted to prevent duplicates."
+                    );
                 }
                 await _eventService.GenerateBirthdayEventsAsync();
                 return Ok("Birthday events generated successfully.");
@@ -520,7 +573,7 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-        
+
         /// <summary>
         /// Invites multiple employees to an event.
         /// </summary>
@@ -528,12 +581,17 @@ namespace ASTREE_PFE.Controllers
         /// <param name="employeeIds">List of employee IDs to invite</param>
         /// <returns>200 OK on success, 404 if event not found, 403 if user is not the organizer.</returns>
         [HttpPost("{eventId}/invite-multiple")]
-        public async Task<ActionResult> InviteMultiple(string eventId, [FromBody] List<string> employeeIds)
+        public async Task<ActionResult> InviteMultiple(
+            string eventId,
+            [FromBody] List<string> employeeIds
+        )
         {
             try
             {
                 // Debug log: log received payload
-                Console.WriteLine($"[InviteMultiple] eventId: {eventId}, employeeIds: {string.Join(",", employeeIds ?? new List<string>())}");
+                Console.WriteLine(
+                    $"[InviteMultiple] eventId: {eventId}, employeeIds: {string.Join(",", employeeIds ?? new List<string>())}"
+                );
                 // Check if event exists
                 var existingEvent = await _eventService.GetEventByIdAsync(eventId);
                 if (existingEvent == null)
@@ -544,7 +602,7 @@ namespace ASTREE_PFE.Controllers
                 var currentUserId = currentUser.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (existingEvent.Organizer != currentUserId)
                     return Forbid("Only the event organizer can invite multiple employees.");
-                
+
                 if (employeeIds == null || !employeeIds.Any())
                     return BadRequest("No employee IDs provided.");
 
@@ -587,19 +645,19 @@ namespace ASTREE_PFE.Controllers
                 // Get all employees and add them as attendees
                 var employees = await _employeeService.GetAllEmployeesAsync();
                 bool success = true;
-                
+
                 foreach (var employee in employees)
                 {
                     // Skip if employee is already an attendee
                     if (existingEvent.Attendees.Contains(employee.Id))
                         continue;
-                        
+
                     // Add employee as attendee
                     var result = await _eventService.AddAttendeeAsync(eventId, employee.Id);
                     if (!result)
                         success = false; // Track if any invitation fails
                 }
-                
+
                 if (success)
                     return Ok();
                 return BadRequest("Some invitations failed to send.");
@@ -613,48 +671,47 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-       
 
         [HttpGet("birthdays/{month}")]
         public async Task<IActionResult> GetBirthdaysByMonth(int month)
-{
-    try
-    {
-        var birthdays = await _eventService.GetBirthdayEventsAsync(month);
-        return Ok(birthdays);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { message = ex.Message });
-    }
-}
+        {
+            try
+            {
+                var birthdays = await _eventService.GetBirthdayEventsAsync(month);
+                return Ok(birthdays);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
-[HttpGet("birthdays/today")]
-public async Task<IActionResult> GetTodaysBirthdays()
-{
-    try
-    {
-        var todaysBirthdays = await _eventService.GetTodaysBirthdaysAsync();
-        return Ok(todaysBirthdays);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { message = ex.Message });
-    }
-}
+        [HttpGet("birthdays/today")]
+        public async Task<IActionResult> GetTodaysBirthdays()
+        {
+            try
+            {
+                var todaysBirthdays = await _eventService.GetTodaysBirthdaysAsync();
+                return Ok(todaysBirthdays);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
-[HttpGet("birthdays/closest")]
-public async Task<IActionResult> GetClosestBirthdays()
-{
-    try
-    {
-        var closestBirthdays = await _eventService.GetClosestBirthdaysAsync();
-        return Ok(closestBirthdays);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { message = ex.Message });
-    }
-}         
+        [HttpGet("birthdays/closest")]
+        public async Task<IActionResult> GetClosestBirthdays()
+        {
+            try
+            {
+                var closestBirthdays = await _eventService.GetClosestBirthdaysAsync();
+                return Ok(closestBirthdays);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

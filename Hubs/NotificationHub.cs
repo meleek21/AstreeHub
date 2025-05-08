@@ -8,12 +8,12 @@ namespace ASTREE_PFE.Hubs
         {
             await Clients.All.SendAsync("ReceiveNotification", user, message);
         }
-        
+
         public async Task JoinGroup(string groupName)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         }
-        
+
         public async Task LeaveGroup(string groupName)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);

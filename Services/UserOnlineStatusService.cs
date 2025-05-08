@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using ASTREE_PFE.Hubs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
-using MongoDB.Driver;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
-using ASTREE_PFE.Hubs;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace ASTREE_PFE.Services
 {
@@ -17,20 +17,25 @@ namespace ASTREE_PFE.Services
         private readonly ILogger<UserOnlineStatusService> _logger;
         private readonly IHubContext<UserHub> _hubContext;
         private readonly Timer _inactivityTimer;
-        
+
         private static readonly TimeSpan InactivityThreshold = TimeSpan.FromMinutes(2);
 
         public UserOnlineStatusService(
-            IMongoDatabase database, 
+            IMongoDatabase database,
             ILogger<UserOnlineStatusService> logger,
-            IHubContext<UserHub> hubContext)
+            IHubContext<UserHub> hubContext
+        )
         {
             _userStatusCollection = database.GetCollection<UserOnlineStatus>("UserOnlineStatus");
             _logger = logger;
             _hubContext = hubContext;
 
-            _inactivityTimer = new Timer(CheckInactiveUsers, null, 
-                TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
+            _inactivityTimer = new Timer(
+                CheckInactiveUsers,
+                null,
+                TimeSpan.FromMinutes(1),
+                TimeSpan.FromMinutes(1)
+            );
 
             _logger.LogInformation("UserOnlineStatusService initialized");
         }
@@ -66,11 +71,15 @@ namespace ASTREE_PFE.Services
         public async Task UpdateUserHeartbeatAsync(string userId)
         {
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
-            var update = Builders<UserOnlineStatus>.Update
-                .Set(u => u.LastActivityTime, DateTime.UtcNow)
+            var update = Builders<UserOnlineStatus>
+                .Update.Set(u => u.LastActivityTime, DateTime.UtcNow)
                 .Set(u => u.IsOnline, true);
-                
-            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+
+            await _userStatusCollection.UpdateOneAsync(
+                filter,
+                update,
+                new UpdateOptions { IsUpsert = true }
+            );
             _logger.LogDebug("Updated heartbeat for user {UserId}", userId);
         }
 
@@ -79,12 +88,16 @@ namespace ASTREE_PFE.Services
             var now = DateTime.UtcNow;
 
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
-            var update = Builders<UserOnlineStatus>.Update
-                .Set(u => u.IsOnline, isOnline)
+            var update = Builders<UserOnlineStatus>
+                .Update.Set(u => u.IsOnline, isOnline)
                 .Set(u => u.LastSeenTime, now)
                 .Set(u => u.LastActivityTime, now);
 
-            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            await _userStatusCollection.UpdateOneAsync(
+                filter,
+                update,
+                new UpdateOptions { IsUpsert = true }
+            );
 
             await _hubContext.Clients.All.SendAsync("UserStatusChanged", userId, isOnline, now);
         }
@@ -104,7 +117,10 @@ namespace ASTREE_PFE.Services
                 var inactiveUsers = await _userStatusCollection.Find(filter).ToListAsync();
                 foreach (var user in inactiveUsers)
                 {
-                    _logger.LogInformation("Marking inactive user {UserId} as offline", user.UserId);
+                    _logger.LogInformation(
+                        "Marking inactive user {UserId} as offline",
+                        user.UserId
+                    );
                     await UpdateUserStatusAsync(user.UserId, false);
                 }
             }
@@ -119,12 +135,16 @@ namespace ASTREE_PFE.Services
             var now = DateTime.UtcNow;
 
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
-            var update = Builders<UserOnlineStatus>.Update
-                .Set(u => u.LastActivityTime, now)
+            var update = Builders<UserOnlineStatus>
+                .Update.Set(u => u.LastActivityTime, now)
                 .Set(u => u.IsOnline, true)
                 .Set(u => u.UpdatedAt, now);
 
-            await _userStatusCollection.UpdateOneAsync(filter, update, new UpdateOptions { IsUpsert = true });
+            await _userStatusCollection.UpdateOneAsync(
+                filter,
+                update,
+                new UpdateOptions { IsUpsert = true }
+            );
             _logger.LogDebug("Updated activity for user {UserId}", userId);
         }
 
@@ -149,21 +169,29 @@ namespace ASTREE_PFE.Services
                     LastSeenTime = DateTime.UtcNow,
                     ConnectionIds = new List<string> { connectionId },
                     CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
+                    UpdatedAt = DateTime.UtcNow,
                 };
                 await _userStatusCollection.InsertOneAsync(userStatus);
-                _logger.LogInformation("Created new status for user {UserId} with connection {ConnectionId}", userId, connectionId);
+                _logger.LogInformation(
+                    "Created new status for user {UserId} with connection {ConnectionId}",
+                    userId,
+                    connectionId
+                );
             }
             else
             {
                 if (!userStatus.ConnectionIds.Contains(connectionId))
                 {
-                    var update = Builders<UserOnlineStatus>.Update
-                        .Push(u => u.ConnectionIds, connectionId)
+                    var update = Builders<UserOnlineStatus>
+                        .Update.Push(u => u.ConnectionIds, connectionId)
                         .Set(u => u.UpdatedAt, DateTime.UtcNow);
 
                     await _userStatusCollection.UpdateOneAsync(filter, update);
-                    _logger.LogDebug("Added connection {ConnectionId} for user {UserId}", connectionId, userId);
+                    _logger.LogDebug(
+                        "Added connection {ConnectionId} for user {UserId}",
+                        connectionId,
+                        userId
+                    );
                 }
             }
         }
@@ -177,15 +205,22 @@ namespace ASTREE_PFE.Services
             }
 
             var filter = Builders<UserOnlineStatus>.Filter.Eq(u => u.UserId, userId);
-            var update = Builders<UserOnlineStatus>.Update
-                .Pull(u => u.ConnectionIds, connectionId)
+            var update = Builders<UserOnlineStatus>
+                .Update.Pull(u => u.ConnectionIds, connectionId)
                 .Set(u => u.UpdatedAt, DateTime.UtcNow);
 
             await _userStatusCollection.UpdateOneAsync(filter, update);
-            _logger.LogDebug("Removed connection {ConnectionId} for user {UserId}", connectionId, userId);
+            _logger.LogDebug(
+                "Removed connection {ConnectionId} for user {UserId}",
+                connectionId,
+                userId
+            );
 
             var userStatus = await _userStatusCollection.Find(filter).FirstOrDefaultAsync();
-            if (userStatus != null && (userStatus.ConnectionIds == null || userStatus.ConnectionIds.Count == 0))
+            if (
+                userStatus != null
+                && (userStatus.ConnectionIds == null || userStatus.ConnectionIds.Count == 0)
+            )
             {
                 _logger.LogInformation("User {UserId} has no active connections remaining", userId);
             }

@@ -61,24 +61,22 @@ namespace ASTREE_PFE.DTOs
         public string CreatorId { get; set; } = null!;
         public bool IsGroup { get; set; }
     }
-    
+
     public class GetConversationRequestDto
     {
         public string UserId { get; set; } = null!;
     }
-    
+
     public class GetMessagesRequestDto
     {
         public string UserId { get; set; } = null!;
         public int Skip { get; set; } = 0;
         public int Limit { get; set; } = 50;
     }
-    
+
     public class GetConversationWithUserDto
     {
         public string UserId { get; set; } = null!;
         public string OtherUserId { get; set; } = null!;
     }
-    
-
 }

@@ -1,14 +1,14 @@
 //This file handles user authentication, registration, and JWT token generation
-using ASTREE_PFE.Models;
-using ASTREE_PFE.DTOs;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using ASTREE_PFE.Data;
-using Microsoft.EntityFrameworkCore;
+using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ASTREE_PFE.Services
 {
@@ -23,7 +23,8 @@ namespace ASTREE_PFE.Services
             UserManager<Employee> userManager,
             SignInManager<Employee> signInManager,
             IConfiguration configuration,
-            ApplicationDbContext dbContext)
+            ApplicationDbContext dbContext
+        )
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -37,7 +38,12 @@ namespace ASTREE_PFE.Services
             if (user == null)
                 return (false, "Invalid credentials", null);
 
-            var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, true);
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                model.Password,
+                false,
+                true
+            );
             if (!result.Succeeded)
                 return (false, "Invalid credentials", null);
 
@@ -54,7 +60,9 @@ namespace ASTREE_PFE.Services
             // Validate DepartmentId if provided
             if (model.DepartmentId.HasValue)
             {
-                bool departmentExists = await _dbContext.Departments.AnyAsync(d => d.Id == model.DepartmentId.Value);
+                bool departmentExists = await _dbContext.Departments.AnyAsync(d =>
+                    d.Id == model.DepartmentId.Value
+                );
                 if (!departmentExists)
                 {
                     return (false, $"Department with ID {model.DepartmentId.Value} does not exist");
@@ -69,12 +77,12 @@ namespace ASTREE_PFE.Services
                 LastName = model.LastName,
                 Role = model.Role,
                 Status = Models.UserStatus.Active,
-                DepartmentId = null,  // Set to null initially
+                DepartmentId = null, // Set to null initially
                 IsFirstLogin = true,
                 CreatedDate = DateTime.UtcNow,
-                DateOfBirth = model.DateOfBirth
+                DateOfBirth = model.DateOfBirth,
             };
-            
+
             // Only set DepartmentId if it has a value and we've already validated it exists
             if (model.DepartmentId.HasValue)
             {
@@ -99,7 +107,7 @@ namespace ASTREE_PFE.Services
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim("FirstName", user.FirstName),
                 new Claim("LastName", user.LastName),
-                new Claim("DepartmentId", user.DepartmentId?.ToString() ?? "0")
+                new Claim("DepartmentId", user.DepartmentId?.ToString() ?? "0"),
             };
 
             // Add roles as claims
@@ -109,8 +117,12 @@ namespace ASTREE_PFE.Services
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-                _configuration["JWT:Secret"] ?? throw new InvalidOperationException("JWT:Secret is not configured")));
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(
+                    _configuration["JWT:Secret"]
+                        ?? throw new InvalidOperationException("JWT:Secret is not configured")
+                )
+            );
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.UtcNow.AddDays(1);
 
@@ -124,6 +136,7 @@ namespace ASTREE_PFE.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
         public async Task<(bool success, string message)> LogoutAsync()
         {
             try
@@ -145,8 +158,10 @@ namespace ASTREE_PFE.Services
             try
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"] ?? 
-                    throw new InvalidOperationException("JWT:Secret is not configured"));
+                var key = Encoding.UTF8.GetBytes(
+                    _configuration["JWT:Secret"]
+                        ?? throw new InvalidOperationException("JWT:Secret is not configured")
+                );
 
                 // Set up validation parameters to match Program.cs configuration
                 var validationParameters = new TokenValidationParameters
@@ -158,7 +173,7 @@ namespace ASTREE_PFE.Services
                     ValidIssuer = _configuration["JWT:ValidIssuer"],
                     ValidAudience = _configuration["JWT:ValidAudience"],
                     IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ClockSkew = TimeSpan.Zero  // Match Program.cs configuration
+                    ClockSkew = TimeSpan.Zero, // Match Program.cs configuration
                 };
 
                 // Validate and decode the token

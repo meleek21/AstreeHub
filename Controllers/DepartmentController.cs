@@ -1,27 +1,30 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services;
 using ASTREE_PFE.Services.Interfaces;
-using ASTREE_PFE.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
-using System.Linq;
-using System;
 
 namespace ASTREE_PFE.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    
     public class DepartmentController : ControllerBase
     {
         private readonly IDepartmentService _departmentService;
         private readonly IEmployeeService _employeeService;
         private readonly IChannelService _channelService;
 
-        public DepartmentController(IDepartmentService departmentService, IEmployeeService employeeService, IChannelService channelService)
+        public DepartmentController(
+            IDepartmentService departmentService,
+            IEmployeeService employeeService,
+            IChannelService channelService
+        )
         {
             _departmentService = departmentService;
             _employeeService = employeeService;
@@ -32,30 +35,31 @@ namespace ASTREE_PFE.Controllers
         public async Task<ActionResult<IEnumerable<DepartmentResponseDto>>> GetAllDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
-            var departmentDtos = departments.Select(d => new DepartmentResponseDto
-            {
-                Id = d.Id,
-                Name = d.Name,
-                Description = d.Description,
-                DirectorId = d.DirectorId
-            }).ToList();
-            
+            var departmentDtos = departments
+                .Select(d => new DepartmentResponseDto
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                    Description = d.Description,
+                    DirectorId = d.DirectorId,
+                })
+                .ToList();
+
             return departmentDtos;
         }
-        
+
         [HttpGet("public")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<DepartmentListDto>>> GetPublicDepartments()
         {
             var departments = await _departmentService.GetAllDepartmentsAsync();
-            var departmentDtos = departments.Select(d => new DepartmentListDto
-            {
-                Id = d.Id,
-                Name = d.Name
-            }).ToList();
-            
+            var departmentDtos = departments
+                .Select(d => new DepartmentListDto { Id = d.Id, Name = d.Name })
+                .ToList();
+
             return departmentDtos;
         }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<DepartmentResponseDto>> GetDepartment(int id)
         {
@@ -64,17 +68,43 @@ namespace ASTREE_PFE.Controllers
             {
                 return NotFound();
             }
-            
+
             // Get employees in this department
             var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
-            
+
             var departmentDto = new DepartmentResponseDto
             {
                 Id = department.Id,
                 Name = department.Name,
                 Description = department.Description,
                 DirectorId = department.DirectorId,
-                Employees = employees.Select(e => new EmployeeDTO
+                Employees = employees
+                    .Select(e => new EmployeeDTO
+                    {
+                        Id = e.Id,
+                        FirstName = e.FirstName,
+                        LastName = e.LastName,
+                        DateOfBirth = e.DateOfBirth,
+                        Role = e.Role,
+                        Status = e.Status,
+                        Email = e.Email,
+                        PhoneNumber = e.PhoneNumber,
+                        DepartmentId = e.DepartmentId,
+                    })
+                    .ToList(),
+            };
+
+            return departmentDto;
+        }
+
+        [HttpGet("{id}/employees")]
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesInDepartment(
+            int id
+        )
+        {
+            var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
+            var employeeDtos = employees
+                .Select(e => new EmployeeResponseDto
                 {
                     Id = e.Id,
                     FirstName = e.FirstName,
@@ -83,64 +113,49 @@ namespace ASTREE_PFE.Controllers
                     Role = e.Role,
                     Status = e.Status,
                     Email = e.Email,
+                    PasswordHash = e.PasswordHash,
+                    DepartmentId = e.DepartmentId,
                     PhoneNumber = e.PhoneNumber,
-                    DepartmentId = e.DepartmentId
-                }).ToList()
-            };
-            
-            return departmentDto;
-        }
+                })
+                .ToList();
 
-        [HttpGet("{id}/employees")]
-        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesInDepartment(int id)
-        {
-            var employees = await _departmentService.GetEmployeesInDepartmentAsync(id);
-            var employeeDtos = employees.Select(e => new EmployeeResponseDto
-            {
-                Id = e.Id,
-                FirstName = e.FirstName,
-                LastName = e.LastName,
-                DateOfBirth = e.DateOfBirth,
-                Role = e.Role,
-                Status = e.Status,
-                Email = e.Email,
-                PasswordHash = e.PasswordHash,
-                DepartmentId = e.DepartmentId,
-                PhoneNumber = e.PhoneNumber
-            }).ToList();
-            
             return employeeDtos;
         }
 
         // For the CreateDepartment method
         [HttpPost]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult<DepartmentResponseDto>> CreateDepartment([FromBody] DepartmentCreateDto departmentDto)
+        public async Task<ActionResult<DepartmentResponseDto>> CreateDepartment(
+            [FromBody] DepartmentCreateDto departmentDto
+        )
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-        
+
             var department = new Department
             {
                 Name = departmentDto.Name,
                 Description = departmentDto.Description,
-                DirectorId = departmentDto.DirectorId
+                DirectorId = departmentDto.DirectorId,
             };
-        
+
             // Update employee role to DIRECTOR if specified
             if (!string.IsNullOrEmpty(departmentDto.DirectorId))
             {
-                var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
+                var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(
+                    departmentDto.DirectorId,
+                    "DIRECTOR"
+                );
                 if (!roleUpdateResult)
                 {
                     return BadRequest("Failed to update employee role to DIRECTOR");
                 }
             }
-        
+
             var createdDepartment = await _departmentService.CreateDepartmentAsync(department);
-            
+
             // Automatically create a channel for the new department
             try
             {
@@ -149,37 +164,42 @@ namespace ASTREE_PFE.Controllers
                     Name = $"{createdDepartment.Name} Channel",
                     DepartmentId = createdDepartment.Id,
                     IsGeneral = false,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 };
-                
+
                 var createdChannel = await _channelService.CreateChannelAsync(channel);
-                
+
                 // Update department with channel ID reference
                 createdDepartment.ChannelId = createdChannel.Id;
-                await _departmentService.UpdateDepartmentAsync(createdDepartment.Id, createdDepartment);
+                await _departmentService.UpdateDepartmentAsync(
+                    createdDepartment.Id,
+                    createdDepartment
+                );
             }
             catch (Exception ex)
             {
                 // Log the error but continue - don't fail department creation if channel creation fails
                 Console.WriteLine($"Error creating channel for department: {ex.Message}");
             }
-            
+
             var responseDto = new DepartmentResponseDto
             {
                 Id = createdDepartment.Id,
                 Name = createdDepartment.Name,
                 Description = createdDepartment.Description,
-                DirectorId = createdDepartment.DirectorId
+                DirectorId = createdDepartment.DirectorId,
             };
 
-            
             return CreatedAtAction(nameof(GetDepartment), new { id = responseDto.Id }, responseDto);
         }
 
         // For the UpdateDepartment method
         [HttpPut("{id}")]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<IActionResult> UpdateDepartment(int id, [FromBody] DepartmentUpdateDto departmentDto)
+        public async Task<IActionResult> UpdateDepartment(
+            int id,
+            [FromBody] DepartmentUpdateDto departmentDto
+        )
         {
             if (!ModelState.IsValid)
             {
@@ -201,13 +221,19 @@ namespace ASTREE_PFE.Controllers
                 // If there was a previous director, update their role back to EMPLOYEE
                 if (!string.IsNullOrEmpty(existingDepartment.DirectorId))
                 {
-                    await _employeeService.UpdateEmployeeRoleAsync(existingDepartment.DirectorId, "EMPLOYEE");
+                    await _employeeService.UpdateEmployeeRoleAsync(
+                        existingDepartment.DirectorId,
+                        "EMPLOYEE"
+                    );
                 }
 
                 // If there's a new director, update their role to DIRECTOR
                 if (!string.IsNullOrEmpty(departmentDto.DirectorId))
                 {
-                    await _employeeService.UpdateEmployeeRoleAsync(departmentDto.DirectorId, "DIRECTOR");
+                    await _employeeService.UpdateEmployeeRoleAsync(
+                        departmentDto.DirectorId,
+                        "DIRECTOR"
+                    );
                 }
             }
 
@@ -242,11 +268,11 @@ namespace ASTREE_PFE.Controllers
                             Name = $"{departmentDto.Name} Channel",
                             DepartmentId = id,
                             IsGeneral = false,
-                            CreatedAt = DateTime.UtcNow
+                            CreatedAt = DateTime.UtcNow,
                         };
-                        
+
                         var createdChannel = await _channelService.CreateChannelAsync(channel);
-                        
+
                         // Update department with channel ID reference
                         existingDepartment.ChannelId = createdChannel.Id;
                         await _departmentService.UpdateDepartmentAsync(id, existingDepartment);
@@ -309,27 +335,36 @@ namespace ASTREE_PFE.Controllers
 
         [HttpPatch("{id}/director")]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult> AssignDirector(int id, [FromBody] DirectorAssignDto directorDto)
+        public async Task<ActionResult> AssignDirector(
+            int id,
+            [FromBody] DirectorAssignDto directorDto
+        )
         {
             var department = await _departmentService.GetDepartmentByIdAsync(id);
             if (department == null)
             {
                 return NotFound();
             }
-        
+
             // Update the employee's role to DIRECTOR
-            var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(directorDto.EmployeeId, "DIRECTOR");
+            var roleUpdateResult = await _employeeService.UpdateEmployeeRoleAsync(
+                directorDto.EmployeeId,
+                "DIRECTOR"
+            );
             if (!roleUpdateResult)
             {
                 return BadRequest("Failed to update employee role to DIRECTOR");
             }
-        
-            var assignResult = await _departmentService.AssignDirectorAsync(id, directorDto.EmployeeId);
+
+            var assignResult = await _departmentService.AssignDirectorAsync(
+                id,
+                directorDto.EmployeeId
+            );
             if (!assignResult)
             {
                 return BadRequest("Failed to assign director to department");
             }
-        
+
             return NoContent();
         }
     }

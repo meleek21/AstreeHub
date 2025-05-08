@@ -1,5 +1,6 @@
-using ASTREE_PFE.Models;
 using System;
+using ASTREE_PFE.Models;
+
 namespace ASTREE_PFE.Repositories.Interfaces
 {
     public interface IEventRepository : IMongoRepository<Event>
@@ -14,11 +15,15 @@ namespace ASTREE_PFE.Repositories.Interfaces
         Task<IEnumerable<Event>> GetEventsByCategoryAsync(EventCategory category);
         Task<IEnumerable<Event>> GetOpenEventsAsync();
         Task<IEnumerable<Event>> GetBirthdayEventsAsync(int month);
-        Task<bool> UpdateAttendanceStatusAsync(string eventId, string employeeId, AttendanceStatus status);
+        Task<bool> UpdateAttendanceStatusAsync(
+            string eventId,
+            string employeeId,
+            AttendanceStatus status
+        );
 
-        /// <summary>
-        /// Updates the final status flag for attendees
-        /// </summary>
-        Task<bool> UpdateAttendeeStatusFinalAsync(string eventId, Dictionary<string, bool> statusFinalUpdates);
+        Task<bool> UpdateAttendeeStatusFinalAsync(
+            string eventId,
+            Dictionary<string, bool> statusFinalUpdates
+        );
     }
 }
