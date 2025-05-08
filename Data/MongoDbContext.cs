@@ -1,27 +1,28 @@
 using MongoDB.Bson.Serialization.Conventions;
 using MongoDB.Driver;
 
-namespace ASTREE_PFE.Data{
-    public class MongoDbContext
+namespace ASTREE_PFE.Data
 {
-    private readonly IMongoDatabase _database;
-
-    public MongoDbContext(IConfiguration configuration)
+    public class MongoDbContext
     {
-        // Register enum string converter convention
-        var pack = new ConventionPack
+        private readonly IMongoDatabase _database;
+
+        public MongoDbContext(IConfiguration configuration)
         {
-            new EnumRepresentationConvention(MongoDB.Bson.BsonType.String)
-        };
-        ConventionRegistry.Register("EnumStringConvention", pack, t => true);
+            // Register enum string converter convention
+            var pack = new ConventionPack
+            {
+                new EnumRepresentationConvention(MongoDB.Bson.BsonType.String),
+            };
+            ConventionRegistry.Register("EnumStringConvention", pack, t => true);
 
-        var client = new MongoClient(configuration.GetConnectionString("MongoConnection"));
-        _database = client.GetDatabase(configuration.GetConnectionString("MongoDatabase"));
-    }
+            var client = new MongoClient(configuration.GetConnectionString("MongoConnection"));
+            _database = client.GetDatabase(configuration.GetConnectionString("MongoDatabase"));
+        }
 
-    public IMongoCollection<T> GetCollection<T>(string name)
-    {
-        return _database.GetCollection<T>(name);
+        public IMongoCollection<T> GetCollection<T>(string name)
+        {
+            return _database.GetCollection<T>(name);
+        }
     }
-}
 }

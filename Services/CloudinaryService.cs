@@ -1,11 +1,11 @@
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
-using ASTREE_PFE.Services.Interfaces;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ASTREE_PFE.Services.Interfaces;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
 
 namespace ASTREE_PFE.Services
 {
@@ -25,7 +25,7 @@ namespace ASTREE_PFE.Services
                 using var stream = file.OpenReadStream();
                 var uploadParams = new ImageUploadParams
                 {
-                    File = new FileDescription(file.FileName, stream)
+                    File = new FileDescription(file.FileName, stream),
                 };
 
                 return await _cloudinary.UploadAsync(uploadParams);
@@ -47,7 +47,7 @@ namespace ASTREE_PFE.Services
                 using var stream = file.OpenReadStream();
                 var uploadParams = new RawUploadParams
                 {
-                    File = new FileDescription(file.FileName, stream)
+                    File = new FileDescription(file.FileName, stream),
                 };
 
                 var result = await _cloudinary.UploadAsync(uploadParams);
@@ -57,7 +57,7 @@ namespace ASTREE_PFE.Services
                     SecureUrl = result.SecureUrl,
                     Url = result.Url,
                     Format = result.Format,
-                    CreatedAt = result.CreatedAt
+                    CreatedAt = result.CreatedAt,
                 };
             }
             catch (Exception ex)

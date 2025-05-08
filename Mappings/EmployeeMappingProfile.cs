@@ -1,6 +1,6 @@
-using AutoMapper;
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
+using AutoMapper;
 
 namespace ASTREE_PFE.Mappings
 {

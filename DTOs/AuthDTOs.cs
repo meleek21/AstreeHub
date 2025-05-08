@@ -1,5 +1,5 @@
-using ASTREE_PFE.Models;
 using System.ComponentModel.DataAnnotations;
+using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.DTOs
 {
@@ -36,11 +36,12 @@ namespace ASTREE_PFE.DTOs
 
         // [Required]
         public int? DepartmentId { get; set; }
-        
+
         [Required]
         [DataType(DataType.Date)]
         public DateTime DateOfBirth { get; set; }
     }
+
     public class TokenDTO
     {
         public string Token { get; set; }

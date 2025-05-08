@@ -38,7 +38,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{notificationId}/read")]
-        public async Task<IActionResult> MarkNotificationAsRead(string notificationId, [FromQuery] string userId)
+        public async Task<IActionResult> MarkNotificationAsRead(
+            string notificationId,
+            [FromQuery] string userId
+        )
         {
             await _notificationService.MarkAsReadAsync(notificationId);
             return Ok();
@@ -52,9 +55,15 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpDelete("{notificationId}")]
-        public async Task<IActionResult> DeleteNotification(string notificationId, [FromQuery] string userId)
+        public async Task<IActionResult> DeleteNotification(
+            string notificationId,
+            [FromQuery] string userId
+        )
         {
-            var success = await _notificationService.DeleteNotificationAsync(notificationId, userId);
+            var success = await _notificationService.DeleteNotificationAsync(
+                notificationId,
+                userId
+            );
             if (!success)
                 return NotFound();
 

@@ -1,11 +1,11 @@
+using System.Security.Claims;
 using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
 using ASTREE_PFE.Services;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using ASTREE_PFE.Models;
-using System.Security.Claims;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -18,7 +18,12 @@ namespace ASTREE_PFE.Controllers
         private readonly UserManager<Employee> _userManager;
         private readonly IUserOnlineStatusService _userOnlineStatusService;
 
-        public AuthController(IAuthService authService, SignInManager<Employee> signInManager, UserManager<Employee> userManager, IUserOnlineStatusService userOnlineStatusService)
+        public AuthController(
+            IAuthService authService,
+            SignInManager<Employee> signInManager,
+            UserManager<Employee> userManager,
+            IUserOnlineStatusService userOnlineStatusService
+        )
         {
             _authService = authService;
             _signInManager = signInManager;
@@ -44,18 +49,20 @@ namespace ASTREE_PFE.Controllers
                 // Log the error but don't prevent login
                 Console.WriteLine($"Failed to update user online status: {ex.Message}");
             }
-            return Ok(new
-            {
-                token,
-                user = new
+            return Ok(
+                new
                 {
-                    user.Id,
-                    user.FirstName,
-                    user.LastName,
-                    user.Email,
-                    user.Role
+                    token,
+                    user = new
+                    {
+                        user.Id,
+                        user.FirstName,
+                        user.LastName,
+                        user.Email,
+                        user.Role,
+                    },
                 }
-            });
+            );
         }
 
         [HttpPost("register")]
@@ -84,13 +91,19 @@ namespace ASTREE_PFE.Controllers
 
             try
             {
-                Console.WriteLine($"Attempting to update online status for user {userId} to offline");
+                Console.WriteLine(
+                    $"Attempting to update online status for user {userId} to offline"
+                );
                 await _userOnlineStatusService.UpdateUserStatusAsync(userId, false);
-                Console.WriteLine($"Successfully updated online status for user {userId} to offline");
+                Console.WriteLine(
+                    $"Successfully updated online status for user {userId} to offline"
+                );
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to update user online status during logout: {ex.Message}");
+                Console.WriteLine(
+                    $"Failed to update user online status during logout: {ex.Message}"
+                );
                 Console.WriteLine($"Exception details: {ex}");
             }
             return Ok(new { message });
@@ -110,20 +123,25 @@ namespace ASTREE_PFE.Controllers
                 if (user == null)
                     return NotFound(new { message = "User not found" });
 
-                return Ok(new
-                {
-                    user.Id,
-                    user.FirstName,
-                    user.LastName,
-                    user.Email,
-                    user.Role,
-                    user.DepartmentId,
-                    user.ProfilePictureUrl
-                });
+                return Ok(
+                    new
+                    {
+                        user.Id,
+                        user.FirstName,
+                        user.LastName,
+                        user.Email,
+                        user.Role,
+                        user.DepartmentId,
+                        user.ProfilePictureUrl,
+                    }
+                );
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred while fetching user data" });
+                return StatusCode(
+                    500,
+                    new { message = "An error occurred while fetching user data" }
+                );
             }
         }
     }

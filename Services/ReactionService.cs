@@ -1,14 +1,14 @@
-using ASTREE_PFE.DTOs;
-using ASTREE_PFE.Models;
-using ASTREE_PFE.Repositories.Interfaces;
-using ASTREE_PFE.Services.Interfaces;
-using MongoDB.Bson;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
+using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Hubs;
+using ASTREE_PFE.Models;
+using ASTREE_PFE.Repositories.Interfaces;
+using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using MongoDB.Bson;
 
 namespace ASTREE_PFE.Services
 {
@@ -18,8 +18,11 @@ namespace ASTREE_PFE.Services
         private readonly IPostService _postService;
         private readonly INotificationService _notificationService;
 
-        public ReactionService(IReactionRepository reactionRepository, IPostService postService,
-            INotificationService notificationService)
+        public ReactionService(
+            IReactionRepository reactionRepository,
+            IPostService postService,
+            INotificationService notificationService
+        )
         {
             _reactionRepository = reactionRepository;
             _postService = postService;
@@ -45,74 +48,75 @@ namespace ASTREE_PFE.Services
             return await _reactionRepository.GetReactionsByPostAsync(postId);
         }
 
-
-
-        public async Task<Reaction> GetReactionByEmployeeAndPostAsync(string employeeId, string postId)
+        public async Task<Reaction> GetReactionByEmployeeAndPostAsync(
+            string employeeId,
+            string postId
+        )
         {
             // No need to validate employeeId format since we're accepting UUID
-            
+
             // No need to validate postId format since we're accepting UUID
             return await _reactionRepository.GetReactionByEmployeeAndPostAsync(employeeId, postId);
         }
 
-
-
-       // Add to ReactionService.cs
-public async Task<Reaction> AddReactionAsync(ReactionRequest request)
-{
-    if (string.IsNullOrEmpty(request.PostId))
-    {
-        throw new ArgumentException("PostId must be provided");
-    }
-
-    // Get the post to  find the author
-    var post = await _postService.GetPostByIdAsync(request.PostId);
-
-
-    // Check if a reaction already exists for this employee and post
-    var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(request.EmployeeId, request.PostId);
-
-    if (existingReaction != null)
-    {
-        // If the reaction type is the same, delete it (toggle off)
-        if (existingReaction.Type == request.Type)
+        // Add to ReactionService.cs
+        public async Task<Reaction> AddReactionAsync(ReactionRequest request)
         {
-            await DeleteReactionAsync(existingReaction.Id);
-            return null;
-        }
-        // If the reaction type is different, update it
-        else
-        {
-            return await UpdateReactionAsync(existingReaction.Id, request);
-        }
-    }
+            if (string.IsNullOrEmpty(request.PostId))
+            {
+                throw new ArgumentException("PostId must be provided");
+            }
 
-    // If no existing reaction, create a new one
-    var reaction = new Reaction
-    {
-        EmployeeId = request.EmployeeId,
-        PostId = request.PostId,
-        Type = request.Type,
-        CreatedAt = DateTime.UtcNow,
-        UpdatedAt = DateTime.UtcNow
-    };
+            // Get the post to  find the author
+            var post = await _postService.GetPostByIdAsync(request.PostId);
 
-    await _reactionRepository.CreateAsync(reaction);
-    await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
-    
-    // Send notification to post author (if different from reactor)
-    if (post.AuthorId != request.EmployeeId)
-    {
-        await _notificationService.CreateReactionNotificationAsync(
-            request.EmployeeId,
-            post.AuthorId,
-            
-            request.PostId,
-            request.Type);
-    }
-    
-    return reaction;
-}
+            // Check if a reaction already exists for this employee and post
+            var existingReaction = await _reactionRepository.GetReactionByEmployeeAndPostAsync(
+                request.EmployeeId,
+                request.PostId
+            );
+
+            if (existingReaction != null)
+            {
+                // If the reaction type is the same, delete it (toggle off)
+                if (existingReaction.Type == request.Type)
+                {
+                    await DeleteReactionAsync(existingReaction.Id);
+                    return null;
+                }
+                // If the reaction type is different, update it
+                else
+                {
+                    return await UpdateReactionAsync(existingReaction.Id, request);
+                }
+            }
+
+            // If no existing reaction, create a new one
+            var reaction = new Reaction
+            {
+                EmployeeId = request.EmployeeId,
+                PostId = request.PostId,
+                Type = request.Type,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            await _reactionRepository.CreateAsync(reaction);
+            await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
+
+            // Send notification to post author (if different from reactor)
+            if (post.AuthorId != request.EmployeeId)
+            {
+                await _notificationService.CreateReactionNotificationAsync(
+                    request.EmployeeId,
+                    post.AuthorId,
+                    request.PostId,
+                    request.Type
+                );
+            }
+
+            return reaction;
+        }
 
         public async Task<Reaction> UpdateReactionAsync(string reactionId, ReactionRequest request)
         {
@@ -128,11 +132,13 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
 
             if (!string.IsNullOrEmpty(existingReaction.PostId))
             {
-                await _postService.UpdateReactionCountAsync(existingReaction.PostId, previousType, request.Type);
+                await _postService.UpdateReactionCountAsync(
+                    existingReaction.PostId,
+                    previousType,
+                    request.Type
+                );
             }
-            
 
-            
             return existingReaction;
         }
 
@@ -147,12 +153,9 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
                 var postId = reaction.PostId;
                 await _postService.DecrementReactionCountAsync(postId, reaction.Type);
                 await _reactionRepository.DeleteAsync(reaction.Id);
-                
 
-                
                 // Broadcast updated reaction summary
                 var summary = await GetReactionsSummaryForPostAsync(postId);
-
             }
         }
 
@@ -169,8 +172,6 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
             return GenerateReactionsSummary(reactions);
         }
 
-
-
         private ReactionsSummary GenerateReactionsSummary(IEnumerable<Reaction> reactions)
         {
             var summary = new ReactionsSummary
@@ -180,7 +181,7 @@ public async Task<Reaction> AddReactionAsync(ReactionRequest request)
                 JadoreCount = reactions.Count(r => r.Type == ReactionType.Jadore),
                 BravoCount = reactions.Count(r => r.Type == ReactionType.Bravo),
                 YoupiCount = reactions.Count(r => r.Type == ReactionType.Youpi),
-                BrillantCount = reactions.Count(r => r.Type == ReactionType.Brillant)
+                BrillantCount = reactions.Count(r => r.Type == ReactionType.Brillant),
             };
 
             return summary;

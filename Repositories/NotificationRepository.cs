@@ -1,12 +1,12 @@
-using ASTREE_PFE.Data;
-using ASTREE_PFE.Models;
-using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ASTREE_PFE.Data;
+using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
 using MongoDB.Bson;
-using System;
+using MongoDB.Driver;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -23,6 +23,7 @@ namespace ASTREE_PFE.Repositories
         {
             return await _notifications.Find(_ => true).ToListAsync();
         }
+
         public async Task<Notification> GetByIdAsync(string id)
         {
             return await _notifications.Find(n => n.Id == id).FirstOrDefaultAsync();
@@ -37,9 +38,14 @@ namespace ASTREE_PFE.Repositories
             return await _notifications.Find(filter).ToListAsync();
         }
 
-        public async Task<IEnumerable<Notification>> GetNotificationsForUserAsync(string userId, int skip = 0, int take = 20)
+        public async Task<IEnumerable<Notification>> GetNotificationsForUserAsync(
+            string userId,
+            int skip = 0,
+            int take = 20
+        )
         {
-            return await _notifications.Find(n => n.RecipientId == userId)
+            return await _notifications
+                .Find(n => n.RecipientId == userId)
                 .SortByDescending(n => n.Timestamp)
                 .Skip(skip)
                 .Limit(take)
@@ -48,7 +54,8 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<int> GetUnreadCountAsync(string userId)
         {
-            return (int)await _notifications.CountDocumentsAsync(n => n.RecipientId == userId && !n.IsRead);
+            return (int)
+                await _notifications.CountDocumentsAsync(n => n.RecipientId == userId && !n.IsRead);
         }
 
         public async Task CreateAsync(Notification notification)

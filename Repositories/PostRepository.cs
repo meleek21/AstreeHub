@@ -1,8 +1,8 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -17,11 +17,15 @@ namespace ASTREE_PFE.Repositories
             _posts = database.GetCollection<Post>("Posts");
         }
 
-        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(string lastItemId = null, int limit = 10)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetAllAsync(string lastItemId = null, int limit = 10)
         {
             var filterBuilder = Builders<Post>.Filter;
             var filter = filterBuilder.Eq(p => p.ChannelId, null);
-            
+
             if (!string.IsNullOrEmpty(lastItemId))
             {
                 var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
@@ -33,7 +37,7 @@ namespace ASTREE_PFE.Repositories
                     );
                 }
             }
-            
+
             var query = _posts.Find(filter);
 
             var sortedQuery = query.SortByDescending(p => p.Timestamp);
@@ -46,11 +50,15 @@ namespace ASTREE_PFE.Repositories
             return (resultPosts, nextLastItemId, hasMore);
         }
 
-        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetPostsByChannelIdAsync(string channelId, string lastItemId = null, int limit = 10)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetPostsByChannelIdAsync(string channelId, string lastItemId = null, int limit = 10)
         {
             var filterBuilder = Builders<Post>.Filter;
             var filter = filterBuilder.Eq(p => p.ChannelId, channelId);
-            
+
             if (!string.IsNullOrEmpty(lastItemId))
             {
                 var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
@@ -62,7 +70,7 @@ namespace ASTREE_PFE.Repositories
                     );
                 }
             }
-            
+
             var query = _posts.Find(filter);
 
             var sortedQuery = query.SortByDescending(p => p.Timestamp);
@@ -80,9 +88,37 @@ namespace ASTREE_PFE.Repositories
             return await _posts.Find(p => p.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetByAuthorIdAsync(string authorId, string lastItemId = null, int limit = 10)
         {
-            return await _posts.Find(p => p.AuthorId == authorId).ToListAsync();
+            var filterBuilder = Builders<Post>.Filter;
+            var filter = filterBuilder.Eq(p => p.AuthorId, authorId);
+
+            if (!string.IsNullOrEmpty(lastItemId))
+            {
+                var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
+                if (lastPost != null)
+                {
+                    filter = filterBuilder.And(
+                        filter,
+                        filterBuilder.Lt(p => p.Timestamp, lastPost.Timestamp)
+                    );
+                }
+            }
+
+            var query = _posts.Find(filter);
+
+            var sortedQuery = query.SortByDescending(p => p.Timestamp);
+            var posts = await sortedQuery.Limit(limit + 1).ToListAsync();
+
+            bool hasMore = posts.Count > limit;
+            var resultPosts = hasMore ? posts.Take(limit) : posts;
+            string nextLastItemId = hasMore ? posts[limit - 1].Id : null;
+
+            return (resultPosts, nextLastItemId, hasMore);
         }
 
         public async Task CreateAsync(Post post)
@@ -114,7 +150,10 @@ namespace ASTREE_PFE.Repositories
             await _posts.UpdateOneAsync(filter, update);
         }
 
-        public async Task UpdateReactionsAsync(string postId, Dictionary<ReactionType, int> reactions)
+        public async Task UpdateReactionsAsync(
+            string postId,
+            Dictionary<ReactionType, int> reactions
+        )
         {
             var filter = Builders<Post>.Filter.Eq(p => p.Id, postId);
             var update = Builders<Post>.Update.Set(p => p.ReactionCounts, reactions);
@@ -123,10 +162,11 @@ namespace ASTREE_PFE.Repositories
 
         public async Task<IEnumerable<Post>> GetRecentPostsAsync(int count)
         {
-            return await _posts.Find(_ => true)
-                               .SortByDescending(p => p.Timestamp)
-                               .Limit(count)
-                               .ToListAsync();
+            return await _posts
+                .Find(_ => true)
+                .SortByDescending(p => p.Timestamp)
+                .Limit(count)
+                .ToListAsync();
         }
 
         public async Task AddFileIdsAsync(string postId, List<string> fileIds)

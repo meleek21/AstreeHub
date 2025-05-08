@@ -1,12 +1,12 @@
-using ASTREE_PFE.Models;
-using ASTREE_PFE.Services.Interfaces;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
+using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -32,47 +32,51 @@ namespace ASTREE_PFE.Controllers
 
         // GET: api/channels/user
         // GET: api/channels/user
-[HttpGet("user")]
-public async Task<ActionResult<IEnumerable<Channel>>> GetUserChannels([FromQuery] int? departmentId = null)
-{
-    try
-    {
-        var userChannels = new List<Channel>();
-
-        // If no departmentId is provided, return all channels
-        if (!departmentId.HasValue)
+        [HttpGet("user")]
+        public async Task<ActionResult<IEnumerable<Channel>>> GetUserChannels(
+            [FromQuery] int? departmentId = null
+        )
         {
-            return Ok(await _channelService.GetAllChannelsAsync());
-        }
-
-        // Get general channels
-        var generalChannels = await _channelService.GetGeneralChannelsAsync();
-        if (generalChannels != null && generalChannels.Any())
-        {
-            userChannels.AddRange(generalChannels);
-        }
-
-        // Get department channel if departmentId is provided
-        try
-        {
-            var departmentChannel = await _channelService.GetChannelByDepartmentIdAsync(departmentId.Value);
-            if (departmentChannel != null)
+            try
             {
-                userChannels.Add(departmentChannel);
+                var userChannels = new List<Channel>();
+
+                // If no departmentId is provided, return all channels
+                if (!departmentId.HasValue)
+                {
+                    return Ok(await _channelService.GetAllChannelsAsync());
+                }
+
+                // Get general channels
+                var generalChannels = await _channelService.GetGeneralChannelsAsync();
+                if (generalChannels != null && generalChannels.Any())
+                {
+                    userChannels.AddRange(generalChannels);
+                }
+
+                // Get department channel if departmentId is provided
+                try
+                {
+                    var departmentChannel = await _channelService.GetChannelByDepartmentIdAsync(
+                        departmentId.Value
+                    );
+                    if (departmentChannel != null)
+                    {
+                        userChannels.Add(departmentChannel);
+                    }
+                }
+                catch (KeyNotFoundException)
+                {
+                    // Continue without department channel if not found
+                }
+
+                return Ok(userChannels);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while fetching channels: {ex.Message}");
             }
         }
-        catch (KeyNotFoundException)
-        {
-            // Continue without department channel if not found
-        }
-
-        return Ok(userChannels);
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, $"An error occurred while fetching channels: {ex.Message}");
-    }
-}
 
         // GET: api/channels/{id}
         [HttpGet("{id}")]
@@ -99,11 +103,15 @@ public async Task<ActionResult<IEnumerable<Channel>>> GetUserChannels([FromQuery
                     Name = channelDto.Name,
                     DepartmentId = channelDto.DepartmentId,
                     IsGeneral = channelDto.IsGeneral,
-                    CreatedAt = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
                 };
-                
+
                 var createdChannel = await _channelService.CreateChannelAsync(channel);
-                return CreatedAtAction(nameof(GetChannel), new { id = createdChannel.Id }, createdChannel);
+                return CreatedAtAction(
+                    nameof(GetChannel),
+                    new { id = createdChannel.Id },
+                    createdChannel
+                );
             }
             catch (InvalidOperationException ex)
             {
@@ -128,13 +136,12 @@ public async Task<ActionResult<IEnumerable<Channel>>> GetUserChannels([FromQuery
                 {
                     return NotFound($"Channel with ID {id} not found");
                 }
-                
+
                 // Update channel properties
                 existingChannel.Name = channelDto.Name;
                 existingChannel.DepartmentId = channelDto.DepartmentId;
                 existingChannel.IsGeneral = channelDto.IsGeneral;
 
-                
                 await _channelService.UpdateChannelAsync(id, existingChannel);
                 return NoContent();
             }

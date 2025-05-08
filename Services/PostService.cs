@@ -1,13 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Linq; // Added for LINQ operations
+using System.Threading.Tasks;
+using ASTREE_PFE.Hubs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
-using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
-using ASTREE_PFE.Hubs;
-using System.Linq; // Added for LINQ operations
+using MongoDB.Driver;
 
 namespace ASTREE_PFE.Services
 {
@@ -24,16 +24,16 @@ namespace ASTREE_PFE.Services
         public PostService(
             IPostRepository postRepository,
             IFileService fileService,
-            
             IReactionRepository reactionRepository,
             ICommentRepository commentRepository,
             IChannelRepository channelRepository, // Added parameter
             IEmployeeRepository employeeRepository,
-            INotificationService notificationService) // Added parameter
+            INotificationService notificationService
+        ) // Added parameter
         {
             _postRepository = postRepository;
             _fileService = fileService;
-  
+
             _reactionRepository = reactionRepository;
             _commentRepository = commentRepository;
             _channelRepository = channelRepository; // Assign injected repository
@@ -41,10 +41,15 @@ namespace ASTREE_PFE.Services
             _notificationService = notificationService; // Assign injected service
         }
 
-        public async Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType)
+        public async Task UpdateReactionCountAsync(
+            string postId,
+            ReactionType oldType,
+            ReactionType newType
+        )
         {
             var post = await _postRepository.GetByIdAsync(postId);
-            if (post == null) return;
+            if (post == null)
+                return;
 
             // Only process if types are different
             if (oldType != newType)
@@ -65,7 +70,8 @@ namespace ASTREE_PFE.Services
                 // Add new reaction count
                 if (newType != ReactionType.None)
                 {
-                    post.ReactionCounts[newType] = post.ReactionCounts.GetValueOrDefault(newType, 0) + 1;
+                    post.ReactionCounts[newType] =
+                        post.ReactionCounts.GetValueOrDefault(newType, 0) + 1;
                 }
 
                 await _postRepository.UpdateAsync(postId, post);
@@ -76,7 +82,8 @@ namespace ASTREE_PFE.Services
         {
             // First get the post to check if ReactionCounts is properly initialized
             var post = await _postRepository.GetByIdAsync(postId);
-            if (post == null) return;
+            if (post == null)
+                return;
 
             // Initialize ReactionCounts if it's null or not properly set up
             if (post.ReactionCounts == null)
@@ -105,7 +112,11 @@ namespace ASTREE_PFE.Services
             }
         }
 
-        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllPostsAsync(string lastItemId = null, int limit = 10)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetAllPostsAsync(string lastItemId = null, int limit = 10)
         {
             return await _postRepository.GetAllAsync(lastItemId, limit);
         }
@@ -115,59 +126,60 @@ namespace ASTREE_PFE.Services
             return await _postRepository.GetByIdAsync(id);
         }
 
-        public async Task<IEnumerable<Post>> GetPostsByAuthorAsync(string authorId)
+        public async Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetPostsByAuthorAsync(string authorId, string lastItemId = null, int limit = 10)
         {
-            return await _postRepository.GetByAuthorIdAsync(authorId);
+            return await _postRepository.GetByAuthorIdAsync(authorId, lastItemId, limit);
         }
 
-public async Task<Post> CreatePostAsync(Post post)
-{
-    await _postRepository.CreateAsync(post);
-
-    // Load file details for the post
-    if (post.FileIds != null && post.FileIds.Any())
-    {
-        post.Files = new List<ASTREE_PFE.Models.File>();
-        foreach (var fileId in post.FileIds)
+        public async Task<Post> CreatePostAsync(Post post)
         {
-            var file = await _fileService.GetFileByIdAsync(fileId);
-            if (file != null)
-            {
-                post.Files.Add(file);
-            }
-        }
-    }
+            await _postRepository.CreateAsync(post);
 
-    // Handle Notifications and SignalR broadcasts for channel posts
-    if (!string.IsNullOrEmpty(post.ChannelId))
-    {
-        var channel = await _channelRepository.GetByIdAsync(post.ChannelId);
-        
-        if (channel != null)
-        {
-            // Create notification for channel post (either department-specific or general)
-            await _notificationService.CreateChannelPostNotificationAsync(
-                post.AuthorId, 
-                post.ChannelId,
-                channel.Name, // Assuming channel has a Name property
-                post.Id,
-                post.Content
-            );
-            
-            // SignalR broadcast logic based on channel type
-            if (channel.DepartmentId.HasValue)
+            // Load file details for the post
+            if (post.FileIds != null && post.FileIds.Any())
             {
-                // Department-specific channel post
-                string departmentGroupId = channel.DepartmentId.Value.ToString();
-
+                post.Files = new List<ASTREE_PFE.Models.File>();
+                foreach (var fileId in post.FileIds)
+                {
+                    var file = await _fileService.GetFileByIdAsync(fileId);
+                    if (file != null)
+                    {
+                        post.Files.Add(file);
+                    }
+                }
             }
 
+            // Handle Notifications and SignalR broadcasts for channel posts
+            if (!string.IsNullOrEmpty(post.ChannelId))
+            {
+                var channel = await _channelRepository.GetByIdAsync(post.ChannelId);
+
+                if (channel != null)
+                {
+                    // Create notification for channel post (either department-specific or general)
+                    await _notificationService.CreateChannelPostNotificationAsync(
+                        post.AuthorId,
+                        post.ChannelId,
+                        channel.Name, // Assuming channel has a Name property
+                        post.Id,
+                        post.Content
+                    );
+
+                    // SignalR broadcast logic based on channel type
+                    if (channel.DepartmentId.HasValue)
+                    {
+                        // Department-specific channel post
+                        string departmentGroupId = channel.DepartmentId.Value.ToString();
+                    }
+                }
+            }
+
+            return post;
         }
-    }
-
-
-    return post;
-}
 
         public async Task UpdatePostAsync(string id, Post post)
         {
@@ -186,9 +198,6 @@ public async Task<Post> CreatePostAsync(Post post)
                     }
                 }
             }
-
-
-
         }
 
         public async Task DeletePostAsync(string id)
@@ -217,9 +226,6 @@ public async Task<Post> CreatePostAsync(Post post)
                 }
 
                 await _postRepository.DeleteAsync(id);
-
-
-    
             }
         }
 

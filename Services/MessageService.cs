@@ -23,7 +23,7 @@ namespace ASTREE_PFE.Services
             INotificationService notificationService,
             IFileService fileService,
             ICloudinaryService cloudinaryService
-            )
+        )
         {
             _messageRepository = messageRepository;
             _conversationRepository = conversationRepository;
@@ -42,9 +42,17 @@ namespace ASTREE_PFE.Services
             return await MapToMessageResponseDtoAsync(message);
         }
 
-        public async Task<IEnumerable<MessageResponseDto>> GetMessagesByConversationIdAsync(string conversationId, int skip = 0, int limit = 50)
+        public async Task<IEnumerable<MessageResponseDto>> GetMessagesByConversationIdAsync(
+            string conversationId,
+            int skip = 0,
+            int limit = 50
+        )
         {
-            var messages = await _messageRepository.GetMessagesByConversationIdAsync(conversationId, skip, limit);
+            var messages = await _messageRepository.GetMessagesByConversationIdAsync(
+                conversationId,
+                skip,
+                limit
+            );
             var messageDtos = new List<MessageResponseDto>();
 
             foreach (var message in messages)
@@ -62,7 +70,9 @@ namespace ASTREE_PFE.Services
                 throw new ArgumentException("ConversationId is required");
             }
 
-            var conversation = await _conversationRepository.GetConversationByIdAsync(messageDto.ConversationId);
+            var conversation = await _conversationRepository.GetConversationByIdAsync(
+                messageDto.ConversationId
+            );
             if (conversation == null)
             {
                 throw new ArgumentException("Invalid conversation ID");
@@ -71,7 +81,9 @@ namespace ASTREE_PFE.Services
             // Verify sender is a participant in the conversation
             if (!conversation.Participants.Contains(messageDto.UserId))
             {
-                throw new UnauthorizedAccessException("User is not a participant in this conversation");
+                throw new UnauthorizedAccessException(
+                    "User is not a participant in this conversation"
+                );
             }
 
             // Create the message
@@ -85,13 +97,16 @@ namespace ASTREE_PFE.Services
                 ConversationId = messageDto.ConversationId,
                 DeletedForUsers = new List<string>(),
                 IsEdited = false,
-                IsUnsent = false
+                IsUnsent = false,
             };
 
             await _messageRepository.CreateMessageAsync(message);
 
             // Update the conversation's last message
-            await _conversationRepository.UpdateLastMessageAsync(messageDto.ConversationId, message.Id);
+            await _conversationRepository.UpdateLastMessageAsync(
+                messageDto.ConversationId,
+                message.Id
+            );
 
             // Send notifications to other participants
             foreach (var participantId in conversation.Participants)
@@ -101,29 +116,38 @@ namespace ASTREE_PFE.Services
                     await _notificationService.CreateMessageNotificationAsync(
                         messageDto.UserId,
                         participantId,
-                        messageDto.ConversationId);
+                        messageDto.ConversationId
+                    );
                 }
             }
 
             return await MapToMessageResponseDtoAsync(message);
         }
 
-        public async Task<bool> UpdateMessageReadStatusAsync(string messageId, bool isRead, string userId)
-{
-    var message = await _messageRepository.GetMessageByIdAsync(messageId);
-    if (message == null || message.SenderId == userId)
-        return false;
+        public async Task<bool> UpdateMessageReadStatusAsync(
+            string messageId,
+            bool isRead,
+            string userId
+        )
+        {
+            var message = await _messageRepository.GetMessageByIdAsync(messageId);
+            if (message == null || message.SenderId == userId)
+                return false;
 
-    await _messageRepository.UpdateMessageReadStatusAsync(messageId, isRead, DateTime.UtcNow);
-    return true;
-}
+            await _messageRepository.UpdateMessageReadStatusAsync(
+                messageId,
+                isRead,
+                DateTime.UtcNow
+            );
+            return true;
+        }
 
         public async Task<bool> DeleteMessageAsync(string id)
         {
             var message = await _messageRepository.GetMessageByIdAsync(id);
             if (message == null)
                 return false;
-                
+
             // Check if the message has an attachment and delete it
             if (!string.IsNullOrEmpty(message.AttachmentUrl))
             {
@@ -131,12 +155,12 @@ namespace ASTREE_PFE.Services
                 {
                     // Find the file with matching URL
                     var file = await _fileService.FindFileByUrlAsync(message.AttachmentUrl);
-                    
+
                     if (file != null)
                     {
                         // Delete from Cloudinary
                         await _cloudinaryService.DeleteFileAsync(file.PublicId);
-                        
+
                         // Delete from database
                         await _fileService.DeleteFileAsync(file.Id);
                     }
@@ -154,7 +178,9 @@ namespace ASTREE_PFE.Services
 
         public async Task<IEnumerable<ConversationDto>> GetUserConversationsAsync(string userId)
         {
-            var conversations = await _conversationRepository.GetConversationsByParticipantIdAsync(userId);
+            var conversations = await _conversationRepository.GetConversationsByParticipantIdAsync(
+                userId
+            );
             var conversationDtos = new List<ConversationDto>();
 
             foreach (var conversation in conversations)
@@ -165,37 +191,48 @@ namespace ASTREE_PFE.Services
             return conversationDtos.OrderByDescending(c => c.UpdatedAt);
         }
 
-        public async Task<ConversationDto> GetConversationByIdAsync(string conversationId, string userId)
+        public async Task<ConversationDto> GetConversationByIdAsync(
+            string conversationId,
+            string userId
+        )
         {
-            var conversation = await _conversationRepository.GetConversationByIdAsync(conversationId);
+            var conversation = await _conversationRepository.GetConversationByIdAsync(
+                conversationId
+            );
             if (conversation == null || !conversation.Participants.Contains(userId))
                 return null;
 
             return await MapToConversationDtoAsync(conversation, userId);
         }
 
-        public async Task<ConversationDto> GetOrCreateConversationWithUserAsync(string currentUserId, string otherUserId)
+        public async Task<ConversationDto> GetOrCreateConversationWithUserAsync(
+            string currentUserId,
+            string otherUserId
+        )
         {
             // Create a list with both user IDs
             var participantIds = new List<string> { currentUserId, otherUserId };
-            
+
             // Sort participant IDs to ensure consistent lookup regardless of order
             participantIds.Sort();
-            
+
             // Try to find an existing conversation first
-            var existingConversation = await _conversationRepository.GetConversationByParticipantsAsync(participantIds);
-            
+            var existingConversation =
+                await _conversationRepository.GetConversationByParticipantsAsync(participantIds);
+
             if (existingConversation != null)
             {
                 // Return the existing conversation
                 return await MapToConversationDtoAsync(existingConversation, currentUserId);
             }
-            
+
             // Return null if no conversation exists - it will be created when a message is sent
             return null;
         }
 
-        public async Task<ConversationDto> CreateGroupConversationAsync(CreateConversationDto createConversationDto)
+        public async Task<ConversationDto> CreateGroupConversationAsync(
+            CreateConversationDto createConversationDto
+        )
         {
             string creatorId = createConversationDto.CreatorId;
             List<string> participantIds = createConversationDto.ParticipantIds;
@@ -209,7 +246,9 @@ namespace ASTREE_PFE.Services
             }
             else if (!isGroup && participantIds.Count != 2)
             {
-                throw new ArgumentException("One-to-one conversations require exactly 2 participants");
+                throw new ArgumentException(
+                    "One-to-one conversations require exactly 2 participants"
+                );
             }
 
             // Ensure creator is in the participants list
@@ -223,8 +262,11 @@ namespace ASTREE_PFE.Services
             {
                 var sortedParticipantIds = new List<string>(participantIds);
                 sortedParticipantIds.Sort();
-                
-                var existingConversation = await _conversationRepository.GetConversationByParticipantsAsync(sortedParticipantIds);
+
+                var existingConversation =
+                    await _conversationRepository.GetConversationByParticipantsAsync(
+                        sortedParticipantIds
+                    );
                 if (existingConversation != null)
                 {
                     return await MapToConversationDtoAsync(existingConversation, creatorId);
@@ -239,7 +281,7 @@ namespace ASTREE_PFE.Services
                 Title = isGroup ? title : null,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                CreatorId = creatorId
+                CreatorId = creatorId,
             };
 
             await _conversationRepository.CreateConversationAsync(conversation);
@@ -255,10 +297,12 @@ namespace ASTREE_PFE.Services
         private async Task<MessageResponseDto> MapToMessageResponseDtoAsync(Message message)
         {
             var sender = await _employeeRepository.GetByIdAsync(message.SenderId);
-            var conversation = await _conversationRepository.GetConversationByIdAsync(message.ConversationId);
+            var conversation = await _conversationRepository.GetConversationByIdAsync(
+                message.ConversationId
+            );
             var recipient = await _employeeRepository.GetByIdAsync(
-            conversation?.Participants.FirstOrDefault(p => p != message.SenderId));
-
+                conversation?.Participants.FirstOrDefault(p => p != message.SenderId)
+            );
 
             return new MessageResponseDto
             {
@@ -273,11 +317,14 @@ namespace ASTREE_PFE.Services
                 IsRead = message.IsRead,
                 ReadAt = message.ReadAt,
                 AttachmentUrl = message.AttachmentUrl,
-                ConversationId = message.ConversationId
+                ConversationId = message.ConversationId,
             };
         }
 
-        private async Task<ConversationDto> MapToConversationDtoAsync(Conversation conversation, string currentUserId)
+        private async Task<ConversationDto> MapToConversationDtoAsync(
+            Conversation conversation,
+            string currentUserId
+        )
         {
             var participantDtos = new List<ParticipantDto>();
             foreach (var participantId in conversation.Participants)
@@ -285,21 +332,28 @@ namespace ASTREE_PFE.Services
                 var employee = await _employeeRepository.GetByIdAsync(participantId);
                 if (employee != null)
                 {
-                    participantDtos.Add(new ParticipantDto
-                    {
-                        Id = employee.Id,
-                        Name = employee.FullName,
-                        ProfilePictureUrl = employee.ProfilePictureUrl
-                    });
+                    participantDtos.Add(
+                        new ParticipantDto
+                        {
+                            Id = employee.Id,
+                            Name = employee.FullName,
+                            ProfilePictureUrl = employee.ProfilePictureUrl,
+                        }
+                    );
                 }
             }
 
-            var lastMessage = conversation.LastMessageId != null
-                ? await _messageRepository.GetMessageByIdAsync(conversation.LastMessageId)
-                : null;
+            var lastMessage =
+                conversation.LastMessageId != null
+                    ? await _messageRepository.GetMessageByIdAsync(conversation.LastMessageId)
+                    : null;
 
-            int unreadCount = await _messageRepository.FindMessagesAsync(m => m.ConversationId == conversation.Id && m.SenderId != currentUserId && !m.IsRead).ContinueWith(t => t.Result.Count());
-return new ConversationDto
+            int unreadCount = await _messageRepository
+                .FindMessagesAsync(m =>
+                    m.ConversationId == conversation.Id && m.SenderId != currentUserId && !m.IsRead
+                )
+                .ContinueWith(t => t.Result.Count());
+            return new ConversationDto
             {
                 Id = conversation.Id,
                 Title = !conversation.IsGroup
@@ -307,11 +361,12 @@ return new ConversationDto
                     : conversation.Title,
                 IsGroup = conversation.IsGroup,
                 Participants = participantDtos,
-                LastMessage = lastMessage != null ? await MapToMessageResponseDtoAsync(lastMessage) : null,
+                LastMessage =
+                    lastMessage != null ? await MapToMessageResponseDtoAsync(lastMessage) : null,
                 CreatedAt = conversation.CreatedAt,
                 UpdatedAt = conversation.UpdatedAt,
                 UnreadCount = unreadCount,
-                CreatorId = conversation.CreatorId // Ensure CreatorId is mapped
+                CreatorId = conversation.CreatorId, // Ensure CreatorId is mapped
             };
         }
 
@@ -333,7 +388,11 @@ return new ConversationDto
         public async Task<bool> UnsendMessageAsync(string messageId, string userId)
         {
             var message = await _messageRepository.GetMessageByIdAsync(messageId);
-            if (message == null || message.SenderId != userId || (DateTime.UtcNow - message.Timestamp).TotalMinutes > 5)
+            if (
+                message == null
+                || message.SenderId != userId
+                || (DateTime.UtcNow - message.Timestamp).TotalMinutes > 5
+            )
                 return false;
 
             // Check if the message has an attachment
@@ -343,12 +402,12 @@ return new ConversationDto
                 {
                     // Find the file with matching URL using the dedicated method
                     var file = await _fileService.FindFileByUrlAsync(message.AttachmentUrl);
-                    
+
                     if (file != null)
                     {
                         // Delete from Cloudinary using the public ID stored in the file record
                         await _cloudinaryService.DeleteFileAsync(file.PublicId);
-                        
+
                         // Delete from database
                         await _fileService.DeleteFileAsync(file.Id);
                     }
@@ -383,34 +442,59 @@ return new ConversationDto
 
         public async Task<bool> DeleteConversationAsync(string conversationId, string userId)
         {
-            var conversation = await _conversationRepository.GetConversationByIdAsync(conversationId);
+            var conversation = await _conversationRepository.GetConversationByIdAsync(
+                conversationId
+            );
             if (conversation == null || !conversation.Participants.Contains(userId))
                 return false;
             await _conversationRepository.DeleteConversationAsync(conversationId, userId);
             return true;
         }
+
         public async Task<bool> PermanentlyDeleteGroupAsync(string conversationId, string userId)
         {
-            return await _conversationRepository.PermanentlyDeleteGroupAsync(conversationId, userId);
+            return await _conversationRepository.PermanentlyDeleteGroupAsync(
+                conversationId,
+                userId
+            );
         }
 
-        public async Task<bool> AddParticipantToGroupAsync(string conversationId, string userId, string newParticipantId)
+        public async Task<bool> AddParticipantToGroupAsync(
+            string conversationId,
+            string userId,
+            string newParticipantId
+        )
         {
-            return await _conversationRepository.AddParticipantAsync(conversationId, userId, newParticipantId);
+            return await _conversationRepository.AddParticipantAsync(
+                conversationId,
+                userId,
+                newParticipantId
+            );
         }
 
-        public async Task<bool> RemoveParticipantFromGroupAsync(string conversationId, string userId, string participantId)
+        public async Task<bool> RemoveParticipantFromGroupAsync(
+            string conversationId,
+            string userId,
+            string participantId
+        )
         {
-            return await _conversationRepository.RemoveParticipantAsync(conversationId, userId, participantId);
+            return await _conversationRepository.RemoveParticipantAsync(
+                conversationId,
+                userId,
+                participantId
+            );
         }
 
         public async Task<bool> LeaveGroupAsync(string conversationId, string userId)
         {
             return await _conversationRepository.LeaveGroupAsync(conversationId, userId);
         }
+
         public async Task<List<string>> GetParticipantsByConversationIdAsync(string conversationId)
         {
-            return await _conversationRepository.GetParticipantsByConversationIdAsync(conversationId);
+            return await _conversationRepository.GetParticipantsByConversationIdAsync(
+                conversationId
+            );
         }
     }
 }

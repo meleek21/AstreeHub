@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.SignalR;
-using ASTREE_PFE.Services.Interfaces;
-using Microsoft.Extensions.Logging; // Add this using statement
 using System;
 using System.Threading.Tasks;
+using ASTREE_PFE.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging; // Add this using statement
 
 namespace ASTREE_PFE.Hubs
 {
@@ -21,7 +21,9 @@ namespace ASTREE_PFE.Hubs
         // Method called by client heartbeat
         public async Task UpdateActivity()
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = Context
+                .User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
             if (!string.IsNullOrEmpty(userId))
             {
                 try
@@ -35,6 +37,7 @@ namespace ASTREE_PFE.Hubs
                 }
             }
         }
+
         public async Task UpdateUserStatus(string userId, bool isOnline)
         {
             await _userOnlineStatusService.UpdateUserStatusAsync(userId, isOnline);
@@ -58,9 +61,15 @@ namespace ASTREE_PFE.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = Context
+                .User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
             var connectionId = Context.ConnectionId;
-            _logger.LogInformation("User connected. User ID: {UserId}, Connection ID: {ConnectionId}", userId ?? "Anonymous", connectionId);
+            _logger.LogInformation(
+                "User connected. User ID: {UserId}, Connection ID: {ConnectionId}",
+                userId ?? "Anonymous",
+                connectionId
+            );
 
             if (!string.IsNullOrEmpty(userId))
             {
@@ -70,11 +79,19 @@ namespace ASTREE_PFE.Hubs
                     await _userOnlineStatusService.RecordConnectionAsync(userId, connectionId);
                     // Update status and activity (which also marks as online if needed)
                     await _userOnlineStatusService.UpdateUserActivityAsync(userId);
-                    _logger.LogInformation("User {UserId} connected with Connection ID {ConnectionId}. Status updated.", userId, connectionId);
+                    _logger.LogInformation(
+                        "User {UserId} connected with Connection ID {ConnectionId}. Status updated.",
+                        userId,
+                        connectionId
+                    );
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error during OnConnectedAsync for User ID: {UserId}", userId);
+                    _logger.LogError(
+                        ex,
+                        "Error during OnConnectedAsync for User ID: {UserId}",
+                        userId
+                    );
                 }
             }
             await base.OnConnectedAsync();
@@ -82,30 +99,47 @@ namespace ASTREE_PFE.Hubs
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            var userId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userId = Context
+                .User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+                ?.Value;
             var connectionId = Context.ConnectionId;
 
             if (exception != null)
             {
-                _logger.LogError(exception, "User disconnected with error. User ID: {UserId}, Connection ID: {ConnectionId}", userId ?? "Anonymous", connectionId);
+                _logger.LogError(
+                    exception,
+                    "User disconnected with error. User ID: {UserId}, Connection ID: {ConnectionId}",
+                    userId ?? "Anonymous",
+                    connectionId
+                );
             }
             else
             {
-                _logger.LogInformation("User disconnected gracefully. User ID: {UserId}, Connection ID: {ConnectionId}", userId ?? "Anonymous", connectionId);
+                _logger.LogInformation(
+                    "User disconnected gracefully. User ID: {UserId}, Connection ID: {ConnectionId}",
+                    userId ?? "Anonymous",
+                    connectionId
+                );
             }
 
             if (!string.IsNullOrEmpty(userId))
             {
-
                 try
                 {
                     await _userOnlineStatusService.RecordDisconnectionAsync(userId, connectionId);
-                    _logger.LogInformation("Recorded disconnection for User ID: {UserId}, Connection ID: {ConnectionId}", userId, connectionId);
-
+                    _logger.LogInformation(
+                        "Recorded disconnection for User ID: {UserId}, Connection ID: {ConnectionId}",
+                        userId,
+                        connectionId
+                    );
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error recording disconnection for User ID: {UserId}", userId);
+                    _logger.LogError(
+                        ex,
+                        "Error recording disconnection for User ID: {UserId}",
+                        userId
+                    );
                 }
             }
             await base.OnDisconnectedAsync(exception);
