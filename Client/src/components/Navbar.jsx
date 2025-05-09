@@ -79,14 +79,7 @@ function Navbar() {
     <nav className="nav-bar">
       {/* Home */}
       <div className="navbar-home">
-        <Link to="/" className="nav-link">
-          <lord-icon
-            src="https://cdn.lordicon.com/lznlxwtc.json"
-            trigger="hover"
-            colors="primary:#FFC107"
-            style={{ width: '30px', height: '30px' }}
-          ></lord-icon>
-        </Link>
+        
       </div>
       
       {/* Notifications */}

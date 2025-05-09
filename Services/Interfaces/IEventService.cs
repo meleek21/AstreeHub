@@ -5,7 +5,6 @@ namespace ASTREE_PFE.Services.Interfaces
 {
     public interface IEventService
     {
-        Task GenerateBirthdayEventsAsync();
         Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto);
         Task<EventResponseDTO> GetEventByIdAsync(string id);
         Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync();

@@ -47,12 +47,12 @@ const NotificationBell = () => {
   return (
     <div className="notification-bell">
       <div onClick={togglePanel}>
-        <lord-icon
-          src="https://cdn.lordicon.com/psnhyobz.json"
-          trigger="hover"
-          colors="primary:#FFC107"
-          style={{ width: '30px', height: '30px' }}
-        ></lord-icon>
+          <lord-icon
+            src="https://cdn.lordicon.com/lznlxwtc.json"
+            trigger="hover"
+            colors="primary:#FFC107"
+            style={{ width: '30px', height: '30px' }}
+          ></lord-icon>
         {unreadCount > 0 && (
           <span className="notification-badge">
             {unreadCount > 99 ? '99+' : unreadCount}
