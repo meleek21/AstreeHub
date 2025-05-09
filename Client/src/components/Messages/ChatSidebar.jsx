@@ -1,17 +1,44 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { userAPI } from '../../services/apiServices';
-import useOnlineStatus from '../../hooks/useOnlineStatus';
 import UserBadge from '../UserBadge';
 import '../../assets/Css/ChatSidebar.css';
+import MiniCalendar from '../MiniCalendar';
+import ModalPortal from '../ModalPortal';
+import { useChat } from '../../Context/ChatContext';
+import { useAuth } from '../../Context/AuthContext';
 
-const ChatSidebar = ({ onSelectEmployee }) => {
+const ChatSidebar = () => {
+  const { conversations, setConversations, selectedConversation, setSelectedConversation, messages, setMessages, loading, setLoading, unreadCount, setUnreadCount, selectedEmployee, setSelectedEmployee, handleSelectEmployee } = useChat();
+  const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  
+  const [isSidebarVisible, setSidebarVisible] = useState(false);
   const [error, setError] = useState(null);
-  const { isUserOnline } = useOnlineStatus();
+  const sidebarRef = useRef(null);
 
+  const toggleSidebarVisibility = () => {
+    setSidebarVisible(!isSidebarVisible);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setSidebarVisible(false);
+      }
+    };
+
+    if (isSidebarVisible) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSidebarVisible]);
   // Fetch all employees
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -85,38 +112,55 @@ const ChatSidebar = ({ onSelectEmployee }) => {
     );
   }
 
-  return (
-    <div className="chat-sidebar">
-      <h2>Contacts</h2>
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="Search contacts..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="search-input"
-        />
-      </div>
-      {filteredEmployees.length === 0 ? (
-        <div className="empty-list">No contacts found</div>
-      ) : (
-        <div className="employee-list">
-          {filteredEmployees.map((employee) => (
-            <div
-              key={employee.id}
-              className="employee-item"
-              onClick={() => onSelectEmployee(employee)}
-            >
-              <UserBadge userId={employee.id} />
-              <div className="employee-info">
+ 
 
-                <span className={`status-indicator ${isUserOnline(employee.id) ? 'online' : 'offline'}`}>
-                  {isUserOnline(employee.id) ? 'Online' : 'Offline'}
-                </span>
+  
+
+  return (
+    <div>
+      <button className="peeking-ticket" onClick={toggleSidebarVisibility}>
+      <lord-icon
+        src="https://cdn.lordicon.com/wjogzler.json"
+        trigger="hover"
+        colors="primary:#ffebd0ff"
+        style={{width: '35px',height: '35px',transform: 'rotate(-180deg)' ,transition: 'transform 0.3s ease'}}>
+      </lord-icon>
+      <span className="peeking-tooltip">une date? un collegue?</span>
+      </button>
+      {isSidebarVisible && (
+        <ModalPortal>
+          <div className="group-sidebar-overlay">
+            <div className="group-sidebar" ref={sidebarRef}>
+              <MiniCalendar/>
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search contacts..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="search-input"
+                />
               </div>
+              {filteredEmployees.length === 0 ? (
+                <div className="empty-list">No contacts found</div>
+              ) : (
+                <div className="employee-list">
+                  {filteredEmployees.map((employee) => (
+                    <div
+                      key={employee.id}
+                      className="employee-item"
+                      onClick={() => handleSelectEmployee(employee, user)}
+                    >
+                      <UserBadge userId={employee.id} />
+                      <div className="employee-info">
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

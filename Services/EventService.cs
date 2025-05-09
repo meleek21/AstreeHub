@@ -84,7 +84,7 @@ public async Task<EventResponseDTO> CreateEventAsync(EventCreateDTO eventDto)
         }
 
         public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
-        public async Task<IEnumerable<EventResponseDTO>> GetAllEventsAsync()
+        
         {
             var events = await _eventRepository.GetAllAsync();
             return _mapper.Map<List<EventResponseDTO>>(events);

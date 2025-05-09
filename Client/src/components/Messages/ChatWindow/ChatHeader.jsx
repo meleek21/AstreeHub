@@ -187,11 +187,10 @@ console.log( currentUser.id);
                         )}
                       </div>
                       <div className="group-menu-section">
-                        <h5>Ajouter de nouveaux membres</h5>
                         <div className={`form-group floating-label ${searchQuery || isFocused.search ? 'has-value' : ''}`}> 
                           <input
                             type="text"
-                            placeholder=" "
+                            placeholder="Ajouter de nouveaux membres"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             onFocus={() => setIsFocused(prev => ({...prev, search: true}))}

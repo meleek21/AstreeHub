@@ -1,8 +1,9 @@
 .chat-container {
   display: flex;
-  height: 100vh;
+  height: 95vh;
   width: 100%;
   background-color: #f5f7fb;
+  border-radius: 20px;
   overflow: hidden;
   position: relative;
   flex-direction: row;
@@ -142,12 +143,9 @@
   box-shadow: 0 0 0 3px var(--primary-lighter);
 }
 
-.search-input {
-  margin-bottom: 15px;
-}
 
 .participants-list {
-  max-height: 150px;
+ 
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -200,8 +198,10 @@
   background-color: var(--primary);
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 15px;
+  font-size: 0.875rem;
+  font-weight: 600;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition-fast);
@@ -218,8 +218,21 @@
   cursor: not-allowed;
   transform: none;
 }
-
+.delete-draft-button{
+  all: unset;
+  padding: 0.75rem 1.25rem;
+  border-radius: 15px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid transparent;
+}
 .delete-draft-button:disabled {
+  border-radius: 15px;
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -305,7 +318,6 @@
   position: relative;
   animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: right center;
-  overflow-y: auto;
 }
 
 @keyframes slideIn {
@@ -442,7 +454,7 @@
 
 /* Participants List */
 .participants-list {
-  max-height: 100px;
+  max-height: 150px;
   overflow-y: auto;
   border-radius: 0.5rem;
 }
