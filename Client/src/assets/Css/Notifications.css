@@ -219,15 +219,12 @@
   /* Notification bell in navbar */
   /* Container for the entire notification panel */
   .notification-panel-container {
-    position: fixed;
-    top: 0;
+    position: absolute;
+    top: 0%;
     left: 0;
-    right: 0;
+    right: 65%;
     bottom: 0;
     z-index: 99999;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-start;
     padding-top: 60px;
     padding-right: 20px;
     pointer-events: none;
@@ -244,7 +241,6 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.3);
     z-index: -1;
     pointer-events: auto;
   }
@@ -260,7 +256,7 @@
     position: absolute;
     top: -5px;
     right: -5px;
-    background-color: #f44336;
+    background-color: var(--error);
     color: white;
     border-radius: 50%;
     width: 18px;

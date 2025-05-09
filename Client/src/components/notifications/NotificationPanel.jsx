@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useNotifications } from '../../Context/NotificationContext';
 import NotificationItem from './NotificationItem';
 import '../../assets/Css/Notifications.css';
@@ -37,7 +39,11 @@ const NotificationPanel = ({ isOpen, onClose }) => {
         <div className="notification-header">
           <h3>Notifications</h3>
           <button className="close-button" onClick={onClose}>
-            &times;
+          <FontAwesomeIcon
+                  icon={faTimes}
+                  
+                  style={{ color: '#A41623' }}
+                />
           </button>
         </div>
         
