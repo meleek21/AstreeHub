@@ -73,6 +73,7 @@ export const postsAPI = {
   createChannelPost: (channelId, postData) => api.post(`/post/channel/${channelId}`, postData),
   updateChannelPost: (channelId, postId, postData) => api.put(`/post/channel/${channelId}/post/${postId}`, postData),
   deleteChannelPost: (channelId, postId) => api.delete(`/post/channel/${channelId}/${postId}`),
+  getPostsByAuthor: (authorId, lastItemId, limit = 10) => api.get(`/post/author/${authorId}?lastItemId=${lastItemId || ''}&limit=${limit}`),
 };
 
 // Reactions API service

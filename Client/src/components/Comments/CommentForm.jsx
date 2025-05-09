@@ -42,7 +42,7 @@ const CommentForm = ({ onCreateComment }) => {
       
       <button 
         type="submit"
-        className="send-button"
+        className="add-comment-button"
         disabled={!newComment.trim()}
       >
         <FontAwesomeIcon icon={faPaperPlane} />
