@@ -16,6 +16,7 @@ import ChatContainer from './components/Messages/ChatContainer';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { ChatProvider } from './Context/ChatContext';
+import { NotificationProvider } from './Context/NotificationContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -31,8 +32,9 @@ function App() {
         <AuthProvider>
           <OnlineStatusProvider>
             <ChatProvider>
-            <div className="app">
-              <Toaster />
+            <NotificationProvider>
+              <div className="app">
+                <Toaster />
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Authen />} />
@@ -56,7 +58,8 @@ function App() {
             {/* Redirect to home if no route matches */}
             <Route path="*" element={<Navigate to="/home" />} />
           </Routes>
-            </div>
+              </div>
+              </NotificationProvider>
             </ChatProvider>
           </OnlineStatusProvider>
         </AuthProvider>

@@ -1,16 +1,10 @@
+using System.Security.Claims;
+using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
-using ASTREE_PFE.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ASTREE_PFE.DTOs;
-using System.Security.Claims;
-using System.Security.Claims;
-using Microsoft.Extensions.Logging;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -32,40 +26,52 @@ namespace ASTREE_PFE.Controllers
             IChannelService channelService,
             IFileService fileService,
             ICloudinaryService cloudinaryService,
-            ILogger<PostController> logger)
+            ILogger<PostController> logger
+        )
         {
             _postService = postService ?? throw new ArgumentNullException(nameof(postService));
-            _employeeService = employeeService ?? throw new ArgumentNullException(nameof(employeeService));
-            _channelService = channelService ?? throw new ArgumentNullException(nameof(channelService));
+            _employeeService =
+                employeeService ?? throw new ArgumentNullException(nameof(employeeService));
+            _channelService =
+                channelService ?? throw new ArgumentNullException(nameof(channelService));
             _fileService = fileService ?? throw new ArgumentNullException(nameof(fileService));
-            _cloudinaryService = cloudinaryService ?? throw new ArgumentNullException(nameof(cloudinaryService));
+            _cloudinaryService =
+                cloudinaryService ?? throw new ArgumentNullException(nameof(cloudinaryService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// Get all posts with file metadata.
-        /// </summary>
         [HttpGet]
-        public async Task<ActionResult<PaginatedPostsDTO>> GetAllPosts([FromQuery] string lastItemId = null, [FromQuery] int limit = 10)
+        public async Task<ActionResult<PaginatedPostsDTO>> GetAllPosts(
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
         {
-            var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(lastItemId, limit);
+            var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
+                lastItemId,
+                limit
+            );
             var postDtos = new List<PostResponseDTO>();
 
             // Collect all author IDs and file IDs for batch loading
             var authorIds = posts.Select(p => p.AuthorId).Distinct().ToList();
-            var fileIds = posts.SelectMany(p => p.FileIds ?? new List<string>()).Distinct().ToList();
-            
+            var fileIds = posts
+                .SelectMany(p => p.FileIds ?? new List<string>())
+                .Distinct()
+                .ToList();
+
             // Batch load all user info and files
             var filesDictionary = new Dictionary<string, Models.File>();
             var userInfoDictionary = new Dictionary<string, UserInfoDTO>();
-            
+
             // Only fetch user info if there are authors
             if (authorIds.Any())
             {
                 var userInfos = await _employeeService.GetUserInfoBatchAsync(authorIds.ToList());
-                userInfoDictionary = userInfos.GroupBy(u => u.Id).ToDictionary(g => g.Key, g => g.First());
+                userInfoDictionary = userInfos
+                    .GroupBy(u => u.Id)
+                    .ToDictionary(g => g.Key, g => g.First());
             }
-            
+
             // Only fetch files if there are file IDs
             if (fileIds.Any())
             {
@@ -80,9 +86,9 @@ namespace ASTREE_PFE.Controllers
             foreach (var post in posts)
             {
                 userInfoDictionary.TryGetValue(post.AuthorId, out var userInfo);
-                
-                var postFiles = post.FileIds
-                    .Where(fileId => filesDictionary.ContainsKey(fileId))
+
+                var postFiles = post
+                    .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
                     .Select(fileId => filesDictionary[fileId])
                     .ToList();
 
@@ -95,29 +101,34 @@ namespace ASTREE_PFE.Controllers
                     AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                     CreatedAt = post.Timestamp,
                     UpdatedAt = post.UpdatedAt,
-                    Files = postFiles.Select(f => new FileResponseDTO
-                    {
-                        Id = f.Id,
-                        FileName = f.FileName,
-                        FileUrl = f.FileUrl,
-                        FileType = f.FileType,
-                        FileSize = f.FileSize,
-                        UploadedAt = f.UploadedAt
-                    }).ToList(),
-                    Comments = post.Comments?.Select(c => 
-                    {
-                        userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
-                        return new CommentResponseDTO
+                    Files = postFiles
+                        .Select(f => new FileResponseDTO
                         {
-                            Id = c.Id,
-                            Content = c.Content,
-                            AuthorId = c.AuthorId,
-                            AuthorName = $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
-                            AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
-                            CreatedAt = c.Timestamp,
-                            UpdatedAt = c.UpdatedAt
-                        };
-                    }).ToList(),
+                            Id = f.Id,
+                            FileName = f.FileName,
+                            FileUrl = f.FileUrl,
+                            FileType = f.FileType,
+                            FileSize = f.FileSize,
+                            UploadedAt = f.UploadedAt,
+                        })
+                        .ToList(),
+                    Comments = post
+                        .Comments?.Select(c =>
+                        {
+                            userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
+                            return new CommentResponseDTO
+                            {
+                                Id = c.Id,
+                                Content = c.Content,
+                                AuthorId = c.AuthorId,
+                                AuthorName =
+                                    $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
+                                AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
+                                CreatedAt = c.Timestamp,
+                                UpdatedAt = c.UpdatedAt,
+                            };
+                        })
+                        .ToList(),
                     ReactionCounts = post.ReactionCounts,
                 };
                 postDtos.Add(postDto);
@@ -127,15 +138,12 @@ namespace ASTREE_PFE.Controllers
             {
                 Posts = postDtos,
                 NextLastItemId = nextLastItemId,
-                HasMore = hasMore
+                HasMore = hasMore,
             };
 
             return Ok(paginatedResponse);
         }
 
-        /// <summary>
-        /// Get a post by ID with file metadata.
-        /// </summary>
         [HttpGet("{id}")]
         public async Task<ActionResult<PostResponseDTO>> GetPost(string id)
         {
@@ -156,7 +164,7 @@ namespace ASTREE_PFE.Controllers
 
             // Fetch files in a single batch
             var files = await _fileService.GetFilesByIdsAsync(post.FileIds);
-            
+
             // Get author info
             userInfoDictionary.TryGetValue(post.AuthorId, out var userInfo);
 
@@ -169,52 +177,62 @@ namespace ASTREE_PFE.Controllers
                 AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                 CreatedAt = post.Timestamp,
                 UpdatedAt = post.UpdatedAt,
-                Files = files.Select(f => new FileResponseDTO
-                {
-                    Id = f.Id,
-                    FileName = f.FileName,
-                    FileUrl = f.FileUrl,
-                    FileType = f.FileType,
-                    FileSize = f.FileSize,
-                    UploadedAt = f.UploadedAt
-                }).ToList(),
-                Comments = post.Comments?.Select(c => 
-                {
-                    userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
-                    return new CommentResponseDTO
+                Files = files
+                    .Select(f => new FileResponseDTO
                     {
-                        Id = c.Id,
-                        Content = c.Content,
-                        AuthorId = c.AuthorId,
-                        AuthorName = $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
-                        AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
-                        CreatedAt = c.Timestamp,
-                        UpdatedAt = c.UpdatedAt
-                    };
-                }).ToList(),
+                        Id = f.Id,
+                        FileName = f.FileName,
+                        FileUrl = f.FileUrl,
+                        FileType = f.FileType,
+                        FileSize = f.FileSize,
+                        UploadedAt = f.UploadedAt,
+                    })
+                    .ToList(),
+                Comments = post
+                    .Comments?.Select(c =>
+                    {
+                        userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
+                        return new CommentResponseDTO
+                        {
+                            Id = c.Id,
+                            Content = c.Content,
+                            AuthorId = c.AuthorId,
+                            AuthorName =
+                                $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
+                            AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
+                            CreatedAt = c.Timestamp,
+                            UpdatedAt = c.UpdatedAt,
+                        };
+                    })
+                    .ToList(),
                 ReactionCounts = post.ReactionCounts,
             };
 
             return Ok(postDto);
         }
 
-        /// <summary>
-        /// Get posts by author ID with file metadata.
-        /// </summary>
         [HttpGet("author/{authorId}")]
-        public async Task<ActionResult<IEnumerable<PostResponseDTO>>> GetPostsByAuthor(string authorId)
+        public async Task<ActionResult<PaginatedPostsDTO>> GetPostsByAuthor(
+            string authorId,
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
         {
-            var posts = await _postService.GetPostsByAuthorAsync(authorId);
+            var (posts, nextLastItemId, hasMore) = await _postService.GetPostsByAuthorAsync(
+                authorId,
+                lastItemId,
+                limit
+            );
             var postDtos = new List<PostResponseDTO>();
 
             // Collect all author IDs and file IDs for batch loading
             var authorIds = new HashSet<string>();
             var fileIds = new HashSet<string>();
-            
+
             foreach (var post in posts)
             {
                 authorIds.Add(post.AuthorId);
-                
+
                 if (post.FileIds != null)
                 {
                     foreach (var fileId in post.FileIds)
@@ -222,7 +240,7 @@ namespace ASTREE_PFE.Controllers
                         fileIds.Add(fileId);
                     }
                 }
-                
+
                 if (post.Comments != null)
                 {
                     foreach (var comment in post.Comments)
@@ -231,18 +249,20 @@ namespace ASTREE_PFE.Controllers
                     }
                 }
             }
-            
+
             // Batch load all user info and files
             var filesDictionary = new Dictionary<string, Models.File>();
             var userInfoDictionary = new Dictionary<string, UserInfoDTO>();
-            
+
             // Only fetch user info if there are authors
             if (authorIds.Any())
             {
                 var userInfos = await _employeeService.GetUserInfoBatchAsync(authorIds.ToList());
-                userInfoDictionary = userInfos.GroupBy(u => u.Id).ToDictionary(g => g.Key, g => g.First());
+                userInfoDictionary = userInfos
+                    .GroupBy(u => u.Id)
+                    .ToDictionary(g => g.Key, g => g.First());
             }
-            
+
             // Only fetch files if there are file IDs
             if (fileIds.Any())
             {
@@ -257,9 +277,9 @@ namespace ASTREE_PFE.Controllers
             foreach (var post in posts)
             {
                 userInfoDictionary.TryGetValue(post.AuthorId, out var userInfo);
-                
-                var postFiles = post.FileIds
-                    .Where(fileId => filesDictionary.ContainsKey(fileId))
+
+                var postFiles = post
+                    .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
                     .Select(fileId => filesDictionary[fileId])
                     .ToList();
 
@@ -272,35 +292,47 @@ namespace ASTREE_PFE.Controllers
                     AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                     CreatedAt = post.Timestamp,
                     UpdatedAt = post.UpdatedAt,
-                    Files = postFiles.Select(f => new FileResponseDTO
-                    {
-                        Id = f.Id,
-                        FileName = f.FileName,
-                        FileUrl = f.FileUrl,
-                        FileType = f.FileType,
-                        FileSize = f.FileSize,
-                        UploadedAt = f.UploadedAt
-                    }).ToList(),
-                    Comments = post.Comments?.Select(c => 
-                    {
-                        userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
-                        return new CommentResponseDTO
+                    Files = postFiles
+                        .Select(f => new FileResponseDTO
                         {
-                            Id = c.Id,
-                            Content = c.Content,
-                            AuthorId = c.AuthorId,
-                            AuthorName = $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
-                            AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
-                            CreatedAt = c.Timestamp,
-                            UpdatedAt = c.UpdatedAt
-                        };
-                    }).ToList(),
+                            Id = f.Id,
+                            FileName = f.FileName,
+                            FileUrl = f.FileUrl,
+                            FileType = f.FileType,
+                            FileSize = f.FileSize,
+                            UploadedAt = f.UploadedAt,
+                        })
+                        .ToList(),
+                    Comments = post
+                        .Comments?.Select(c =>
+                        {
+                            userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
+                            return new CommentResponseDTO
+                            {
+                                Id = c.Id,
+                                Content = c.Content,
+                                AuthorId = c.AuthorId,
+                                AuthorName =
+                                    $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
+                                AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
+                                CreatedAt = c.Timestamp,
+                                UpdatedAt = c.UpdatedAt,
+                            };
+                        })
+                        .ToList(),
                     ReactionCounts = post.ReactionCounts,
                 };
                 postDtos.Add(postDto);
             }
 
-            return Ok(postDtos);
+            var paginatedResponse = new PaginatedPostsDTO
+            {
+                Posts = postDtos,
+                NextLastItemId = nextLastItemId,
+                HasMore = hasMore,
+            };
+
+            return Ok(paginatedResponse);
         }
 
         /// <summary>
@@ -319,7 +351,7 @@ namespace ASTREE_PFE.Controllers
                 IsPublic = postRequest.IsPublic,
                 FileIds = postRequest.FileIds, // Include file IDs
                 Timestamp = DateTime.UtcNow,
-                ChannelId = postRequest.ChannelId // Set the channelId from the request
+                ChannelId = postRequest.ChannelId, // Set the channelId from the request
             };
 
             var createdPost = await _postService.CreatePostAsync(post);
@@ -330,7 +362,11 @@ namespace ASTREE_PFE.Controllers
         /// Update an existing post with file IDs.
         /// </summary>
         [HttpPut("channel/{channelId}/post/{postId}")]
-        public async Task<ActionResult<Post>> UpdateChannelPost(string channelId, string postId, [FromBody] PostRequestDTO postRequest)
+        public async Task<ActionResult<Post>> UpdateChannelPost(
+            string channelId,
+            string postId,
+            [FromBody] PostRequestDTO postRequest
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -355,7 +391,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Post>> UpdatePost(string id, [FromBody] PostRequestDTO postRequest)
+        public async Task<ActionResult<Post>> UpdatePost(
+            string id,
+            [FromBody] PostRequestDTO postRequest
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -381,7 +420,9 @@ namespace ASTREE_PFE.Controllers
         /// Upload files for a post.
         /// </summary>
         [HttpPost("upload")]
-        public async Task<ActionResult<List<FileResponseDTO>>> UploadFiles(IFormFileCollection files)
+        public async Task<ActionResult<List<FileResponseDTO>>> UploadFiles(
+            IFormFileCollection files
+        )
         {
             try
             {
@@ -401,7 +442,10 @@ namespace ASTREE_PFE.Controllers
                             continue;
 
                         var uploadResult = await _cloudinaryService.UploadFileAsync(file);
-                        if (uploadResult == null || string.IsNullOrEmpty(uploadResult.SecureUrl?.ToString()))
+                        if (
+                            uploadResult == null
+                            || string.IsNullOrEmpty(uploadResult.SecureUrl?.ToString())
+                        )
                             continue;
 
                         var fileEntity = new ASTREE_PFE.Models.File
@@ -412,7 +456,7 @@ namespace ASTREE_PFE.Controllers
                             FileSize = file.Length,
                             UploadedAt = DateTime.UtcNow,
                             PublicId = uploadResult.PublicId,
-                            UploaderId = userId
+                            UploaderId = userId,
                         };
 
                         var fileId = await _fileService.CreateFileAsync(fileEntity);
@@ -421,15 +465,17 @@ namespace ASTREE_PFE.Controllers
                             var savedFile = await _fileService.GetFileByIdAsync(fileId);
                             if (savedFile != null)
                             {
-                                uploadedFiles.Add(new FileResponseDTO
-                                {
-                                    Id = savedFile.Id,
-                                    FileName = savedFile.FileName,
-                                    FileUrl = savedFile.FileUrl,
-                                    FileType = savedFile.FileType,
-                                    FileSize = savedFile.FileSize,
-                                    UploadedAt = savedFile.UploadedAt
-                                });
+                                uploadedFiles.Add(
+                                    new FileResponseDTO
+                                    {
+                                        Id = savedFile.Id,
+                                        FileName = savedFile.FileName,
+                                        FileUrl = savedFile.FileUrl,
+                                        FileType = savedFile.FileType,
+                                        FileSize = savedFile.FileSize,
+                                        UploadedAt = savedFile.UploadedAt,
+                                    }
+                                );
                             }
                         }
                     }
@@ -477,11 +523,19 @@ namespace ASTREE_PFE.Controllers
 
         // GET: api/post/channel/{channelId}
         [HttpGet("channel/{channelId}")]
-        public async Task<ActionResult<PaginatedPostsDTO>> GetChannelPosts(string channelId, [FromQuery] string lastItemId = null, [FromQuery] int limit = 10)
+        public async Task<ActionResult<PaginatedPostsDTO>> GetChannelPosts(
+            string channelId,
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
         {
             try
             {
-                var (posts, nextLastItemId, hasMore) = await _channelService.GetChannelPostsAsync(channelId, lastItemId, limit);
+                var (posts, nextLastItemId, hasMore) = await _channelService.GetChannelPostsAsync(
+                    channelId,
+                    lastItemId,
+                    limit
+                );
                 var postDtos = new List<PostResponseDTO>();
 
                 foreach (var post in posts)
@@ -498,25 +552,29 @@ namespace ASTREE_PFE.Controllers
                         AuthorProfilePicture = userInfo?.ProfilePictureUrl,
                         CreatedAt = post.Timestamp,
                         UpdatedAt = post.UpdatedAt,
-                        Files = files.Select(f => new FileResponseDTO
-                        {
-                            Id = f.Id,
-                            FileName = f.FileName,
-                            FileUrl = f.FileUrl,
-                            FileType = f.FileType,
-                            FileSize = f.FileSize,
-                            UploadedAt = f.UploadedAt
-                        }).ToList(),
-                        Comments = post.Comments?.Select(c => new CommentResponseDTO
-                        {
-                            Id = c.Id,
-                            Content = c.Content,
-                            AuthorId = c.AuthorId,
-                            AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
-                            AuthorProfilePicture = userInfo?.ProfilePictureUrl,
-                            CreatedAt = c.Timestamp,
-                            UpdatedAt = c.UpdatedAt
-                        }).ToList(),
+                        Files = files
+                            .Select(f => new FileResponseDTO
+                            {
+                                Id = f.Id,
+                                FileName = f.FileName,
+                                FileUrl = f.FileUrl,
+                                FileType = f.FileType,
+                                FileSize = f.FileSize,
+                                UploadedAt = f.UploadedAt,
+                            })
+                            .ToList(),
+                        Comments = post
+                            .Comments?.Select(c => new CommentResponseDTO
+                            {
+                                Id = c.Id,
+                                Content = c.Content,
+                                AuthorId = c.AuthorId,
+                                AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                                AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                                CreatedAt = c.Timestamp,
+                                UpdatedAt = c.UpdatedAt,
+                            })
+                            .ToList(),
                         ReactionCounts = post.ReactionCounts,
                     };
                     postDtos.Add(postDto);
@@ -526,7 +584,7 @@ namespace ASTREE_PFE.Controllers
                 {
                     Posts = postDtos,
                     NextLastItemId = nextLastItemId,
-                    HasMore = hasMore
+                    HasMore = hasMore,
                 };
 
                 return Ok(paginatedResponse);
@@ -540,7 +598,10 @@ namespace ASTREE_PFE.Controllers
         // POST: api/post/channel/{channelId}
         [HttpPost("channel/{channelId}")]
         [Authorize(Roles = "DIRECTOR")]
-        public async Task<ActionResult<Post>> CreateChannelPost(string channelId, PostRequestDTO postRequest)
+        public async Task<ActionResult<Post>> CreateChannelPost(
+            string channelId,
+            PostRequestDTO postRequest
+        )
         {
             // Get current user
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -563,9 +624,13 @@ namespace ASTREE_PFE.Controllers
             if (!channel.IsGeneral && channel.DepartmentId.HasValue)
             {
                 // If it's a department channel, check if user is the director
-                if (employee.Role != RoleType.SUPERADMIN && 
-                    (employee.Role != RoleType.DIRECTOR || 
-                     employee.DepartmentId != channel.DepartmentId))
+                if (
+                    employee.Role != RoleType.SUPERADMIN
+                    && (
+                        employee.Role != RoleType.DIRECTOR
+                        || employee.DepartmentId != channel.DepartmentId
+                    )
+                )
                 {
                     return Forbid();
                 }
@@ -577,7 +642,7 @@ namespace ASTREE_PFE.Controllers
                 Content = postRequest.Content,
                 AuthorId = userId, // Use current user ID instead of the one from DTO
                 IsPublic = postRequest.IsPublic,
-                ChannelId = channelId
+                ChannelId = channelId,
             };
 
             // Create the post
@@ -625,8 +690,11 @@ namespace ASTREE_PFE.Controllers
             // Users can only delete their own posts
             if (employee.Role != RoleType.SUPERADMIN)
             {
-                if (employee.Role == RoleType.DIRECTOR && channel.DepartmentId.HasValue && 
-                    employee.DepartmentId == channel.DepartmentId)
+                if (
+                    employee.Role == RoleType.DIRECTOR
+                    && channel.DepartmentId.HasValue
+                    && employee.DepartmentId == channel.DepartmentId
+                )
                 {
                     // Director can delete any post in their department's channel
                 }

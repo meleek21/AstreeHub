@@ -25,9 +25,15 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("conversations/{conversationId}")]
-        public async Task<IActionResult> GetConversation(string conversationId, [FromQuery] string userId)
+        public async Task<IActionResult> GetConversation(
+            string conversationId,
+            [FromQuery] string userId
+        )
         {
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, userId);
+            var conversation = await _messageService.GetConversationByIdAsync(
+                conversationId,
+                userId
+            );
             if (conversation == null)
                 return NotFound();
 
@@ -36,15 +42,23 @@ namespace ASTREE_PFE.Controllers
 
         [HttpGet("conversations/{conversationId}/messages")]
         public async Task<IActionResult> GetMessages(
-            string conversationId, 
-            [FromQuery] GetMessagesRequestDto request)
+            string conversationId,
+            [FromQuery] GetMessagesRequestDto request
+        )
         {
             // Verify user is part of the conversation
-            var conversation = await _messageService.GetConversationByIdAsync(conversationId, request.UserId);
+            var conversation = await _messageService.GetConversationByIdAsync(
+                conversationId,
+                request.UserId
+            );
             if (conversation == null)
                 return NotFound(new { message = "Conversation not found or user not authorized" });
 
-            var messages = await _messageService.GetMessagesByConversationIdAsync(conversationId, request.Skip, request.Limit);
+            var messages = await _messageService.GetMessagesByConversationIdAsync(
+                conversationId,
+                request.Skip,
+                request.Limit
+            );
             return Ok(messages);
         }
 
@@ -62,12 +76,17 @@ namespace ASTREE_PFE.Controllers
             return Ok(conversation);
         }
 
- 
-
         [HttpPut("messages/{messageId}/read-status")]
-        public async Task<IActionResult> MarkMessageAsRead(string messageId, [FromBody] MessageStatusUpdateDto statusDto)
+        public async Task<IActionResult> MarkMessageAsRead(
+            string messageId,
+            [FromBody] MessageStatusUpdateDto statusDto
+        )
         {
-            var success = await _messageService.UpdateMessageReadStatusAsync(messageId, statusDto.IsRead, statusDto.UserId);
+            var success = await _messageService.UpdateMessageReadStatusAsync(
+                messageId,
+                statusDto.IsRead,
+                statusDto.UserId
+            );
             if (!success)
                 return NotFound();
 
@@ -92,7 +111,11 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost("upload-message-attachment")]
-        public async Task<IActionResult> UploadMessageAttachment([FromForm] IFormFile file, [FromServices] ICloudinaryService cloudinaryService, [FromServices] IFileService fileService)
+        public async Task<IActionResult> UploadMessageAttachment(
+            [FromForm] IFormFile file,
+            [FromServices] ICloudinaryService cloudinaryService,
+            [FromServices] IFileService fileService
+        )
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
@@ -126,7 +149,7 @@ namespace ASTREE_PFE.Controllers
                     UploaderId = User.Identity.Name,
                     FileType = file.ContentType,
                     FileSize = file.Length,
-                    UploadedAt = DateTime.UtcNow
+                    UploadedAt = DateTime.UtcNow,
                 };
                 var fileId = await fileService.CreateFileAsync(fileModel);
                 fileModel.Id = fileId;
@@ -139,7 +162,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("messages/{messageId}/edit")]
-        public async Task<IActionResult> EditMessage(string messageId, [FromBody] MessageCreateDto messageDto)
+        public async Task<IActionResult> EditMessage(
+            string messageId,
+            [FromBody] MessageCreateDto messageDto
+        )
         {
             var result = await _messageService.EditMessageAsync(messageId, messageDto);
             if (!result)
@@ -157,7 +183,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("messages/{messageId}/soft-delete")]
-        public async Task<IActionResult> SoftDeleteMessage(string messageId, [FromBody] string userId)
+        public async Task<IActionResult> SoftDeleteMessage(
+            string messageId,
+            [FromBody] string userId
+        )
         {
             var result = await _messageService.SoftDeleteMessageAsync(messageId, userId);
             if (!result)
@@ -166,7 +195,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("conversations/{conversationId}/soft-delete")]
-        public async Task<IActionResult> SoftDeleteConversation(string conversationId, [FromBody] string userId)
+        public async Task<IActionResult> SoftDeleteConversation(
+            string conversationId,
+            [FromBody] string userId
+        )
         {
             var result = await _messageService.DeleteConversationAsync(conversationId, userId);
             if (!result)
@@ -175,7 +207,10 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpDelete("conversations/{conversationId}/permanent")]
-        public async Task<IActionResult> PermanentlyDeleteGroup(string conversationId, [FromQuery] string userId)
+        public async Task<IActionResult> PermanentlyDeleteGroup(
+            string conversationId,
+            [FromQuery] string userId
+        )
         {
             var success = await _messageService.PermanentlyDeleteGroupAsync(conversationId, userId);
             if (!success)
@@ -184,9 +219,17 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPost("conversations/{conversationId}/participants")]
-        public async Task<IActionResult> AddParticipant(string conversationId, [FromQuery] string userId, [FromQuery] string newParticipantId)
+        public async Task<IActionResult> AddParticipant(
+            string conversationId,
+            [FromQuery] string userId,
+            [FromQuery] string newParticipantId
+        )
         {
-            var success = await _messageService.AddParticipantToGroupAsync(conversationId, userId, newParticipantId);
+            var success = await _messageService.AddParticipantToGroupAsync(
+                conversationId,
+                userId,
+                newParticipantId
+            );
             if (!success)
                 return Forbid();
             return Ok();
@@ -195,21 +238,34 @@ namespace ASTREE_PFE.Controllers
         [HttpGet("conversations/{conversationId}/participants")]
         public async Task<IActionResult> GetParticipants(string conversationId)
         {
-            var participants = await _messageService.GetParticipantsByConversationIdAsync(conversationId);
+            var participants = await _messageService.GetParticipantsByConversationIdAsync(
+                conversationId
+            );
             return Ok(participants);
         }
 
         [HttpDelete("conversations/{conversationId}/participants/{participantId}")]
-        public async Task<IActionResult> RemoveParticipant(string conversationId, string participantId, [FromQuery] string userId)
+        public async Task<IActionResult> RemoveParticipant(
+            string conversationId,
+            string participantId,
+            [FromQuery] string userId
+        )
         {
-            var success = await _messageService.RemoveParticipantFromGroupAsync(conversationId, userId, participantId);
+            var success = await _messageService.RemoveParticipantFromGroupAsync(
+                conversationId,
+                userId,
+                participantId
+            );
             if (!success)
                 return Forbid();
             return Ok();
         }
 
         [HttpPost("conversations/{conversationId}/leave")]
-        public async Task<IActionResult> LeaveGroup(string conversationId, [FromQuery] string userId)
+        public async Task<IActionResult> LeaveGroup(
+            string conversationId,
+            [FromQuery] string userId
+        )
         {
             var success = await _messageService.LeaveGroupAsync(conversationId, userId);
             if (!success)

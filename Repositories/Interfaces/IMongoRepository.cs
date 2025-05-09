@@ -1,9 +1,10 @@
-using MongoDB.Driver;
 using System.Linq.Expressions;
+using MongoDB.Driver;
 
 namespace ASTREE_PFE.Repositories
 {
-    public interface IMongoRepository<T> where T : class
+    public interface IMongoRepository<T>
+        where T : class
     {
         Task<IEnumerable<T>> GetAllAsync();
         Task<T> GetByIdAsync(string id);

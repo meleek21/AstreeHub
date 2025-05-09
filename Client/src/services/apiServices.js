@@ -234,3 +234,24 @@ export const departmentAPI = {
   getEmployeesInDepartment: (departmentId) => api.get(`/Department/${departmentId}/employees`)
 };
 
+// Notifications API service
+export const notificationAPI = {
+  // Get all notifications for a user
+  getNotifications: (userId) => api.get(`/notification?userId=${userId}`),
+
+  // Get only unread notifications for a user
+  getUnreadNotifications: (userId) => api.get(`/notification/unread?userId=${userId}`),
+
+  // Get count of unread notifications
+  getUnreadCount: (userId) => api.get(`/notification/count?userId=${userId}`),
+
+  // Mark a notification as read
+  markAsRead: (notificationId, userId) => api.put(`/notification/${notificationId}/read?userId=${userId}`),
+
+  // Mark all notifications as read
+  markAllAsRead: (userId) => api.put(`/notification/mark-all-read?userId=${userId}`),
+
+  // Delete a notification
+  deleteNotification: (notificationId, userId) => api.delete(`/notification/${notificationId}?userId=${userId}`),
+};
+

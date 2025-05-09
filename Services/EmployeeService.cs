@@ -1,11 +1,10 @@
+
+using ASTREE_PFE.Data;
+using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories;
-using ASTREE_PFE.Services.Interfaces;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Repositories.Interfaces;
-using ASTREE_PFE.Data;
+using ASTREE_PFE.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace ASTREE_PFE.Services
@@ -16,7 +15,11 @@ namespace ASTREE_PFE.Services
         private readonly IDepartmentRepository _departmentRepository;
         private readonly ApplicationDbContext _context;
 
-        public EmployeeService(IEmployeeRepository employeeRepository, IDepartmentRepository departmentRepository, ApplicationDbContext context)
+        public EmployeeService(
+            IEmployeeRepository employeeRepository,
+            IDepartmentRepository departmentRepository,
+            ApplicationDbContext context
+        )
         {
             _employeeRepository = employeeRepository;
             _departmentRepository = departmentRepository;
@@ -61,7 +64,8 @@ namespace ASTREE_PFE.Services
         public async Task<UserInfoDTO> GetUserInfoAsync(string id)
         {
             var employee = await _employeeRepository.GetByIdAsync(id);
-            if (employee == null) return null;
+            if (employee == null)
+                return null;
 
             return new UserInfoDTO
             {
@@ -76,12 +80,15 @@ namespace ASTREE_PFE.Services
                 IsFirstLogin = employee.IsFirstLogin,
                 CreatedDate = employee.CreatedDate,
                 ProfilePictureUrl = employee.ProfilePictureUrl ?? string.Empty,
-                Department = employee.Department != null ? new DepartmentDTO
-                {
-                    Id = employee.Department.Id,
-                    Name = employee.Department.Name,
-                    Description = employee.Department.Description
-                } : null
+                Department =
+                    employee.Department != null
+                        ? new DepartmentDTO
+                        {
+                            Id = employee.Department.Id,
+                            Name = employee.Department.Name,
+                            Description = employee.Department.Description,
+                        }
+                        : null,
             };
         }
 
@@ -94,7 +101,7 @@ namespace ASTREE_PFE.Services
         {
             return await _employeeRepository.AssignToDepartmentAsync(employeeId, departmentId);
         }
-        
+
         public async Task<bool> UpdateEmployeeRoleAsync(string employeeId, string roleName)
         {
             var employee = await _employeeRepository.GetByIdAsync(employeeId);
@@ -102,46 +109,53 @@ namespace ASTREE_PFE.Services
             {
                 return false;
             }
-            
+
             // Convert string role name to RoleType enum
             if (Enum.TryParse<RoleType>(roleName, out var roleType))
             {
                 // If updating to Director role, handle the previous director
                 if (roleType == RoleType.DIRECTOR && employee.DepartmentId.HasValue)
                 {
-                    var department = await _departmentRepository.GetByIdAsync(employee.DepartmentId.Value);
+                    var department = await _departmentRepository.GetByIdAsync(
+                        employee.DepartmentId.Value
+                    );
                     if (department?.DirectorId != null && department.DirectorId != employeeId)
                     {
                         // Get the previous director
-                        var previousDirector = await _employeeRepository.GetByIdAsync(department.DirectorId);
+                        var previousDirector = await _employeeRepository.GetByIdAsync(
+                            department.DirectorId
+                        );
                         if (previousDirector != null)
                         {
                             // Update previous director's role to Employee
                             previousDirector.Role = RoleType.EMPLOYEE;
-                            await _employeeRepository.UpdateAsync(department.DirectorId, previousDirector);
+                            await _employeeRepository.UpdateAsync(
+                                department.DirectorId,
+                                previousDirector
+                            );
                         }
                     }
                 }
-                
+
                 employee.Role = roleType;
                 return await _employeeRepository.UpdateAsync(employeeId, employee);
             }
-            
+
             return false;
         }
+
         public async Task<IEnumerable<Employee>> GetEmployeesByBirthMonthAsync(int month)
         {
-            return await _context.Employees
-            .Where(e => e.DateOfBirth.Month == month)
-            .ToListAsync();
+            return await _context.Employees.Where(e => e.DateOfBirth.Month == month).ToListAsync();
         }
 
         public async Task<IEnumerable<Employee>> GetEmployeesByBirthDateAsync(DateTime date)
         {
-            return await _context.Employees
-            .Where(e =>e.DateOfBirth.Month == date.Month && e.DateOfBirth.Day == date.Day)
-            .ToListAsync();
+            return await _context
+                .Employees.Where(e =>
+                    e.DateOfBirth.Month == date.Month && e.DateOfBirth.Day == date.Day
+                )
+                .ToListAsync();
         }
-
     }
 }

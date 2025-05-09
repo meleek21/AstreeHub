@@ -1,6 +1,5 @@
-// ASTREE_PFE/DTOs/ReactionRequest.cs
 using System.ComponentModel.DataAnnotations;
-using ASTREE_PFE.Models; // Add this line
+using ASTREE_PFE.Models; 
 
 namespace ASTREE_PFE.DTOs
 {
@@ -14,6 +13,5 @@ namespace ASTREE_PFE.DTOs
         public ReactionType Type { get; set; }
 
         public string? PostId { get; set; }
-
     }
 }

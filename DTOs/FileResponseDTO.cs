@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using ASTREE_PFE.Models;
-using System.ComponentModel.DataAnnotations;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization.Attributes;
-using MongoDB.Bson.Serialization.Options;
+
 
 namespace ASTREE_PFE.DTOs
 {
@@ -17,5 +11,4 @@ namespace ASTREE_PFE.DTOs
         public long FileSize { get; set; }
         public DateTime UploadedAt { get; set; }
     }
-
 }

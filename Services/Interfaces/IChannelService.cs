@@ -1,6 +1,4 @@
 using ASTREE_PFE.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services.Interfaces
 {
@@ -15,6 +13,10 @@ namespace ASTREE_PFE.Services.Interfaces
         Task DeleteChannelAsync(string id);
         Task<bool> ChannelExistsAsync(string id);
         Task<bool> DepartmentHasChannelAsync(int departmentId);
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetChannelPostsAsync(string channelId, string lastItemId = null, int limit = 10);
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetChannelPostsAsync(
+            string channelId,
+            string lastItemId = null,
+            int limit = 10
+        );
     }
 }

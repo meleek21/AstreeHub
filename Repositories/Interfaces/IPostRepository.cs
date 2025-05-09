@@ -1,22 +1,32 @@
+
 using ASTREE_PFE.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Repositories.Interfaces
 {
     public interface IPostRepository
     {
         // Get all posts with cursor-based pagination
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(string lastItemId = null, int limit = 10);
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllAsync(
+            string lastItemId = null,
+            int limit = 10
+        );
 
         // Get all posts by channel ID with pagination
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetPostsByChannelIdAsync(string channelId, string lastItemId = null, int limit = 10);
+        Task<(
+            IEnumerable<Post> Posts,
+            string NextLastItemId,
+            bool HasMore
+        )> GetPostsByChannelIdAsync(string channelId, string lastItemId = null, int limit = 10);
 
         // Get a post by its ID
         Task<Post> GetByIdAsync(string id);
 
-        // Get all posts by a specific author ID
-        Task<IEnumerable<Post>> GetByAuthorIdAsync(string authorId);
+        // Get all posts by a specific author ID with pagination
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetByAuthorIdAsync(
+            string authorId,
+            string lastItemId = null,
+            int limit = 10
+        );
 
         // Create a new post
         Task CreateAsync(Post post);

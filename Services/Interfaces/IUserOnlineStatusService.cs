@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.Services.Interfaces
@@ -15,7 +13,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task UpdateUserHeartbeatAsync(string userId);
         Task UserConnectedAsync(string userId);
         Task UserDisconnectedAsync(string userId);
-        
+
         // Add the missing methods
         Task UpdateUserActivityAsync(string userId);
         Task RecordConnectionAsync(string userId, string connectionId);

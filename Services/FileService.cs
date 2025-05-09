@@ -1,13 +1,10 @@
+
+using ASTREE_PFE.Models;
+using ASTREE_PFE.Services.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
-using ASTREE_PFE.Models;
-using ASTREE_PFE.Services.Interfaces;
 using MongoDB.Driver;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Linq;
-using Microsoft.Extensions.Logging;
 
 namespace ASTREE_PFE.Services
 {
@@ -23,22 +20,29 @@ namespace ASTREE_PFE.Services
         public FileService(
             IMongoDatabase database,
             IOptions<CloudinarySettings> cloudinarySettings,
-            ILogger<FileService> logger)
+            ILogger<FileService> logger
+        )
         {
             _files = database.GetCollection<FileModel>("Files"); // Changed to FileModel
 
             // Validate Cloudinary settings
             if (string.IsNullOrEmpty(cloudinarySettings.Value.CloudName))
             {
-                throw new ArgumentException("Cloudinary CloudName is not configured in appsettings.json");
+                throw new ArgumentException(
+                    "Cloudinary CloudName is not configured in appsettings.json"
+                );
             }
             if (string.IsNullOrEmpty(cloudinarySettings.Value.ApiKey))
             {
-                throw new ArgumentException("Cloudinary ApiKey is not configured in appsettings.json");
+                throw new ArgumentException(
+                    "Cloudinary ApiKey is not configured in appsettings.json"
+                );
             }
             if (string.IsNullOrEmpty(cloudinarySettings.Value.ApiSecret))
             {
-                throw new ArgumentException("Cloudinary ApiSecret is not configured in appsettings.json");
+                throw new ArgumentException(
+                    "Cloudinary ApiSecret is not configured in appsettings.json"
+                );
             }
 
             var account = new Account(
@@ -87,17 +91,21 @@ namespace ASTREE_PFE.Services
                 {
                     return await _files.Find(_ => true).ToListAsync();
                 }
-                
+
                 var filter = Builders<FileModel>.Filter.In(f => f.Id, fileIds);
                 return await _files.Find(filter).ToListAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error fetching files by IDs: {FileIds}", string.Join(", ", fileIds));
+                _logger.LogError(
+                    ex,
+                    "Error fetching files by IDs: {FileIds}",
+                    string.Join(", ", fileIds)
+                );
                 throw;
             }
         }
-        
+
         /// <summary>
         /// Finds a file by its URL.
         /// </summary>

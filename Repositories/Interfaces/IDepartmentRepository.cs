@@ -1,6 +1,4 @@
 using ASTREE_PFE.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Repositories
 {

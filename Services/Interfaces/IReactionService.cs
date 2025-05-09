@@ -1,7 +1,6 @@
+
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ASTREE_PFE.Services.Interfaces
 {
@@ -15,6 +14,5 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<Reaction> AddReactionAsync(ReactionRequest request);
         Task DeleteReactionAsync(string id);
         Task<ReactionsSummary> GetReactionsSummaryForPostAsync(string postId);
-
     }
 }
