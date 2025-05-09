@@ -1,14 +1,7 @@
-using System.Linq;
-using System.Threading.Tasks;
-using ASTREE_PFE.Hubs;
-using ASTREE_PFE.Models;
+
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
 using FileModel = ASTREE_PFE.Models.File;
 
 namespace ASTREE_PFE.Controllers

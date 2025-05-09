@@ -25,12 +25,12 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.String)]
         public NotificationType NotificationType { get; set; }
 
-        public string? RelatedEntityId { get; set; }
+
 
         // Additional properties for richer notifications
         public string? SenderName { get; set; }
-        public string? SenderProfilePicture { get; set; }
+
         public string? Title { get; set; }
-        public string? ActionUrl { get; set; } // URL to navigate to when clicking the notification
+
     }
 }

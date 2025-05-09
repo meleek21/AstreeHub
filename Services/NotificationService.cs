@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
+
 using ASTREE_PFE.Hubs;
 using ASTREE_PFE.Models;
-using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.SignalR;
@@ -99,13 +97,11 @@ namespace ASTREE_PFE.Services
 
             var notification = new Notification
             {
+                Title = "Nouveau Message",
                 RecipientId = receiverId,
                 Content = $"{sender?.FullName ?? "Quelqu'un"} vous a envoyé un message",
                 NotificationType = NotificationType.Message,
-                RelatedEntityId = conversationId,
                 SenderName = sender?.FullName,
-                SenderProfilePicture = sender?.ProfilePictureUrl,
-                ActionUrl = $"/conversations/{conversationId}",
             };
 
             await CreateNotificationAsync(notification);
@@ -126,13 +122,11 @@ namespace ASTREE_PFE.Services
             var reactionText = GetReactionText(reactionType);
             var notification = new Notification
             {
+                Title = "Nouvelle Réaction",
                 RecipientId = postOwnerId,
                 Content = $"{reactor?.FullName ?? "Quelqu'un"} {reactionText} votre publication",
                 NotificationType = NotificationType.PostReaction,
-                RelatedEntityId = postId,
                 SenderName = reactor?.FullName,
-                SenderProfilePicture = reactor?.ProfilePictureUrl,
-                ActionUrl = $"/posts/{postId}",
             };
 
             await CreateNotificationAsync(notification);
@@ -153,14 +147,12 @@ namespace ASTREE_PFE.Services
 
             var notification = new Notification
             {
+                Title = "Nouveau Commentaire",
                 RecipientId = postOwnerId,
                 Content =
                     $"{commenter?.FullName ?? "Quelqu'un"} a commenté votre publication: {TruncateContent(commentContent)}",
                 NotificationType = NotificationType.Comment,
-                RelatedEntityId = postId,
                 SenderName = commenter?.FullName,
-                SenderProfilePicture = commenter?.ProfilePictureUrl,
-                ActionUrl = $"/posts/{postId}?commentId={commentId}",
             };
 
             await CreateNotificationAsync(notification);
@@ -183,10 +175,7 @@ namespace ASTREE_PFE.Services
                 Content =
                     $"{organizer?.FullName ?? "Quelqu'un"} vous a invité à {eventTitle} le {eventDateTime:dd MMM yyyy 'à' HH:mm}",
                 NotificationType = NotificationType.EventInvitation,
-                RelatedEntityId = eventId,
                 SenderName = organizer?.FullName,
-                SenderProfilePicture = organizer?.ProfilePictureUrl,
-                ActionUrl = $"/events/{eventId}",
             };
 
             await CreateNotificationAsync(notification);
@@ -209,8 +198,6 @@ namespace ASTREE_PFE.Services
                     Content =
                         $"L'événement '{eventTitle}' a été mis à jour: {updateType} - {updateDetails}",
                     NotificationType = NotificationType.EventUpdate,
-                    RelatedEntityId = eventId,
-                    ActionUrl = $"/events/{eventId}",
                 };
 
                 await CreateNotificationAsync(notification);
@@ -248,10 +235,7 @@ namespace ASTREE_PFE.Services
                     Title = "Célébration d'anniversaire",
                     Content = $"Aujourd'hui, c'est l'anniversaire de {birthdayPerson.FullName}! 🎂",
                     NotificationType = NotificationType.Birthday,
-                    RelatedEntityId = birthdayPersonId,
                     SenderName = birthdayPerson.FullName,
-                    SenderProfilePicture = birthdayPerson.ProfilePictureUrl,
-                    ActionUrl = $"/employees/{birthdayPersonId}",
                 };
 
                 await CreateNotificationAsync(notification);
@@ -276,8 +260,6 @@ namespace ASTREE_PFE.Services
                 Content =
                     $"{attendeeName} a {(status == AttendanceStatus.Accepté ? "accepté" : "refusé")} votre invitation à l'événement '{eventTitle}'",
                 NotificationType = NotificationType.EventStatusChange,
-                RelatedEntityId = eventId,
-                ActionUrl = $"/events/{eventId}",
             };
 
             await CreateNotificationAsync(notification);
@@ -329,10 +311,7 @@ namespace ASTREE_PFE.Services
                     Content =
                         $"{poster?.FullName ?? "Quelqu'un"} a publié dans {channelName}: {TruncateContent(postContent)}",
                     NotificationType = NotificationType.ChannelPost,
-                    RelatedEntityId = postId,
                     SenderName = poster?.FullName,
-                    SenderProfilePicture = poster?.ProfilePictureUrl,
-                    ActionUrl = $"/channels/{channelId}/posts/{postId}",
                 };
 
                 await CreateNotificationAsync(notification);

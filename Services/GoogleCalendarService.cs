@@ -1,10 +1,9 @@
-using ASTREE_PFE.Models;
+
 using ASTREE_PFE.Services.Interfaces;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
-using Microsoft.Extensions.Configuration;
 using GoogleEvent = Google.Apis.Calendar.v3.Data.Event;
 using LocalEvent = ASTREE_PFE.Models.Event;
 
