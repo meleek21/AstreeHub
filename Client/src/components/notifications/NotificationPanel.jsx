@@ -39,11 +39,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
         <div className="notification-header">
           <h3>Notifications</h3>
           <button className="close-button" onClick={onClose}>
-          <FontAwesomeIcon
-                  icon={faTimes}
-                  
-                  style={{ color: '#A41623' }}
-                />
+            <FontAwesomeIcon icon={faTimes} style={{ color: '#A41623' }}/>
           </button>
         </div>
         

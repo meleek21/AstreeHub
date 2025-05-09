@@ -63,7 +63,7 @@
   display: contents; /* Flatten the structure */
 }
 
-.send-button {
+.add-comment-button{
   flex-shrink: 0; /* Prevent button from shrinking */
   display: flex;
   align-items: center;
@@ -78,12 +78,12 @@
   transition: var(--transition);
   margin-bottom: 4px; /* Align with textarea baseline */
 }
-.send-button:hover:not(:disabled) {
+.add-comment-button:hover:not(:disabled) {
   background: var(--primary-light);
   transform: translateY(-1px);
 }
 
-.send-button:disabled {
+.add-comment-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   background: var(--text-secondary);
@@ -95,7 +95,7 @@
     padding: 12px;
   }
   
-  .send-button {
+  .add-comment-button {
     padding: 8px 12px;
   }
 }
