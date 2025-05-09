@@ -1,10 +1,9 @@
+
+using ASTREE_PFE.Services.Interfaces;
 using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
-using Microsoft.Extensions.Configuration;
-using ASTREE_PFE.Models;
-using ASTREE_PFE.Services.Interfaces;
 using GoogleEvent = Google.Apis.Calendar.v3.Data.Event;
 using LocalEvent = ASTREE_PFE.Models.Event;
 
@@ -20,10 +19,10 @@ namespace ASTREE_PFE.Services
         {
             _configuration = configuration;
             _eventService = eventService;
-    
+
             // Get the application root path
             var rootPath = Directory.GetCurrentDirectory();
-            
+
             // Get credentials path from configuration
             var credentialsConfigPath = _configuration["GoogleCalendar:CredentialsPath"];
             if (string.IsNullOrEmpty(credentialsConfigPath))
@@ -32,10 +31,10 @@ namespace ASTREE_PFE.Services
                 _calendarService = null;
                 return;
             }
-            
+
             // Construct full path for credentials
             var credentialsPath = Path.Combine(rootPath, credentialsConfigPath);
-            
+
             // Verify credentials file exists
             if (!System.IO.File.Exists(credentialsPath))
             {
@@ -43,17 +42,20 @@ namespace ASTREE_PFE.Services
                 _calendarService = null;
                 return;
             }
-    
+
             try
             {
-                var credential = GoogleCredential.FromFile(credentialsPath)
+                var credential = GoogleCredential
+                    .FromFile(credentialsPath)
                     .CreateScoped(CalendarService.Scope.Calendar);
-    
-                _calendarService = new CalendarService(new BaseClientService.Initializer
-                {
-                    HttpClientInitializer = credential,
-                    ApplicationName = "ASTREE Enterprise Social Network"
-                });
+
+                _calendarService = new CalendarService(
+                    new BaseClientService.Initializer
+                    {
+                        HttpClientInitializer = credential,
+                        ApplicationName = "ASTREE Enterprise Social Network",
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -80,10 +82,14 @@ namespace ASTREE_PFE.Services
                     Start = new EventDateTime { DateTime = eventToAdd.EventDateTime },
                     End = new EventDateTime { DateTime = eventToAdd.EventDateTime.AddHours(1) },
                     Location = eventToAdd.Location,
-                    Attendees = eventToAdd.Attendees?.Select(email => new EventAttendee { Email = email }).ToList()
+                    Attendees = eventToAdd
+                        .Attendees?.Select(email => new EventAttendee { Email = email })
+                        .ToList(),
                 };
 
-                var createdEvent = await _calendarService.Events.Insert(calendarEvent, "primary").ExecuteAsync();
+                var createdEvent = await _calendarService
+                    .Events.Insert(calendarEvent, "primary")
+                    .ExecuteAsync();
                 return createdEvent.Id;
             }
             catch (Exception ex)
@@ -93,64 +99,74 @@ namespace ASTREE_PFE.Services
             }
         }
 
-        public async Task<bool> AddEventToAttendeeCalendarAsync(string eventId, string attendeeEmail)
-    {
-        // Check if Google Calendar service is available
-        if (_calendarService == null)
+        public async Task<bool> AddEventToAttendeeCalendarAsync(
+            string eventId,
+            string attendeeEmail
+        )
         {
-            return false;
-        }
-
-        try
-        {
-            // Get the event details
-            var eventDetails = await _eventService.GetEventByIdAsync(eventId);
-            if (eventDetails == null)
+            // Check if Google Calendar service is available
+            if (_calendarService == null)
+            {
                 return false;
+            }
 
-            // Get Google Calendar event ID or create a new one if it doesn't exist
-            string googleEventId = await GetGoogleCalendarEventId(eventId);
-            if (string.IsNullOrEmpty(googleEventId))
+            try
             {
-                var localEvent = new LocalEvent
-                {
-                    Id = eventId,
-                    Title = eventDetails.Title,
-                    Description = eventDetails.Description,
-                    EventDateTime = eventDetails.EventDateTime,
-                    Location = eventDetails.Location
-                };
-                googleEventId = await AddEventToGoogleCalendar(localEvent);
-                
-                // If we couldn't create the event in Google Calendar, return false
-                if (string.IsNullOrEmpty(googleEventId))
+                // Get the event details
+                var eventDetails = await _eventService.GetEventByIdAsync(eventId);
+                if (eventDetails == null)
                     return false;
-            }
 
-            // Add the attendee to the Google Calendar event
-            var calendarEvent = await _calendarService.Events.Get("primary", googleEventId).ExecuteAsync();
-            
-            // Initialize attendees list if null
-            if (calendarEvent.Attendees == null)
-                calendarEvent.Attendees = new List<EventAttendee>();
-            
-            // Add the new attendee if not already in the list
-            if (!calendarEvent.Attendees.Any(a => a.Email == attendeeEmail))
+                // Get Google Calendar event ID or create a new one if it doesn't exist
+                string googleEventId = await GetGoogleCalendarEventId(eventId);
+                if (string.IsNullOrEmpty(googleEventId))
+                {
+                    var localEvent = new LocalEvent
+                    {
+                        Id = eventId,
+                        Title = eventDetails.Title,
+                        Description = eventDetails.Description,
+                        EventDateTime = eventDetails.EventDateTime,
+                        Location = eventDetails.Location,
+                    };
+                    googleEventId = await AddEventToGoogleCalendar(localEvent);
+
+                    // If we couldn't create the event in Google Calendar, return false
+                    if (string.IsNullOrEmpty(googleEventId))
+                        return false;
+                }
+
+                // Add the attendee to the Google Calendar event
+                var calendarEvent = await _calendarService
+                    .Events.Get("primary", googleEventId)
+                    .ExecuteAsync();
+
+                // Initialize attendees list if null
+                if (calendarEvent.Attendees == null)
+                    calendarEvent.Attendees = new List<EventAttendee>();
+
+                // Add the new attendee if not already in the list
+                if (!calendarEvent.Attendees.Any(a => a.Email == attendeeEmail))
+                {
+                    calendarEvent.Attendees.Add(new EventAttendee { Email = attendeeEmail });
+                    await _calendarService
+                        .Events.Update(calendarEvent, "primary", googleEventId)
+                        .ExecuteAsync();
+                }
+
+                return true;
+            }
+            catch (Exception ex)
             {
-                calendarEvent.Attendees.Add(new EventAttendee { Email = attendeeEmail });
-                await _calendarService.Events.Update(calendarEvent, "primary", googleEventId).ExecuteAsync();
+                Console.WriteLine($"Error adding attendee to Google Calendar event: {ex.Message}");
+                return false;
             }
-            
-            return true;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error adding attendee to Google Calendar event: {ex.Message}");
-            return false;
-        }
-    }
 
-    public async Task<bool> UpdateEventInGoogleCalendar(string googleEventId, LocalEvent updatedEvent)
+        public async Task<bool> UpdateEventInGoogleCalendar(
+            string googleEventId,
+            LocalEvent updatedEvent
+        )
         {
             // Check if Google Calendar service is available
             if (_calendarService == null)
@@ -167,10 +183,14 @@ namespace ASTREE_PFE.Services
                     Start = new EventDateTime { DateTime = updatedEvent.EventDateTime },
                     End = new EventDateTime { DateTime = updatedEvent.EventDateTime.AddHours(1) },
                     Location = updatedEvent.Location,
-                    Attendees = updatedEvent.Attendees?.Select(email => new EventAttendee { Email = email }).ToList()
+                    Attendees = updatedEvent
+                        .Attendees?.Select(email => new EventAttendee { Email = email })
+                        .ToList(),
                 };
 
-                await _calendarService.Events.Update(calendarEvent, "primary", googleEventId).ExecuteAsync();
+                await _calendarService
+                    .Events.Update(calendarEvent, "primary", googleEventId)
+                    .ExecuteAsync();
                 return true;
             }
             catch (Exception ex)
@@ -211,7 +231,9 @@ namespace ASTREE_PFE.Services
             try
             {
                 var events = await _calendarService.Events.List("primary").ExecuteAsync();
-                var calendarEvent = events.Items.FirstOrDefault(e => e.Description?.Contains(eventId) ?? false);
+                var calendarEvent = events.Items.FirstOrDefault(e =>
+                    e.Description?.Contains(eventId) ?? false
+                );
                 return calendarEvent?.Id;
             }
             catch (Exception ex)

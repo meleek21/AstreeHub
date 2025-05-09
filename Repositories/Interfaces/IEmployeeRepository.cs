@@ -1,8 +1,6 @@
-using ASTREE_PFE.Models;
-using Microsoft.AspNetCore.Identity;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using ASTREE_PFE.DTOs;
+using ASTREE_PFE.Models;
+
 
 namespace ASTREE_PFE.Repositories.Interfaces
 {

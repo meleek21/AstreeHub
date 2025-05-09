@@ -1,5 +1,5 @@
-using ASTREE_PFE.Models;
 using System.Linq.Expressions;
+using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.Repositories.Interfaces
 {
@@ -7,7 +7,11 @@ namespace ASTREE_PFE.Repositories.Interfaces
     {
         Task<IEnumerable<Message>> GetAllMessagesAsync();
         Task<Message> GetMessageByIdAsync(string id);
-        Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(string conversationId, int skip = 0, int limit = 50);
+        Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(
+            string conversationId,
+            int skip = 0,
+            int limit = 50
+        );
         Task<IEnumerable<Message>> FindMessagesAsync(Expression<Func<Message, bool>> predicate);
         Task CreateMessageAsync(Message message);
         Task UpdateMessageAsync(string id, Message message);

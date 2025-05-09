@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../Context/AuthContext';
 import { userAPI, userOnlineStatusAPI as userStatusAPI } from '../services/apiServices';
+import NotificationBell from './notifications/NotificationBell';
 
 function Navbar() {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ function Navbar() {
 
   return (
     <nav className="nav-bar">
-      {/* Notifications */}
+      {/* Home */}
       <div className="navbar-home">
         <Link to="/" className="nav-link">
           <lord-icon
@@ -87,6 +88,9 @@ function Navbar() {
           ></lord-icon>
         </Link>
       </div>
+      
+      {/* Notifications */}
+      <NotificationBell />
      
       {/* Search Bar */}
       <div className="search-bar">

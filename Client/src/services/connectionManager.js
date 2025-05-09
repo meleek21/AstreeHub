@@ -15,12 +15,15 @@ class ConnectionManager {
   constructor() {
     this.userConnection = null;
     this.messageConnection = null;
+    this.notificationConnection = null; // Added notification connection
     this.userConnectionPromise = null;
     this.messageConnectionPromise = null;
+    this.notificationConnectionPromise = null; // Added notification connection promise
     this.state = ConnectionState.DISCONNECTED;
     this.stateListeners = new Set();
     this.userCallbacks = {}; // Callbacks for user hub events
     this.messageCallbacks = {}; // Callbacks for message hub events
+    this.notificationCallbacks = {}; // Callbacks for notification hub events
     this.connectionChangeCallback = null; // Callback for connection state changes
     this.activityListeners = new Set(); // Listeners for user activity changes
     this.lastActivityTime = Date.now();
@@ -37,6 +40,7 @@ class ConnectionManager {
     this.invokeHub = this.invokeHub.bind(this);
     this.ensureUserConnection = this.ensureUserConnection.bind(this);
     this.ensureMessageConnection = this.ensureMessageConnection.bind(this);
+    this.ensureNotificationConnection = this.ensureNotificationConnection.bind(this);
   }
 
   // --- State Management ---
@@ -233,7 +237,7 @@ class ConnectionManager {
     if (this.state === ConnectionState.CONNECTING) {
       console.log("Connection manager already starting.");
       return Promise.all(
-        [this.userConnectionPromise, this.messageConnectionPromise].filter(
+        [this.userConnectionPromise, this.messageConnectionPromise, this.notificationConnectionPromise].filter(
           Boolean
         )
       );
@@ -256,10 +260,15 @@ class ConnectionManager {
           "/hubs/message",
           "message"
         );
+        this.notificationConnectionPromise = this.startSpecificConnection(
+          "/notificationHub",
+          "notification"
+        );
 
         await Promise.all([
           this.userConnectionPromise,
           this.messageConnectionPromise,
+          this.notificationConnectionPromise,
         ]);
         this.checkAndUpdateGlobalState();
 
@@ -285,12 +294,19 @@ class ConnectionManager {
   }
 
   async startSpecificConnection(hubPath, connectionType) {
-    let connection =
-      connectionType === "user" ? this.userConnection : this.messageConnection;
-    let connectionPromiseField =
-      connectionType === "user"
-        ? "userConnectionPromise"
-        : "messageConnectionPromise";
+    let connection;
+    let connectionPromiseField;
+    
+    if (connectionType === "user") {
+      connection = this.userConnection;
+      connectionPromiseField = "userConnectionPromise";
+    } else if (connectionType === "message") {
+      connection = this.messageConnection;
+      connectionPromiseField = "messageConnectionPromise";
+    } else if (connectionType === "notification") {
+      connection = this.notificationConnection;
+      connectionPromiseField = "notificationConnectionPromise";
+    }
 
     // Avoid restarting if already connected or connecting
     if (
@@ -325,12 +341,19 @@ class ConnectionManager {
             connectionType,
             this.userCallbacks
           );
-        } else {
+        } else if (connectionType === "message") {
           this.messageConnection = connection;
           this.setupEventHandlers(
             this.messageConnection,
             connectionType,
             this.messageCallbacks
+          );
+        } else if (connectionType === "notification") {
+          this.notificationConnection = connection;
+          this.setupEventHandlers(
+            this.notificationConnection,
+            connectionType,
+            this.notificationCallbacks
           );
         }
 
@@ -349,8 +372,10 @@ class ConnectionManager {
         console.error(`${connectionType} SignalR connection failed:`, error);
         if (connectionType === "user") {
           this.userConnection = null;
-        } else {
+        } else if (connectionType === "message") {
           this.messageConnection = null;
+        } else if (connectionType === "notification") {
+          this.notificationConnection = null;
         }
         this.checkAndUpdateGlobalState(); // Update global state after failure
         throw error; // Re-throw error to be caught by the main start() method or caller
@@ -371,7 +396,7 @@ class ConnectionManager {
       console.warn(
         `${connectionType} SignalR connection lost. Attempting to reconnect... Error: ${error}`
       );
-      // If either connection starts reconnecting, the overall state is RECONNECTING
+      // If any connection starts reconnecting, the overall state is RECONNECTING
       this.setState(ConnectionState.RECONNECTING);
     });
 
@@ -386,14 +411,20 @@ class ConnectionManager {
           "user",
           this.userCallbacks
         );
-      } else {
+      } else if (connectionType === "message") {
         this.setupEventHandlers(
           this.messageConnection,
           "message",
           this.messageCallbacks
         );
+      } else if (connectionType === "notification") {
+        this.setupEventHandlers(
+          this.notificationConnection,
+          "notification",
+          this.notificationCallbacks
+        );
       }
-      // Check if both are connected now to potentially move back to CONNECTED state
+      // Check if all connections are connected now to potentially move back to CONNECTED state
       this.checkAndUpdateGlobalState();
     });
 
@@ -406,11 +437,14 @@ class ConnectionManager {
       if (connectionType === "user") {
         this.userConnection = null;
         this.userConnectionPromise = null; // Clear promise on close
-      } else {
+      } else if (connectionType === "message") {
         this.messageConnection = null;
         this.messageConnectionPromise = null; // Clear promise on close
+      } else if (connectionType === "notification") {
+        this.notificationConnection = null;
+        this.notificationConnectionPromise = null; // Clear promise on close
       }
-      // If either connection closes permanently, update the overall state.
+      // If any connection closes permanently, update the overall state.
       this.checkAndUpdateGlobalState();
     });
   }
@@ -418,24 +452,26 @@ class ConnectionManager {
   checkAndUpdateGlobalState() {
     const userState = this.userConnection?.state;
     const messageState = this.messageConnection?.state;
+    const notificationState = this.notificationConnection?.state;
 
-    if (userState === "Connected" && messageState === "Connected") {
+    if (userState === "Connected" && messageState === "Connected" && notificationState === "Connected") {
       this.setState(ConnectionState.CONNECTED);
     } else if (
       userState === "Reconnecting" ||
-      messageState === "Reconnecting"
+      messageState === "Reconnecting" ||
+      notificationState === "Reconnecting"
     ) {
       // If at least one is reconnecting (and none are disconnected unexpectedly)
       this.setState(ConnectionState.RECONNECTING);
-    } else if (!this.userConnection && !this.messageConnection) {
-      // Both connections are definitively gone (closed or never started properly)
+    } else if (!this.userConnection && !this.messageConnection && !this.notificationConnection) {
+      // All connections are definitively gone (closed or never started properly)
       this.setState(ConnectionState.DISCONNECTED);
-    } else if (userState === "Connecting" || messageState === "Connecting") {
+    } else if (userState === "Connecting" || messageState === "Connecting" || notificationState === "Connecting") {
       // If at least one is still in the initial connecting phase
       this.setState(ConnectionState.CONNECTING);
     } else {
       // Handle partial states or other scenarios.
-      // If one is connected and the other is null/Disconnected,
+      // If one is connected and the others are null/Disconnected,
       // or any other combination not covered above, default to DISCONNECTED.
       // Avoid overriding RECONNECTING state prematurely.
       if (this.state !== ConnectionState.RECONNECTING) {
@@ -473,16 +509,20 @@ class ConnectionManager {
     const stopMessage = this.messageConnection
       ? this.messageConnection.stop()
       : Promise.resolve();
+    const stopNotification = this.notificationConnection
+      ? this.notificationConnection.stop()
+      : Promise.resolve();
 
     try {
-      await Promise.all([stopUser, stopMessage]);
-      console.log("Both connections stopped.");
+      await Promise.all([stopUser, stopMessage, stopNotification]);
+      console.log("All connections stopped.");
     } catch (error) {
       console.error("Error stopping connections:", error);
       // Handle potential errors during stop
     } finally {
       this.userConnection = null;
       this.messageConnection = null;
+      this.notificationConnection = null;
       // Clear activity listeners on final stop
       this.activityListeners.clear();
       // Ensure state is DISCONNECTED unless a reconnect started somehow
@@ -596,14 +636,122 @@ class ConnectionManager {
       }
     }
   }
+  
+  // --- Notification Hub Event Handling ---
+  registerNotificationHandler(eventName, callback) {
+    if (!this.notificationCallbacks[eventName]) {
+      this.notificationCallbacks[eventName] = new Set();
+    }
+    this.notificationCallbacks[eventName].add(callback);
 
+    // Ensure the SignalR handler is registered only once
+    if (this.notificationConnection && this.notificationCallbacks[eventName].size === 1) {
+      // Register with original case
+      this.notificationConnection.on(eventName, (...args) => {
+        this.notificationCallbacks[eventName].forEach(cb => cb(...args));
+      });
+      
+      // Register with lowercase version too
+      const lowerCaseEventName = eventName.toLowerCase();
+      if (lowerCaseEventName !== eventName) {
+        this.notificationConnection.on(lowerCaseEventName, (...args) => {
+          this.notificationCallbacks[eventName].forEach(cb => cb(...args));
+        });
+      }
+    }
+  }
+
+  unregisterNotificationHandler(eventName, callback) {
+    if (this.notificationCallbacks[eventName]) {
+      this.notificationCallbacks[eventName].delete(callback);
+      if (this.notificationCallbacks[eventName].size === 0 && this.notificationConnection) {
+        // Clean up both case variations
+        this.notificationConnection.off(eventName);
+        this.notificationConnection.off(eventName.toLowerCase());
+      }
+    }
+  }
+
+  // --- Hub Method Invocation ---
+  async invokeHub(hubType, methodName, ...args) {
+    let connection;
+    let ensureMethod;
+
+    switch (hubType) {
+      case 'user':
+        connection = this.userConnection;
+        ensureMethod = this.ensureUserConnection;
+        break;
+      case 'message':
+        connection = this.messageConnection;
+        ensureMethod = this.ensureMessageConnection;
+        break;
+      case 'notification':
+        connection = this.notificationConnection;
+        ensureMethod = this.ensureNotificationConnection;
+        break;
+      default:
+        throw new Error(`Unknown hub type: ${hubType}`);
+    }
+
+    await ensureMethod();
+
+    if (!connection || connection.state !== 'Connected') {
+      throw new Error(`${hubType} connection is not established`);
+    }
+
+    try {
+      return await connection.invoke(methodName, ...args);
+    } catch (error) {
+      console.error(`Error invoking ${methodName} on ${hubType} hub:`, error);
+      throw error;
+    }
+  }
+
+  // Convenience methods for specific hubs
+  async invokeUserHub(methodName, ...args) {
+    return this.invokeHub('user', methodName, ...args);
+  }
+
+  async invokeMessageHub(methodName, ...args) {
+    return this.invokeHub('message', methodName, ...args);
+  }
+
+  async invokeNotificationHub(methodName, ...args) {
+    return this.invokeHub('notification', methodName, ...args);
+  }
+  
   // --- Connection Readiness Checks ---
   async ensureUserConnection() {
     if (this.userConnection && this.userConnection.state === "Connected") {
       return; // Already connected
     }
     if (!this.userConnectionPromise) {
-      console.warn("User connection start not initiated, attempting to start...");
+      console.warn("User connection start not initiated. Starting connection...");
+      await this.start();
+    } else {
+      await this.userConnectionPromise;
+    }
+  }
+  
+  async ensureMessageConnection() {
+    if (this.messageConnection && this.messageConnection.state === "Connected") {
+      return; // Already connected
+    }
+    if (!this.messageConnectionPromise) {
+      console.warn("Message connection start not initiated. Starting connection...");
+      await this.start();
+    } else {
+      await this.messageConnectionPromise;
+    }
+  }
+  
+  async ensureNotificationConnection() {
+    if (this.notificationConnection && this.notificationConnection.state === "Connected") {
+      return; // Already connected
+    }
+    if (!this.notificationConnectionPromise) {
+      console.warn("Notification connection start not initiated, attempting to start...");
       // Optionally trigger start if not already in progress, or throw error
       await this.start(); // Start connection if not already in progress
     }

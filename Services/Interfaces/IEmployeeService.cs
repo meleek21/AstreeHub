@@ -1,7 +1,6 @@
-using ASTREE_PFE.Models;
+
 using ASTREE_PFE.DTOs;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.Services.Interfaces
 {

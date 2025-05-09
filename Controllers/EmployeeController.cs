@@ -1,16 +1,9 @@
+using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
-using ASTREE_PFE.Services;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using ASTREE_PFE.DTOs;
-using System.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.SignalR;
-using ASTREE_PFE.Hubs; // Add this if you have a UserHub class
+
 
 namespace ASTREE_PFE.Controllers
 {
@@ -21,7 +14,12 @@ namespace ASTREE_PFE.Controllers
         private readonly IEmployeeService _employeeService;
         private readonly IDepartmentService _departmentService;
         private readonly ICloudinaryService _cloudinaryService;
-        public EmployeeController(IEmployeeService employeeService, IDepartmentService departmentService, ICloudinaryService cloudinaryService)
+
+        public EmployeeController(
+            IEmployeeService employeeService,
+            IDepartmentService departmentService,
+            ICloudinaryService cloudinaryService
+        )
         {
             _employeeService = employeeService;
             _departmentService = departmentService;
@@ -46,24 +44,26 @@ namespace ASTREE_PFE.Controllers
         public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetAllEmployees()
         {
             var employees = await _employeeService.GetAllEmployeesAsync();
-            var employeeDtos = employees.Select(e => new EmployeeResponseDto
-            {
-                Id = e.Id,
-                FirstName = e.FirstName,
-                LastName = e.LastName,
-                DateOfBirth = e.DateOfBirth,
-                Role = e.Role,
-                Status = e.Status,
-                Email = e.Email,
-                PasswordHash = e.PasswordHash,
-                DepartmentId = e.DepartmentId,
-                PhoneNumber = e.PhoneNumber,
-                ProfilePictureUrl = e.ProfilePictureUrl
-            }).ToList();
-            
+            var employeeDtos = employees
+                .Select(e => new EmployeeResponseDto
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    DateOfBirth = e.DateOfBirth,
+                    Role = e.Role,
+                    Status = e.Status,
+                    Email = e.Email,
+                    PasswordHash = e.PasswordHash,
+                    DepartmentId = e.DepartmentId,
+                    PhoneNumber = e.PhoneNumber,
+                    ProfilePictureUrl = e.ProfilePictureUrl,
+                })
+                .ToList();
+
             return employeeDtos;
         }
-        
+
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<EmployeeResponseDto>> GetEmployee(string id)
@@ -73,7 +73,7 @@ namespace ASTREE_PFE.Controllers
             {
                 return NotFound(new { message = "Employee not found" });
             }
-            
+
             var employeeDto = new EmployeeResponseDto
             {
                 Id = employee.Id,
@@ -85,31 +85,35 @@ namespace ASTREE_PFE.Controllers
                 Email = employee.Email,
                 PasswordHash = employee.PasswordHash,
                 DepartmentId = employee.DepartmentId,
-                PhoneNumber = employee.PhoneNumber
+                PhoneNumber = employee.PhoneNumber,
             };
-            
+
             return employeeDto;
         }
-        
+
         [HttpGet("department/{departmentId}")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(int departmentId)
+        public async Task<ActionResult<IEnumerable<EmployeeResponseDto>>> GetEmployeesByDepartment(
+            int departmentId
+        )
         {
             var employees = await _employeeService.GetEmployeesByDepartmentAsync(departmentId);
-            var employeeDtos = employees.Select(e => new EmployeeResponseDto
-            {
-                Id = e.Id,
-                FirstName = e.FirstName,
-                LastName = e.LastName,
-                DateOfBirth = e.DateOfBirth,
-                Role = e.Role,
-                Status = e.Status,
-                Email = e.Email,
-                PasswordHash = e.PasswordHash,
-                DepartmentId = e.DepartmentId,
-                PhoneNumber = e.PhoneNumber
-            }).ToList();
-            
+            var employeeDtos = employees
+                .Select(e => new EmployeeResponseDto
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    DateOfBirth = e.DateOfBirth,
+                    Role = e.Role,
+                    Status = e.Status,
+                    Email = e.Email,
+                    PasswordHash = e.PasswordHash,
+                    DepartmentId = e.DepartmentId,
+                    PhoneNumber = e.PhoneNumber,
+                })
+                .ToList();
+
             return employeeDtos;
         }
 
@@ -132,7 +136,7 @@ namespace ASTREE_PFE.Controllers
                 DateOfBirth = employeeDto.DateOfBirth,
                 DepartmentId = employeeDto.DepartmentId,
                 Role = employeeDto.Role,
-                Status = UserStatus.Active
+                Status = UserStatus.Active,
             };
 
             var result = await _employeeService.CreateEmployeeAsync(employee, employeeDto.Password);
@@ -145,94 +149,97 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{id}")]
-[Authorize]
-public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpdateDto employeeDto)
-{
-    if (!ModelState.IsValid)
-    {
-        // Log the validation errors
-        var errors = ModelState.Values
-            .SelectMany(v => v.Errors)
-            .Select(e => e.ErrorMessage)
-            .ToList();
-        Console.WriteLine("Validation Errors: " + string.Join(", ", errors));
-        return BadRequest(ModelState);
-    }
-
-    var existingEmployee = await _employeeService.GetEmployeeByIdAsync(id);
-    if (existingEmployee == null)
-    {
-        return NotFound(new { message = "Employee not found" });
-    }
-
-    bool isUpdated = false;
-
-    // Update only the fields that are provided
-    if (employeeDto.FirstName != null)
-    {
-        existingEmployee.FirstName = employeeDto.FirstName;
-        isUpdated = true;
-    }
-    if (employeeDto.LastName != null)
-    {
-        existingEmployee.LastName = employeeDto.LastName;
-        isUpdated = true;
-    }
-    if (employeeDto.Email != null)
-    {
-        existingEmployee.Email = employeeDto.Email;
-        isUpdated = true;
-    }
-    if (employeeDto.PhoneNumber != null)
-    {
-        existingEmployee.PhoneNumber = employeeDto.PhoneNumber;
-        isUpdated = true;
-    }
-    if (employeeDto.DateOfBirth.HasValue)
-    {
-        existingEmployee.DateOfBirth = employeeDto.DateOfBirth.Value;
-        isUpdated = true;
-    }
-    if (employeeDto.DepartmentId.HasValue)
-    {
-        existingEmployee.DepartmentId = employeeDto.DepartmentId.Value;
-        isUpdated = true;
-    }
-    if (employeeDto.Role != null)
-    {
-        existingEmployee.Role = employeeDto.Role.Value;
-        isUpdated = true;
-    }
-
-    // Handle profile picture update if a file is provided
-    if (employeeDto.File != null)
-    {
-        // Upload the file to Cloudinary
-        var uploadResult = await _cloudinaryService.UploadImageAsync(employeeDto.File);
-        if (uploadResult == null)
+        [Authorize]
+        public async Task<ActionResult> UpdateEmployee(
+            string id,
+            [FromForm] EmployeeUpdateDto employeeDto
+        )
         {
-            return StatusCode(500, "Failed to upload profile picture.");
+            if (!ModelState.IsValid)
+            {
+                // Log the validation errors
+                var errors = ModelState
+                    .Values.SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+                Console.WriteLine("Validation Errors: " + string.Join(", ", errors));
+                return BadRequest(ModelState);
+            }
+
+            var existingEmployee = await _employeeService.GetEmployeeByIdAsync(id);
+            if (existingEmployee == null)
+            {
+                return NotFound(new { message = "Employee not found" });
+            }
+
+            bool isUpdated = false;
+
+            // Update only the fields that are provided
+            if (employeeDto.FirstName != null)
+            {
+                existingEmployee.FirstName = employeeDto.FirstName;
+                isUpdated = true;
+            }
+            if (employeeDto.LastName != null)
+            {
+                existingEmployee.LastName = employeeDto.LastName;
+                isUpdated = true;
+            }
+            if (employeeDto.Email != null)
+            {
+                existingEmployee.Email = employeeDto.Email;
+                isUpdated = true;
+            }
+            if (employeeDto.PhoneNumber != null)
+            {
+                existingEmployee.PhoneNumber = employeeDto.PhoneNumber;
+                isUpdated = true;
+            }
+            if (employeeDto.DateOfBirth.HasValue)
+            {
+                existingEmployee.DateOfBirth = employeeDto.DateOfBirth.Value;
+                isUpdated = true;
+            }
+            if (employeeDto.DepartmentId.HasValue)
+            {
+                existingEmployee.DepartmentId = employeeDto.DepartmentId.Value;
+                isUpdated = true;
+            }
+            if (employeeDto.Role != null)
+            {
+                existingEmployee.Role = employeeDto.Role.Value;
+                isUpdated = true;
+            }
+
+            // Handle profile picture update if a file is provided
+            if (employeeDto.File != null)
+            {
+                // Upload the file to Cloudinary
+                var uploadResult = await _cloudinaryService.UploadImageAsync(employeeDto.File);
+                if (uploadResult == null)
+                {
+                    return StatusCode(500, "Failed to upload profile picture.");
+                }
+
+                // Update the profile picture URL
+                existingEmployee.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
+                isUpdated = true;
+            }
+
+            if (!isUpdated)
+            {
+                return BadRequest("No fields were updated.");
+            }
+
+            // Save the updated employee to the database
+            var result = await _employeeService.UpdateEmployeeAsync(id, existingEmployee);
+            if (!result)
+            {
+                return BadRequest("Failed to update employee");
+            }
+
+            return NoContent();
         }
-
-        // Update the profile picture URL
-        existingEmployee.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
-        isUpdated = true;
-    }
-
-    if (!isUpdated)
-    {
-        return BadRequest("No fields were updated.");
-    }
-
-    // Save the updated employee to the database
-    var result = await _employeeService.UpdateEmployeeAsync(id, existingEmployee);
-    if (!result)
-    {
-        return BadRequest("Failed to update employee");
-    }
-
-    return NoContent();
-}
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "SUPERADMIN")]
@@ -262,7 +269,10 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
 
         [HttpPatch("{id}/status")]
         [Authorize(Roles = "SUPERADMIN")]
-        public async Task<ActionResult> ChangeEmployeeStatus(string id, [FromBody] StatusUpdateDto statusDto)
+        public async Task<ActionResult> ChangeEmployeeStatus(
+            string id,
+            [FromBody] StatusUpdateDto statusDto
+        )
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
@@ -281,7 +291,10 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
 
         [HttpPatch("{id}/department")]
         [Authorize]
-        public async Task<ActionResult> AssignEmployeeToDepartment(string id, [FromBody] DepartmentAssignDto departmentDto)
+        public async Task<ActionResult> AssignEmployeeToDepartment(
+            string id,
+            [FromBody] DepartmentAssignDto departmentDto
+        )
         {
             var employee = await _employeeService.GetEmployeeByIdAsync(id);
             if (employee == null)
@@ -289,7 +302,10 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
                 return NotFound(new { message = "Employee not found" });
             }
 
-            var result = await _employeeService.AssignEmployeeToDepartmentAsync(id, departmentDto.DepartmentId);
+            var result = await _employeeService.AssignEmployeeToDepartmentAsync(
+                id,
+                departmentDto.DepartmentId
+            );
             if (!result)
             {
                 return BadRequest("Failed to assign employee to department");
@@ -317,7 +333,7 @@ public async Task<ActionResult> UpdateEmployee(string id, [FromForm] EmployeeUpd
             {
                 var uploadResult = await _cloudinaryService.UploadImageAsync(file);
                 employee.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
-                
+
                 var result = await _employeeService.UpdateEmployeeAsync(id, employee);
                 if (!result)
                 {

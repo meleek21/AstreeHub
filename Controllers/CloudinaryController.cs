@@ -1,15 +1,8 @@
-using Microsoft.AspNetCore.Mvc;
+
 using ASTREE_PFE.Services.Interfaces;
-using ASTREE_PFE.Models;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
-using System.Linq;
-using MongoDB.Bson;
+using Microsoft.AspNetCore.Mvc;
 using FileModel = ASTREE_PFE.Models.File;
-using Microsoft.AspNetCore.SignalR;
-using ASTREE_PFE.Hubs;
 
 namespace ASTREE_PFE.Controllers
 {
@@ -22,17 +15,15 @@ namespace ASTREE_PFE.Controllers
         private readonly ILogger<CloudinaryController> _logger;
         private readonly IFileService _fileService; // Service to manage File collection
 
-
         public CloudinaryController(
             ICloudinaryService cloudinaryService,
             ILogger<CloudinaryController> logger,
             IFileService fileService
-            ) // Inject SignalR hub context
+        ) // Inject SignalR hub context
         {
             _cloudinaryService = cloudinaryService;
             _logger = logger;
             _fileService = fileService;
-
         }
 
         /// <summary>
@@ -51,7 +42,9 @@ namespace ASTREE_PFE.Controllers
 
                 var allowedImageTypes = new[] { "image/jpeg", "image/png", "image/gif" };
                 if (!allowedImageTypes.Contains(file.ContentType))
-                    return BadRequest("Invalid file type. Only JPEG, PNG, and GIF images are allowed.");
+                    return BadRequest(
+                        "Invalid file type. Only JPEG, PNG, and GIF images are allowed."
+                    );
 
                 if (file.Length > 5 * 1024 * 1024) // 5 MB
                     return BadRequest("File size exceeds the limit (5MB).");
@@ -71,16 +64,14 @@ namespace ASTREE_PFE.Controllers
                     UploaderId = User.Identity.Name, // Assuming the user ID is in the claims
                     FileType = file.ContentType,
                     FileSize = file.Length,
-                    UploadedAt = DateTime.UtcNow
+                    UploadedAt = DateTime.UtcNow,
                 };
 
                 // Save file metadata to the database
                 var fileId = await _fileService.CreateFileAsync(fileModel);
-                
+
                 // Set the ID from the database
                 fileModel.Id = fileId;
-                
-  
 
                 return Ok(new { FileId = fileId, FileUrl = fileModel.FileUrl });
             }
@@ -91,57 +82,53 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        
         /// Uploads a file to Cloudinary and associates it with a post.
         [HttpPost("upload-file")]
-public async Task<IActionResult> UploadFile(IFormFile file)
-{
-    try
-    {
-        // Validate file
-        if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded.");
-
-        if (file.Length > 10 * 1024 * 1024) // 10 MB
-            return BadRequest("File size exceeds the limit (10MB).");
-
-        // Upload file to Cloudinary
-        var uploadResult = await _cloudinaryService.UploadFileAsync(file);
-
-        if (uploadResult == null)
-            return StatusCode(500, "Error uploading file.");
-
-        // Create File object
-        var fileModel = new FileModel
+        public async Task<IActionResult> UploadFile(IFormFile file)
         {
-            FileName = file.FileName,
-            FileUrl = uploadResult.SecureUrl.AbsoluteUri, // Convert URI to string
-            PublicId = uploadResult.PublicId,
-            UploaderId = User.Identity.Name, // Assuming the user ID is in the claims
-            FileType = file.ContentType,
-            FileSize = file.Length,
-            UploadedAt = DateTime.UtcNow
-        };
+            try
+            {
+                // Validate file
+                if (file == null || file.Length == 0)
+                    return BadRequest("No file uploaded.");
 
-        // Save file metadata to the database
-        var fileId = await _fileService.CreateFileAsync(fileModel);
-        
-        // Set the ID from the database
-        fileModel.Id = fileId;
-        
+                if (file.Length > 10 * 1024 * 1024) // 10 MB
+                    return BadRequest("File size exceeds the limit (10MB).");
 
+                // Upload file to Cloudinary
+                var uploadResult = await _cloudinaryService.UploadFileAsync(file);
 
-        // Return file ID and URL in the response
-        return Ok(new { FileId = fileId, FileUrl = fileModel.FileUrl });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error uploading file.");
-        return StatusCode(500, "An error occurred while uploading the file.");
-    }
-}
+                if (uploadResult == null)
+                    return StatusCode(500, "Error uploading file.");
 
-        
+                // Create File object
+                var fileModel = new FileModel
+                {
+                    FileName = file.FileName,
+                    FileUrl = uploadResult.SecureUrl.AbsoluteUri, // Convert URI to string
+                    PublicId = uploadResult.PublicId,
+                    UploaderId = User.Identity.Name, // Assuming the user ID is in the claims
+                    FileType = file.ContentType,
+                    FileSize = file.Length,
+                    UploadedAt = DateTime.UtcNow,
+                };
+
+                // Save file metadata to the database
+                var fileId = await _fileService.CreateFileAsync(fileModel);
+
+                // Set the ID from the database
+                fileModel.Id = fileId;
+
+                // Return file ID and URL in the response
+                return Ok(new { FileId = fileId, FileUrl = fileModel.FileUrl });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading file.");
+                return StatusCode(500, "An error occurred while uploading the file.");
+            }
+        }
+
         /// Deletes a file from Cloudinary and the database.
         [HttpDelete("delete-file/{fileId}")]
         public async Task<IActionResult> DeleteFile(string fileId)
@@ -165,8 +152,6 @@ public async Task<IActionResult> UploadFile(IFormFile file)
 
                 // Delete file metadata from the database
                 await _fileService.DeleteFileAsync(fileId);
-                
-
 
                 return Ok(new { message = "File deleted successfully." });
             }

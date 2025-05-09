@@ -1,7 +1,7 @@
+using System.Linq.Expressions;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using MongoDB.Driver;
-using System.Linq.Expressions;
 
 namespace ASTREE_PFE.Repositories
 {
@@ -26,7 +26,11 @@ namespace ASTREE_PFE.Repositories
             return await _messages.Find(m => m.Id == id).FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(string conversationId, int skip = 0, int limit = 50)
+        public async Task<IEnumerable<Message>> GetMessagesByConversationIdAsync(
+            string conversationId,
+            int skip = 0,
+            int limit = 50
+        )
         {
             return await _messages
                 .Find(m => m.ConversationId == conversationId)
@@ -36,7 +40,9 @@ namespace ASTREE_PFE.Repositories
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Message>> FindMessagesAsync(Expression<Func<Message, bool>> predicate)
+        public async Task<IEnumerable<Message>> FindMessagesAsync(
+            Expression<Func<Message, bool>> predicate
+        )
         {
             return await _messages.Find(predicate).ToListAsync();
         }
@@ -51,11 +57,15 @@ namespace ASTREE_PFE.Repositories
             await _messages.ReplaceOneAsync(m => m.Id == id, message);
         }
 
-        public async Task UpdateMessageReadStatusAsync(string id, bool isRead, DateTime? readAt = null)
+        public async Task UpdateMessageReadStatusAsync(
+            string id,
+            bool isRead,
+            DateTime? readAt = null
+        )
         {
             var filter = Builders<Message>.Filter.Eq(m => m.Id, id);
-            var update = Builders<Message>.Update
-                .Set(m => m.IsRead, isRead)
+            var update = Builders<Message>
+                .Update.Set(m => m.IsRead, isRead)
                 .Set(m => m.ReadAt, readAt ?? DateTime.UtcNow);
 
             await _messages.UpdateOneAsync(filter, update);
@@ -80,7 +90,9 @@ namespace ASTREE_PFE.Repositories
             var conversationIds = conversations.Select(c => c.Id).ToList();
 
             var count = await _messages
-                .Find(m => conversationIds.Contains(m.ConversationId) && m.SenderId != userId && !m.IsRead)
+                .Find(m =>
+                    conversationIds.Contains(m.ConversationId) && m.SenderId != userId && !m.IsRead
+                )
                 .CountDocumentsAsync();
             return (int)count;
         }
