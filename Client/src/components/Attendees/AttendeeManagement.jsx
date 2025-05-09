@@ -96,6 +96,30 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
     };
     fetchUserStatus();
   }, [event.id, user?.id, isOrganizer, event.isOpenEvent, event.attendeeStatuses]);
+  
+  // Function to refresh user status after changes
+  const refreshUserStatus = async () => {
+    if (!user?.id || isOrganizer || event.isOpenEvent) return;
+    
+    try {
+      const { data } = await eventsAPI.getUserAttendanceStatus(event.id, user.id);
+      setUserAttendanceStatus({
+        status: data.status,
+        isFinal: data.isFinal
+      });
+      
+      // Also refresh status counts
+      const response = await eventsAPI.getAttendanceStatusCounts(event.id);
+      setStatusCounts(response.data);
+      
+      // Notify parent component about the update
+      if (typeof onUpdate === 'function') {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Failed to refresh user status:', error);
+    }
+  };
 
   // Fetch status counts
   useEffect(() => {
@@ -242,16 +266,36 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
   const handleStatusChange = async (newStatus) => {
     try {
       setIsLoading(true);
+      // Update attendance status via API
       await eventsAPI.updateAttendanceStatus(event.id, user.id, newStatus);
+      
+      // Refresh user's attendance status
       const { data } = await eventsAPI.getUserAttendanceStatus(event.id, user.id);
       setUserAttendanceStatus({
         status: data.status,
         isFinal: data.isFinal
       });
+      
+      // Update status counts
+      try {
+        const response = await eventsAPI.getAttendanceStatusCounts(event.id);
+        setStatusCounts(response.data);
+      } catch (error) {
+        console.error('Failed to update status counts:', error);
+      }
+      
       toast.success('Statut de participation mis à jour');
-      onUpdate();
+      
+      // Notify parent component to refresh event data
+      if (typeof onUpdate === 'function') {
+        onUpdate();
+      }
+      
+      return true; // Return success for AttendeeItem component
     } catch (error) {
+      console.error('Échec de mettre à jour le statut de participation:', error);
       toast.error('Échec de mettre à jour le statut de participation');
+      throw error; // Propagate error to AttendeeItem for state reversion
     } finally {
       setIsLoading(false);
     }

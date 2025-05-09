@@ -15,6 +15,7 @@ import Calendar from './pages/Calendar';
 import ChatContainer from './components/Messages/ChatContainer';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
+import { ChatProvider } from './Context/ChatContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
@@ -29,6 +30,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <OnlineStatusProvider>
+            <ChatProvider>
             <div className="app">
               <Toaster />
           <Routes>
@@ -55,6 +57,7 @@ function App() {
             <Route path="*" element={<Navigate to="/home" />} />
           </Routes>
             </div>
+            </ChatProvider>
           </OnlineStatusProvider>
         </AuthProvider>
       </QueryClientProvider>

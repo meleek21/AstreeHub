@@ -4,6 +4,7 @@ import Sidebar from '../components/Sidebar';
 import React from 'react';
 import { useAuth } from '../Context/AuthContext';
 import '../assets/Css/Layout.css';
+import ChatSidebar from '../components/Messages/ChatSidebar';
 
 function Layout() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -21,6 +22,7 @@ function Layout() {
     <div className={`layout-container${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <Sidebar onToggleCollapse={setSidebarCollapsed} />
       <Navbar sidebarCollapsed={sidebarCollapsed} />
+      <ChatSidebar />     
       <div className="main-content">
         <Outlet />
       </div>

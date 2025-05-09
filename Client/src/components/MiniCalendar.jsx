@@ -73,7 +73,6 @@ const MiniCalendar = () => {
 
     return (
         <div className="mini-calendar-container">
-            <h3>{date.toLocaleString('fr-FR', { month: 'long' })} {date.getFullYear()}</h3>
             <Calendar
                 onChange={setDate}
                 value={date}

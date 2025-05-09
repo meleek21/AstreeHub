@@ -7,16 +7,13 @@ import '../../assets/Css/Chat.css';
 import {useAuth} from '../../Context/AuthContext';
 import connectionManager from '../../services/connectionManager';
 import ConfirmationModal from '../ConfirmationModal';
+import { useChat } from '../../Context/ChatContext';
 
 const ChatContainer = () => {
+  const { conversations, setConversations, selectedConversation, setSelectedConversation, messages, setMessages, loading, setLoading, unreadCount, setUnreadCount, selectedEmployee, setSelectedEmployee } = useChat();
   const { user: currentUser } = useAuth();
-  const [conversations, setConversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [confirmModal, setConfirmModal] = useState({ open: false, onConfirm: null, title: '', message: '' });
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  
 
   const fetchConversations = useCallback(async () => {
     if (!currentUser || !currentUser.id) return;
@@ -398,39 +395,16 @@ const handleSendMessage = async (messageText, attachment) => {
     });
   };
 
-  // Handle selecting an employee from the sidebar
+  // Use the handleSelectEmployee from ChatContext
   const handleSelectEmployee = async (employee) => {
-    setSelectedEmployee(employee);
-    
-    // Check if a conversation already exists with this employee
-    const existingConversation = conversations.find(conv => {
-      if (conv.isGroup) return false;
-      return conv.participants.some(p => p.id === employee.id);
-    });
-    
-    if (existingConversation) {
-      // If conversation exists, select it
-      handleSelectConversation(existingConversation);
-    } else {
-      // If no conversation exists, create a temporary conversation object
-      // but don't create it in the backend until a message is sent
-      const tempConversation = {
-        id: 'temp_' + employee.id,
-        isGroup: false,
-        participants: [employee, currentUser],
-        lastMessage: '',
-        lastMessageTime: new Date(),
-        isTemporary: true // Flag to indicate this is not yet saved
-      };
-      
-      setSelectedConversation(tempConversation);
-      setMessages([]);
-    }
+    // Get the context's handleSelectEmployee function without destructuring to avoid naming conflicts
+    const chatContext = useChat();
+    // Call the context function with the employee and current user
+    await chatContext.handleSelectEmployee(employee, currentUser);
   };
   
   return (
     <div className="chat-container">
-      <ChatSidebar onSelectEmployee={handleSelectEmployee} />
       <ConversationList
         conversations={conversations}
         selectedConversationId={selectedConversation?.id}

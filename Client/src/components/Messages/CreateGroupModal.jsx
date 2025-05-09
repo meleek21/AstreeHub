@@ -125,33 +125,26 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
           </div>
           
           <form onSubmit={handleSubmit} className="post-editor-textarea-container">
-            <div className={`form-group floating-label ${groupName || isFocused.groupName ? 'has-value' : ''}`}>
+            <div className="form-group">
               <input
                 ref={groupNameRef}
                 type="text"
                 value={groupName}
                 onChange={e => setGroupName(e.target.value)}
-                onFocus={() => setIsFocused(prev => ({...prev, groupName: true}))}
-                onBlur={() => setIsFocused(prev => ({...prev, groupName: false}))}
                 required
-                className="floating-input"
+                className="form-control"
+                placeholder='Nom du groupe'
               />
-              <label className="floating-label-text">Nom du groupe</label>
-              <span className="floating-label-highlight"></span>
             </div>
             
-            <div className={`form-group floating-label ${searchQuery || isFocused.search ? 'has-value' : ''}`}>
+            <div className="form-group">
               <input
                 type="text"
-                placeholder=" "
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsFocused(prev => ({...prev, search: true}))}
-                onBlur={() => setIsFocused(prev => ({...prev, search: false}))}
-                className="floating-input search-input"
+                className="form-control search-input"
+                placeholder='Rechercher des participants'
               />
-              <label className="floating-label-text">Rechercher des participants</label>
-              <span className="floating-label-highlight"></span>
             </div>
             
             <div className="participants-list">

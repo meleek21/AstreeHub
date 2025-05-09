@@ -49,7 +49,9 @@ const InviteSelectSection = ({
             </div>
           ))}
         </div>
-        <button 
+        
+      </div>
+      <button 
           className="btn btn-success mt-3" 
           onClick={handleInviteSelected}
           disabled={isSending || selectedEmployees.length === 0}
@@ -66,7 +68,6 @@ const InviteSelectSection = ({
             </>
           )}
         </button>
-      </div>
     </div>
   );
 };

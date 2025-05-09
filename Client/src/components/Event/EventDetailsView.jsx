@@ -185,11 +185,19 @@ const EventDetailsView = ({
             isFinal={getAttendeeIsFinal(user.id)}
             handleStatusChange={async (newStatus) => {
               try {
+                // Update attendance status via API
                 await eventsAPI.updateAttendanceStatus(event.id, user.id, newStatus);
-                if (typeof onUpdate === 'function') onUpdate();
-                toast.success(`Invitation ${newStatus.toLowerCase() === 'Accepté' ? 'Accepté' : 'Refusé'}`);
+                
+                // Call the parent update function to refresh event data
+                if (typeof onUpdate === 'function') {
+                  onUpdate();
+                }
+                
+                toast.success(`Invitation ${newStatus === 'Accepté' ? 'acceptée' : 'refusée'}`);
               } catch (error) {
-                toast.error('Failed to update invitation status');
+                console.error('Error updating invitation status:', error);
+                toast.error('Échec de mise à jour du statut d\'invitation');
+                throw error; // Propagate error to AttendeeItem for state reversion
               }
             }}
             handleRemoveAttendee={() => {}}
