@@ -1,13 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq; // Added for LINQ operations
-using System.Threading.Tasks;
-using ASTREE_PFE.Hubs;
+
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
-using Microsoft.AspNetCore.SignalR;
-using MongoDB.Driver;
+
 
 namespace ASTREE_PFE.Services
 {

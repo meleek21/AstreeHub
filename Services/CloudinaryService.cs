@@ -1,11 +1,8 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+
 using ASTREE_PFE.Services.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
+
 
 namespace ASTREE_PFE.Services
 {

@@ -1,15 +1,9 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using ASTREE_PFE.DTOs;
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 
 namespace ASTREE_PFE.Controllers

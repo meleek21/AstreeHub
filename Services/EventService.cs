@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 using ASTREE_PFE.Data;
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
@@ -9,7 +6,7 @@ using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
 using AutoMapper;
-using Microsoft.Extensions.Logging;
+
 
 namespace ASTREE_PFE.Services
 {

@@ -6,10 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ASTREE_PFE.Controllers
 {
-    /// <summary>
-    /// Controller for managing events, including creation, updates, attendee management, and queries.
-    /// All endpoints are prefixed with 'api/events'.
-    /// </summary>
+
     [ApiController]
     [Route("api/[controller]")]
     public class EventController : ControllerBase
@@ -18,13 +15,7 @@ namespace ASTREE_PFE.Controllers
         private readonly IEmployeeService _employeeService;
         private readonly IGoogleCalendarService _googleCalendarService;
         private readonly ILogger<EventController> _logger;
-
-        /// <summary>
-        /// Initializes a new instance of the EventController class.
-        /// </summary>
-        /// <param name="eventService">Service for managing events</param>
-        /// <param name="employeeService">Service for managing employees</param>
-        /// <param name="googleCalendarService">Service for Google Calendar integration</param>
+        
         public EventController(
             IEventService eventService,
             IEmployeeService employeeService,
@@ -37,12 +28,7 @@ namespace ASTREE_PFE.Controllers
             _googleCalendarService = googleCalendarService;
             _logger = logger;
         }
-
-        /// <summary>
-        /// Creates a new event.
-        /// </summary>
-        /// <param name="eventDto">Event data including title, description, date, etc.</param>
-        /// <returns>Newly created event with 201 status on success.</returns>
+        
         [HttpPost("create")]
         public async Task<ActionResult<EventResponseDTO>> CreateEvent(
             [FromBody] EventCreateDTO eventDto
@@ -59,11 +45,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves a specific event by its unique ID.
-        /// </summary>
-        /// <param name="id">Event ID (MongoDB ObjectId format)</param>
-        /// <returns>Event details with 200 status, or 404 if not found.</returns>
+
         [HttpGet("get/{id}")]
         public async Task<ActionResult<EventResponseDTO>> GetEventById(string id)
         {
@@ -82,10 +64,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all events in the system.
-        /// </summary>
-        /// <returns>List of all events with 200 status.</returns>
+
         [HttpGet("all")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetAllEvents()
         {
@@ -100,12 +79,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates an existing event.
-        /// </summary>
-        /// <param name="id">Event ID to update</param>
-        /// <param name="eventDto">Updated event data (partial updates supported)</param>
-        /// <returns>Updated event with 200 status, or 404 if event not found.</returns>
+
         [HttpPut("update/{id}")]
         public async Task<ActionResult<EventResponseDTO>> UpdateEvent(
             string id,
@@ -137,11 +111,6 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Deletes an event permanently.
-        /// </summary>
-        /// <param name="id">Event ID to delete</param>
-        /// <returns>204 No Content on success, 404 if event not found.</returns>
         [HttpDelete("delete/{id}")]
         public async Task<ActionResult> DeleteEvent(string id)
         {
@@ -168,12 +137,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Adds an attendee to a restricted event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="attendeeDto">Contains employeeId of attendee</param>
-        /// <returns>200 OK on success, 400 if event is open to all.</returns>
+
         [HttpPost("add-attendee/{eventId}")]
         public async Task<ActionResult> AddAttendee(
             string eventId,
@@ -208,11 +172,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Gets the attendance status counts for an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <returns>Dictionary of attendance status counts with 200 status, or 404 if event not found.</returns>
+
         [HttpGet("{eventId}/attendance-counts")]
         public async Task<
             ActionResult<Dictionary<AttendanceStatus, int>>
@@ -271,12 +231,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Gets the attendance status for a specific attendee in an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="employeeId">Employee ID</param>
-        /// <returns>Attendance status details with 200 status, or 404 if not found.</returns>
+
         [HttpGet("{eventId}/attendee/{employeeId}/status")]
         public async Task<ActionResult<AttendanceStatusResponseDTO>> GetAttendanceStatus(
             string eventId,
@@ -317,12 +272,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Removes an attendee from an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="employeeId">Employee ID to remove</param>
-        /// <returns>200 OK on success, 404 if event/attendee not found.</returns>
+
         [HttpDelete("remove-attendee/{eventId}/{employeeId}")]
         public async Task<ActionResult> RemoveAttendee(string eventId, string employeeId)
         {
@@ -343,13 +293,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Updates an attendee's status for an event (Accept or Decline).
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="employeeId">Employee ID of the attendee</param>
-        /// <param name="status">New attendance status (Accepted or Declined)</param>
-        /// <returns>200 OK on success, 404 if event or attendee not found.</returns>
+
         [HttpPut("{eventId}/attendee/{employeeId}/status")]
         public async Task<ActionResult> UpdateAttendanceStatus(
             string eventId,
@@ -378,10 +322,6 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all upcoming events (events with future dates).
-        /// </summary>
-        /// <returns>List of upcoming events with 200 status.</returns>
         [HttpGet("upcoming")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetUpcomingEvents()
         {
@@ -396,11 +336,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all events organized by a specific employee.
-        /// </summary>
-        /// <param name="organizerId">Employee ID of the organizer</param>
-        /// <returns>List of events with 200 status.</returns>
+
         [HttpGet("by-organizer/{organizerId}")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByOrganizer(
             string organizerId
@@ -417,11 +353,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves events filtered by category.
-        /// </summary>
-        /// <param name="category">Event category (Meeting, Training, etc.)</param>
-        /// <returns>List of events with 200 status.</returns>
+
         [HttpGet("by-category/{category}")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByCategory(
             EventCategory category
@@ -438,10 +370,6 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all open events (events that don't require attendee registration).
-        /// </summary>
-        /// <returns>List of open events with 200 status.</returns>
         [HttpGet("open-events")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetOpenEvents()
         {
@@ -455,13 +383,7 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-        /// <summary>
-        /// Updates an event's status (Upcoming, Ongoing, Completed).
-        /// </summary>
-        /// <param name="eventId">Event ID to update</param>
-        /// <param name="status">New status</param>
-        /// <returns>200 OK on success, 404 if event not found.</returns>
+        
         [HttpPut("update-status/{eventId}")]
         public async Task<ActionResult> UpdateEventStatus(
             string eventId,
@@ -485,11 +407,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Retrieves all events a specific employee is attending.
-        /// </summary>
-        /// <param name="employeeId">Employee ID</param>
-        /// <returns>List of events with 200 status.</returns>
+
         [HttpGet("by-attendee/{employeeId}")]
         public async Task<ActionResult<IEnumerable<EventResponseDTO>>> GetEventsByAttendee(
             string employeeId
@@ -506,10 +424,6 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Generates birthday events for all employees in the system.
-        /// </summary>
-        /// <returns>200 OK on success, 400 if generation fails.</returns>
         [HttpPost("generate-birthdays")]
         public async Task<ActionResult> GenerateBirthdayEvents()
         {
@@ -537,12 +451,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Invites all employees from a department to an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="departmentId">Department ID</param>
-        /// <returns>200 OK on success, 404 if event/department not found.</returns>
+
         [HttpPost("invite-department/{eventId}/{departmentId}")]
         public async Task<ActionResult> InviteDepartment(string eventId, string departmentId)
         {
@@ -574,12 +483,7 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Invites multiple employees to an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <param name="employeeIds">List of employee IDs to invite</param>
-        /// <returns>200 OK on success, 404 if event not found, 403 if user is not the organizer.</returns>
+
         [HttpPost("{eventId}/invite-multiple")]
         public async Task<ActionResult> InviteMultiple(
             string eventId,
@@ -621,11 +525,6 @@ namespace ASTREE_PFE.Controllers
             }
         }
 
-        /// <summary>
-        /// Invites all employees in the system to an event.
-        /// </summary>
-        /// <param name="eventId">Event ID</param>
-        /// <returns>200 OK on success, 404 if event not found.</returns>
         [HttpPost("{eventId}/invite-all")]
         public async Task<ActionResult> InviteAll(string eventId)
         {

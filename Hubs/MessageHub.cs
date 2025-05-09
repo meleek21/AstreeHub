@@ -3,8 +3,7 @@ using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging; // Add this using statement
+
 
 namespace ASTREE_PFE.Hubs
 {
