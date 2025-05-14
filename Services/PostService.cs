@@ -237,5 +237,9 @@ namespace ASTREE_PFE.Services
                 await _postRepository.UpdateAsync(postId, post);
             }
         }
+        public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetLibraryPostsAsync(string lastItemId = null, int limit = 10)
+{
+    return await _postRepository.GetLibraryPostsAsync(lastItemId, limit);
+}
     }
 }

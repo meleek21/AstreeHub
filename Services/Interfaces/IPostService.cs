@@ -23,5 +23,6 @@ namespace ASTREE_PFE.Services.Interfaces
         Task DeletePostAsync(string id);
         Task AddCommentAsync(string postId, Comment comment);
         Task UpdateReactionsAsync(string postId);
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetLibraryPostsAsync(string lastItemId = null, int limit = 10);
     }
 }

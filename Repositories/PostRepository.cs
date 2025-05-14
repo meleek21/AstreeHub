@@ -23,7 +23,10 @@ namespace ASTREE_PFE.Repositories
         )> GetAllAsync(string lastItemId = null, int limit = 10)
         {
             var filterBuilder = Builders<Post>.Filter;
-            var filter = filterBuilder.Eq(p => p.ChannelId, null);
+            var filter = filterBuilder.And(
+                filterBuilder.Eq(p => p.ChannelId, null),
+                filterBuilder.Eq(p => p.IsLibraryPost, false)
+            );
 
             if (!string.IsNullOrEmpty(lastItemId))
             {
@@ -81,6 +84,34 @@ namespace ASTREE_PFE.Repositories
 
             return (resultPosts, nextLastItemId, hasMore);
         }
+
+public async Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetLibraryPostsAsync(string lastItemId = null, int limit = 10)
+{
+    var filterBuilder = Builders<Post>.Filter;
+    var filter = filterBuilder.Eq(p => p.IsLibraryPost, true);
+
+    if (!string.IsNullOrEmpty(lastItemId))
+    {
+        var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
+        if (lastPost != null)
+        {
+            filter = filterBuilder.And(
+                filter,
+                filterBuilder.Lt(p => p.Timestamp, lastPost.Timestamp)
+            );
+        }
+    }
+
+    var query = _posts.Find(filter);
+    var sortedQuery = query.SortByDescending(p => p.Timestamp);
+    var posts = await sortedQuery.Limit(limit + 1).ToListAsync();
+
+    bool hasMore = posts.Count > limit;
+    var resultPosts = hasMore ? posts.Take(limit) : posts;
+    string nextLastItemId = hasMore ? posts[limit - 1].Id : null;
+
+    return (resultPosts, nextLastItemId, hasMore);
+}
 
         public async Task<Post> GetByIdAsync(string id)
         {

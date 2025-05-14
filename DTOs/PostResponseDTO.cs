@@ -31,5 +31,7 @@ namespace ASTREE_PFE.DTOs
         public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
 
         public string ChannelId { get; set; }
+
+        public bool IsLibraryPost { get; set; }
     }
 }

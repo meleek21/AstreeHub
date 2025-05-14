@@ -1,0 +1,203 @@
+/* Base Styles */
+.employee-table-container {
+  font-family: 'Nunito', sans-serif;
+  background-color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  margin: 1rem;
+  overflow: hidden;
+}
+
+.employee-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.employee-header h2 {
+  color: var(--primary);
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0;
+  font-family: 'Raleway', sans-serif;
+}
+
+.employee-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  will-change: transform;
+}
+
+.btn-edit, .btn-delete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+/* Search & Filter */
+.search-filter {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  will-change: transform;
+}
+
+
+.select-department {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  background-color: white;
+  will-change: box-shadow;
+}
+.kGGmIE{
+  color: var(--secondary);
+  font-size: 15px;
+}
+.fwLRfc{
+  display: none;
+}
+/* DataTable Overrides */
+.rdt_Table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rdt_TableHead {
+  font-weight: 700;
+  color: var(--primary);
+  background-color: var(--primary-lighter);
+}
+
+.rdt_TableHeadRow {
+  border-bottom: 2px solid var(--border);
+}
+
+.rdt_TableCell {
+  padding: 1rem;
+}
+
+.rdt_TableRow {
+  will-change: transform;
+}
+
+/* Profile Picture */
+.table-profile-picture {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  will-change: transform;
+}
+
+/* Empty States */
+.empty-message, .loading-message, .error-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.error-message {
+  color: var(--error);
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(23, 59, 97, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  margin: 0 auto;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .employee-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .employee-actions {
+    width: 100%;
+  }
+  
+  .search-filter {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .search-input, .select-department {
+    width: 100%;
+  }
+}
+
+/* Tags */
+.department-tag {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  will-change: background-color, color;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 4px;
+  background-color: var(--accent-light);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* Links */
+.email-link, .phone-link {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.email-link:hover, .phone-link:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}

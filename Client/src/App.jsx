@@ -12,7 +12,9 @@ import ErrorBoundary from './components/ErrorBoundary';
 import EditableProfile from './components/EditableProfile';
 import ProfileViewer from './components/ProfileViewer';
 import Calendar from './pages/Calendar';
+import Bibliotheque from './pages/Bibliotheque';
 import ChatContainer from './components/Messages/ChatContainer';
+import EmployeeTable from './components/EmployeeTable';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { ChatProvider } from './Context/ChatContext';
@@ -20,6 +22,8 @@ import { NotificationProvider } from './Context/NotificationContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -52,6 +56,16 @@ function App() {
               <Route path='/profile/view/:userId' element={<ErrorBoundary> <ProfileViewer/> </ErrorBoundary>}/>
               <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
               <Route path="/messages" element={<ErrorBoundary><ChatContainer /></ErrorBoundary>} />
+              <Route path="/bibliotheque" element={<ErrorBoundary><Bibliotheque /></ErrorBoundary>} />
+              <Route path="/equipes" element={<ErrorBoundary><EmployeeTable /></ErrorBoundary>} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute requiredRole="SUPERADMIN">
+                    <SuperAdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
               
             </Route>
 

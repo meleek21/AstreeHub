@@ -117,7 +117,7 @@ namespace ASTREE_PFE.Controllers
             return employeeDtos;
         }
 
-        [HttpPost]
+        [HttpPost("create")]
         [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> CreateEmployee([FromBody] EmployeeCreateDto employeeDto)
         {
@@ -126,20 +126,22 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ModelState);
             }
 
+            // Generate default password: Capitalized first name + '@' + departmentId
+            var capitalizedFirstName = employeeDto.FirstName.Length > 0 ? char.ToUpper(employeeDto.FirstName[0]) + employeeDto.FirstName.Substring(1) : string.Empty;
+            var defaultPassword = $"{capitalizedFirstName}@{employeeDto.DepartmentId}";
+
             var employee = new Employee
             {
-                UserName = employeeDto.Email,
-                Email = employeeDto.Email,
+                UserName = employeeDto.Email ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
+                Email = employeeDto.Email ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
                 FirstName = employeeDto.FirstName,
                 LastName = employeeDto.LastName,
-                PhoneNumber = employeeDto.PhoneNumber,
-                DateOfBirth = employeeDto.DateOfBirth,
                 DepartmentId = employeeDto.DepartmentId,
                 Role = employeeDto.Role,
                 Status = UserStatus.Active,
             };
 
-            var result = await _employeeService.CreateEmployeeAsync(employee, employeeDto.Password);
+            var result = await _employeeService.CreateEmployeeAsync(employee, defaultPassword);
             if (!result)
             {
                 return BadRequest("Failed to create employee");
@@ -149,7 +151,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> UpdateEmployee(
             string id,
             [FromForm] EmployeeUpdateDto employeeDto
@@ -241,7 +243,7 @@ namespace ASTREE_PFE.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete("delete/{id}")]
         [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult> DeleteEmployee(string id)
         {
@@ -289,7 +291,7 @@ namespace ASTREE_PFE.Controllers
             return NoContent();
         }
 
-        [HttpPatch("{id}/department")]
+        [HttpPatch("assign/{id}/department")]
         [Authorize]
         public async Task<ActionResult> AssignEmployeeToDepartment(
             string id,

@@ -54,5 +54,7 @@ namespace ASTREE_PFE.Repositories.Interfaces
 
         // Remove file IDs from a post
         Task RemoveFileIdsAsync(string postId, List<string> fileIds);
+
+        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetLibraryPostsAsync(string lastItemId = null, int limit = 10);
     }
 }
