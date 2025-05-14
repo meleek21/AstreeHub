@@ -709,5 +709,212 @@ namespace ASTREE_PFE.Controllers
             await _postService.DeletePostAsync(postId);
             return NoContent();
         }
+        
+        // GET: api/Post/library
+        [HttpGet("library")]
+        public async Task<ActionResult<PaginatedPostsDTO>> GetLibraryPosts(
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
+        {
+            var (posts, nextLastItemId, hasMore) = await _postService.GetLibraryPostsAsync(lastItemId, limit);
+            var postDtos = new List<PostResponseDTO>();
+
+            // Collect all author IDs and file IDs for batch loading
+            var authorIds = posts.Select(p => p.AuthorId).Distinct().ToList();
+            var fileIds = posts.SelectMany(p => p.FileIds ?? new List<string>()).Distinct().ToList();
+
+            // Batch load all user info and files
+            var filesDictionary = new Dictionary<string, Models.File>();
+            var userInfoDictionary = new Dictionary<string, UserInfoDTO>();
+
+            if (authorIds.Any())
+            {
+                var userInfos = await _employeeService.GetUserInfoBatchAsync(authorIds.ToList());
+                userInfoDictionary = userInfos.GroupBy(u => u.Id).ToDictionary(g => g.Key, g => g.First());
+            }
+
+            if (fileIds.Any())
+            {
+                var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                foreach (var file in files)
+                {
+                    filesDictionary[file.Id] = file;
+                }
+            }
+
+            foreach (var post in posts)
+            {
+                userInfoDictionary.TryGetValue(post.AuthorId, out var userInfo);
+
+                var postFiles = post.FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
+                    .Select(fileId => filesDictionary[fileId])
+                    .ToList();
+
+                var postDto = new PostResponseDTO
+                {
+                    Id = post.Id,
+                    Content = post.Content,
+                    AuthorId = post.AuthorId,
+                    AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                    AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                    CreatedAt = post.Timestamp,
+                    UpdatedAt = post.UpdatedAt,
+                    Files = postFiles.Select(f => new FileResponseDTO
+                    {
+                        Id = f.Id,
+                        FileName = f.FileName,
+                        FileUrl = f.FileUrl,
+                        FileType = f.FileType,
+                        FileSize = f.FileSize,
+                        UploadedAt = f.UploadedAt,
+                    }).ToList(),
+                    Comments = post.Comments?.Select(c =>
+                    {
+                        userInfoDictionary.TryGetValue(c.AuthorId, out var commentUserInfo);
+                        return new CommentResponseDTO
+                        {
+                            Id = c.Id,
+                            Content = c.Content,
+                            AuthorId = c.AuthorId,
+                            AuthorName = $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
+                            AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
+                            CreatedAt = c.Timestamp,
+                            UpdatedAt = c.UpdatedAt,
+                        };
+                    }).ToList(),
+                    ReactionCounts = post.ReactionCounts,
+                    ChannelId = post.ChannelId,
+                    IsLibraryPost = post.IsLibraryPost
+                };
+                postDtos.Add(postDto);
+            }
+
+            var paginatedResponse = new PaginatedPostsDTO
+            {
+                Posts = postDtos,
+                NextLastItemId = nextLastItemId,
+                HasMore = hasMore,
+            };
+
+            return Ok(paginatedResponse);
+        }
+
+        // POST: api/Post/library
+        [HttpPost("library/create")]
+        public async Task<ActionResult<PostResponseDTO>> AddLibraryPost([FromBody] PostRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var post = new Post
+            {
+                Content = request.Content,
+                AuthorId = request.AuthorId,
+                IsPublic = request.IsPublic,
+                ChannelId = request.ChannelId,
+                FileIds = request.FileIds ?? new List<string>(),
+                IsLibraryPost = request.IsLibraryPost ?? true,
+                Timestamp = DateTime.UtcNow,
+                ReactionCounts = new Dictionary<ReactionType, int>(),
+                Comments = new List<Comment>()
+            };
+
+            var createdPost = await _postService.CreatePostAsync(post);
+
+            // Prepare DTO for response
+            var userInfo = await _employeeService.GetUserInfoAsync(createdPost.AuthorId);
+            var files = await _fileService.GetFilesByIdsAsync(createdPost.FileIds);
+
+            var postDto = new PostResponseDTO
+            {
+                Id = createdPost.Id,
+                Content = createdPost.Content,
+                AuthorId = createdPost.AuthorId,
+                AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                CreatedAt = createdPost.Timestamp,
+                UpdatedAt = createdPost.UpdatedAt,
+                Files = files.Select(f => new FileResponseDTO
+                {
+                    Id = f.Id,
+                    FileName = f.FileName,
+                    FileUrl = f.FileUrl,
+                    FileType = f.FileType,
+                    FileSize = f.FileSize,
+                    UploadedAt = f.UploadedAt,
+                }).ToList(),
+                Comments = new List<CommentResponseDTO>(),
+                ReactionCounts = createdPost.ReactionCounts,
+                ChannelId = createdPost.ChannelId,
+                IsLibraryPost = createdPost.IsLibraryPost
+            };
+
+            return CreatedAtAction(nameof(GetLibraryPosts), new { id = postDto.Id }, postDto);
+        }
+
+        // PUT: api/Post/library/{id}
+        [HttpPut("library/update/{id}")]
+        public async Task<ActionResult<PostResponseDTO>> UpdateLibraryPost(string id, [FromBody] PostRequestDTO request)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingPost = await _postService.GetPostByIdAsync(id);
+            if (existingPost == null || !existingPost.IsLibraryPost)
+                return NotFound();
+
+            existingPost.Content = request.Content;
+            existingPost.IsPublic = request.IsPublic;
+            existingPost.ChannelId = request.ChannelId;
+            existingPost.FileIds = request.FileIds ?? new List<string>();
+            existingPost.UpdatedAt = DateTime.UtcNow;
+            existingPost.IsLibraryPost = request.IsLibraryPost ?? true;
+
+            await _postService.UpdatePostAsync(id, existingPost);
+
+            // Prepare DTO for response
+            var userInfo = await _employeeService.GetUserInfoAsync(existingPost.AuthorId);
+            var files = await _fileService.GetFilesByIdsAsync(existingPost.FileIds);
+
+            var postDto = new PostResponseDTO
+            {
+                Id = existingPost.Id,
+                Content = existingPost.Content,
+                AuthorId = existingPost.AuthorId,
+                AuthorName = $"{userInfo?.FirstName} {userInfo?.LastName}",
+                AuthorProfilePicture = userInfo?.ProfilePictureUrl,
+                CreatedAt = existingPost.Timestamp,
+                UpdatedAt = existingPost.UpdatedAt,
+                Files = files.Select(f => new FileResponseDTO
+                {
+                    Id = f.Id,
+                    FileName = f.FileName,
+                    FileUrl = f.FileUrl,
+                    FileType = f.FileType,
+                    FileSize = f.FileSize,
+                    UploadedAt = f.UploadedAt,
+                }).ToList(),
+                Comments = existingPost.Comments?.Select(c =>
+                {
+                    var commentUserInfo = userInfo; // Optionally fetch comment author info
+                    return new CommentResponseDTO
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        AuthorId = c.AuthorId,
+                        AuthorName = $"{commentUserInfo?.FirstName} {commentUserInfo?.LastName}",
+                        AuthorProfilePicture = commentUserInfo?.ProfilePictureUrl,
+                        CreatedAt = c.Timestamp,
+                        UpdatedAt = c.UpdatedAt,
+                    };
+                }).ToList(),
+                ReactionCounts = existingPost.ReactionCounts,
+                ChannelId = existingPost.ChannelId,
+                IsLibraryPost = existingPost.IsLibraryPost
+            };
+
+            return Ok(postDto);
+        }
     }
 }

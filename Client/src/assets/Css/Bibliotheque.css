@@ -1,0 +1,247 @@
+.bibliotheque-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  background: #f8f9fb;
+  min-height: 100vh;
+}
+
+.bibliotheque-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.bibliotheque-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: 1px solid #ececec;
+}
+.bibliotheque-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  transform: translateY(-2px) scale(1.01);
+}
+
+.bibliotheque-description {
+  font-size: 1.05rem;
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.bibliotheque-files {
+  margin-top: 0.5rem;
+}
+
+.bibliotheque-files-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.bibliotheque-file-item {
+  flex: 1 1 140px;
+  
+}
+
+.bibliotheque-image-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f6f8fa;
+  border-radius: 20px;
+  padding: 1rem ;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.bibliotheque-image-card:hover {
+  box-shadow: 0 4px 18px rgba(0,0,0,0.11);
+  transform: scale(1.03);
+}
+.bibliotheque-image {
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 20px;
+  margin-bottom: 0.7rem;
+  border: 3px solid #e2e8f0;
+  background: #fff;
+}
+.bibliotheque-image-name {
+  font-size: 0.98rem;
+  color: #444;
+  text-align: center;
+  margin-top: 0.2rem;
+  word-break: break-all;
+}
+
+.bibliotheque-file-card {
+  align-items: center;
+  gap: 0.7rem;
+  background: #f6f8fa;
+  border-radius: 14px;
+  padding: 0.8rem 1rem;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  min-width: 0;
+}
+.bibliotheque-file-details {
+  flex: 1;
+  min-width: 0;
+}
+.bibliotheque-file-link {
+  color: #2b6cb0;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.98rem;
+  word-break: break-all;
+  transition: color 0.2s;
+}
+.bibliotheque-file-link:hover {
+  color: #e67e22;
+  text-decoration: underline;
+}
+
+.file-icon {
+  width: 120px;
+  height: 130px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  margin-right: 0.5rem;
+  position: relative;
+}
+.file-icon::before {
+  content: "";
+  display: block;
+  width: 120px;
+  height: 130px;
+  border-radius: 8px;
+  background: inherit;
+}
+.file-icon.pdf {
+  background: linear-gradient(135deg, #f85032 0%, #e73827 100%);
+}
+.file-icon.word {
+  background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+}
+.file-icon.excel {
+  background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+}
+.file-icon.generic {
+  background: linear-gradient(135deg, #b2bec3 0%, #636e72 100%);
+}
+.file-icon::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 12px;
+  width: 22px;
+  height: 18px;
+  background: #fff;
+  border-radius: 3px;
+  opacity: 0.8;
+}
+.file-icon.pdf::after {
+  content: "PDF";
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  left: 10px;
+  top: 18px;
+  width: auto;
+  height: auto;
+  background: none;
+  opacity: 1;
+}
+.file-icon.word::after {
+  content: "DOC";
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  left: 10px;
+  top: 18px;
+  width: auto;
+  height: auto;
+  background: none;
+  opacity: 1;
+}
+.file-icon.excel::after {
+  content: "XLS";
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  left: 10px;
+  top: 18px;
+  width: auto;
+  height: auto;
+  background: none;
+  opacity: 1;
+}
+.file-icon.generic::after {
+  content: "FILE";
+  color: white;
+  font-weight: bold;
+  font-size: 0.85rem;
+  left: 8px;
+  top: 18px;
+  width: auto;
+  height: auto;
+  background: none;
+  opacity: 1;
+}
+
+.bibliotheque-infinite-scroll-trigger {
+  height: 1px;
+}
+
+.bibliotheque-error {
+  color: #e74c3c;
+  font-weight: 600;
+  margin: 1rem 0;
+}
+
+.bibliotheque-image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+.bibliotheque-image-expanded {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+
+@media (max-width: 700px) {
+  .bibliotheque-list {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+  .bibliotheque-card {
+    padding: 1rem 0.5rem;
+  }
+  .bibliotheque-files-list {
+    gap: 0.7rem;
+  }
+}

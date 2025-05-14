@@ -43,6 +43,8 @@ namespace ASTREE_PFE.Services
 
         public async Task<bool> CreateEmployeeAsync(Employee employee, string password)
         {
+            // Only require firstName, lastName, departmentId, and role for creation
+            // Email and username are already set in controller
             return await _employeeRepository.CreateAsync(employee, password);
         }
 

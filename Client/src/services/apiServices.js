@@ -95,6 +95,7 @@ export const userAPI = {
     }
   }),
   getAllEmployees: () => api.get('/employee'),
+  deleteEmployee: (id) => api.delete(`/employee/delete/${id}`)
 };
 
 // User online status API service - Updated with correct casing
@@ -233,6 +234,28 @@ export const eventsAPI = {
 
 export const departmentAPI = {
   getEmployeesInDepartment: (departmentId) => api.get(`/Department/${departmentId}/employees`)
+};
+
+// Admin API service
+export const adminAPI = {
+  // Assign an employee to a department
+  assignEmployeeToDepartment: (employeeId, departmentId) => api.patch(`/employee/assign/${employeeId}/department`, { departmentId }),
+  // Delete an employee
+  deleteEmployee: (employeeId) => api.delete(`/employee/delete/${employeeId}`),
+  // Update an employee (multipart/form-data)
+  updateEmployee: (employeeId, formData) => api.put(`/employee/${employeeId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  // Create a new employee
+  createEmployee: (employeeData) => api.post('/employee/create', employeeData),
+};
+
+export const libraryAPI = {
+  GetLibraryPosts:(lastItemId, limit = 10) => api.get (`/post/library?lastItemId=${lastItemId || ''}&limit=${limit}`),
+  AddLibraryPost: (data) => api.post('/post/library/create', data),
+  UpdateLibraryPost: (id, data) => api.put(`/post/library/update/${id}`, data)
 };
 
 // Notifications API service

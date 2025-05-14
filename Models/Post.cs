@@ -37,5 +37,7 @@ namespace ASTREE_PFE.Models
 
         [BsonElement("Files")]
         public List<File> Files { get; set; } = new List<File>();
+
+        public bool IsLibraryPost { get; set; }
     }
 }
