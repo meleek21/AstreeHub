@@ -1,49 +1,39 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const SearchAttendees = ({
   searchQuery,
   setSearchQuery,
-  searchResults,
-  handleSearch,
-  handleAddAttendee,
+  attendees,
   isLoading
-}) => (
-  <div className="attendee-search mb-3">
-    <div className="input-group">
-      <input
-        type="text"
-        className="form-control"
-        placeholder="Search employees to add..."
-        value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          handleSearch(e.target.value);
-        }}
-      />
-      <div className="input-group-append">
-        <span className="input-group-text">
-          <FontAwesomeIcon icon={faSearch} />
-        </span>
+}) => {
+  // Cette fonction est maintenant utilisée pour filtrer les participants existants
+  // au lieu de rechercher de nouveaux utilisateurs à inviter
+  return (
+    <div className="attendee-search mb-3">
+      <div className="search-info">
+        <FontAwesomeIcon icon={faInfoCircle} className="info-icon" />
+        <span>Filtrer les participants déjà invités</span>
+      </div>
+      <div className="input-group">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Rechercher parmi les participants invités..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+          }}
+        />
+        <div className="input-group-append">
+          <span className="input-group-text">
+            <FontAwesomeIcon icon={faSearch} />
+          </span>
+        </div>
       </div>
     </div>
+  );
+};
 
-    {searchResults.length > 0 && (
-      <div className="search-results">
-        {searchResults.map(emp => (
-          <div key={emp.id} className="search-result-item">
-            <span>{emp.name} ({emp.department})</span>
-            <button 
-              className="btn btn-sm btn-primary"
-              onClick={() => handleAddAttendee(emp)}
-            >
-              <FontAwesomeIcon icon={faUserPlus} /> Add
-            </button>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
 export default SearchAttendees;

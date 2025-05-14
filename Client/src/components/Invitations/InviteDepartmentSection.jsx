@@ -17,7 +17,8 @@ const InviteDepartmentSection = ({
   userAttendanceStatus,
   handleStatusChange,
   handleRemoveAttendee,
-  event
+  event,
+  filterQuery
 }) => {
   const [departmentEmployees, setDepartmentEmployees] = useState([]);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
@@ -63,20 +64,26 @@ const InviteDepartmentSection = ({
       {isLoadingEmployees && <div>Chargement des employés...</div>}
       {selectedDepartment && departmentEmployees.length > 0 && (
         <div className="department-employee-list mt-3">
-          {departmentEmployees.map(emp => (
-            <AttendeeItem
-              key={emp.id}
-              attendeeId={emp.id}
-              isOrganizer={isOrganizer}
-              isEditing={isEditing}
-              user={emp}
-              status={userAttendanceStatus?.status || 'En attente'}
-              isFinal={userAttendanceStatus?.isFinal ?? false}
-              handleStatusChange={handleStatusChange}
-              handleRemoveAttendee={handleRemoveAttendee}
-              event={event}
-            />
-          ))}
+          {departmentEmployees
+            .filter(emp => 
+              !filterQuery || 
+              `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(filterQuery.toLowerCase()) ||
+              (emp.email && emp.email.toLowerCase().includes(filterQuery.toLowerCase()))
+            )
+            .map(emp => (
+              <AttendeeItem
+                key={emp.id}
+                attendeeId={emp.id}
+                isOrganizer={isOrganizer}
+                isEditing={isEditing}
+                user={emp}
+                status={userAttendanceStatus?.status || 'En attente'}
+                isFinal={userAttendanceStatus?.isFinal ?? false}
+                handleStatusChange={handleStatusChange}
+                handleRemoveAttendee={handleRemoveAttendee}
+                event={event}
+              />
+            ))}
         </div>
       )}
       <button 

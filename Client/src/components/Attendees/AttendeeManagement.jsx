@@ -17,12 +17,13 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
   const { user } = useAuth();
   const [attendees, setAttendees] = useState(event.attendees || []);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [filterQuery, setFilterQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [inviteMode, setInviteMode] = useState('search');
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [attendeeNames, setAttendeeNames] = useState({});
   const [statusCounts, setStatusCounts] = useState({
     Accepté: 0,
     Refusé: 0,
@@ -46,6 +47,25 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
         statusOrder[event.attendeeStatuses?.[b] || 'En attente'];
     });
     setAttendees(sorted);
+    
+    // Récupérer les noms des participants pour le filtrage
+    const fetchAttendeeNames = async () => {
+      const namesMap = {};
+      for (const attendeeId of sorted) {
+        try {
+          const response = await userAPI.getUserInfo(attendeeId);
+          if (response.data) {
+            const userData = response.data;
+            namesMap[attendeeId] = `${userData.firstName || ''} ${userData.lastName || ''}`;
+          }
+        } catch (error) {
+          console.error(`Erreur lors de la récupération des informations pour l'utilisateur ${attendeeId}:`, error);
+        }
+      }
+      setAttendeeNames(namesMap);
+    };
+    
+    fetchAttendeeNames();
   }, [event.attendees, event.attendeeStatuses, event.organizer, user.id]);
 
   // Fetch all employees
@@ -160,25 +180,8 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
     return true; // Other attendees' statuses are considered final (only user can change their own status)
   };
 
-  const handleSearch = async (query) => {
-    if (query.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await eventsAPI.searchEmployees(query);
-      const filteredResults = response.data.filter(emp =>
-        !attendees.some(a => a === emp.id)
-      );
-      setSearchResults(filteredResults);
-    } catch (error) {
-      toast.error('Échec de rechercher des employés');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Nous n'avons plus besoin de la fonction handleSearch car nous filtrons les participants existants
+  // au lieu de rechercher de nouveaux utilisateurs à inviter
 
   const handleInviteAll = async () => {
     try {
@@ -318,11 +321,17 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
           <InvitationModeSelector
             inviteMode={inviteMode}
             setInviteMode={setInviteMode}
+            searchQuery={filterQuery}
+            setSearchQuery={setFilterQuery}
           />
 
           {inviteMode === 'all' && (
             <InviteAllSection
-              employees={allEmployees}
+              employees={allEmployees.filter(emp => 
+                filterQuery === '' || 
+                `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(filterQuery.toLowerCase()) ||
+                (emp.email && emp.email.toLowerCase().includes(filterQuery.toLowerCase()))
+              )}
               handleInviteAll={handleInviteAll}
               isSending={isSending}
             />
@@ -335,12 +344,17 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
               handleDepartmentChange={setSelectedDepartment}
               handleInviteDepartment={handleInviteDepartment}
               isSending={isSending}
+              filterQuery={filterQuery}
             />
           )}
 
           {inviteMode === 'select' && (
             <InviteSelectSection
-              employees={allEmployees}
+              employees={allEmployees.filter(emp => 
+                filterQuery === '' || 
+                `${emp.firstName} ${emp.lastName}`.toLowerCase().includes(filterQuery.toLowerCase()) ||
+                (emp.email && emp.email.toLowerCase().includes(filterQuery.toLowerCase()))
+              )}
               organizerDepartmentId={user.departmentId}
               selectedEmployees={selectedEmployees}
               toggleEmployeeSelection={toggleEmployeeSelection}
@@ -356,33 +370,50 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
           <SearchAttendees
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            searchResults={searchResults}
-            handleSearch={handleSearch}
-            handleAddAttendee={handleAddAttendee}
+            attendees={attendees}
             isLoading={isLoading}
           />
 
           <div className="attendees-list">
-            {attendees.map(attendeeId => (
-              <AttendeeItem
-                key={attendeeId}
-                attendeeId={attendeeId}
-                isOrganizer={isOrganizer}
-                isEditing={isEditing}
-                user={user}
-                status={getAttendeeStatus(attendeeId)}
-                isFinal={getAttendeeIsFinal(attendeeId)}
-                handleStatusChange={handleStatusChange}
-                handleRemoveAttendee={handleRemoveAttendee}
-                event={event}
-              />
-            ))}
+            {attendees
+              .filter(attendeeId => 
+                searchQuery === '' || 
+                // Filtrer les participants en fonction de la recherche
+                // Nous utilisons les noms des participants que nous avons récupérés
+                (attendeeNames[attendeeId] && 
+                  attendeeNames[attendeeId].toLowerCase().includes(searchQuery.toLowerCase()))
+              )
+              .map(attendeeId => (
+                <AttendeeItem
+                  key={attendeeId}
+                  attendeeId={attendeeId}
+                  isOrganizer={isOrganizer}
+                  isEditing={isEditing}
+                  user={user}
+                  status={getAttendeeStatus(attendeeId)}
+                  isFinal={getAttendeeIsFinal(attendeeId)}
+                  handleStatusChange={handleStatusChange}
+                  handleRemoveAttendee={handleRemoveAttendee}
+                  event={event}
+                />
+              ))}
 
             {attendees.length === 0 && (
               <div className="no-attendees">
                 {event.isOpenEvent
                   ? "Cet événement est ouvert - aucune confirmation requise"
                   : "Aucun participant pour l'instant"}
+              </div>
+            )}
+            
+            {attendees.length > 0 && 
+              attendees.filter(attendeeId => 
+                searchQuery === '' || 
+                (attendeeNames[attendeeId] && 
+                  attendeeNames[attendeeId].toLowerCase().includes(searchQuery.toLowerCase()))
+              ).length === 0 && (
+              <div className="no-attendees">
+                Aucun participant ne correspond à votre recherche
               </div>
             )}
           </div>

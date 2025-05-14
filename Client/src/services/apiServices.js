@@ -205,10 +205,10 @@ export const eventsAPI = {
   getUserAttendanceStatus: (eventId, userId) => api.get(`/event/${eventId}/user/${userId}/attendance-status`),
   
   // Employee search and invitation endpoints
-  searchEmployees: (query) => api.get(`/employee/search?query=${query}`),
+
   getDepartmentEmployees: (departmentId) => api.get(`/department/${departmentId}`),
   getAllDepartments: () => api.get('/department'),
-  getCurrentUserDepartment: () => api.get('/employee/current-department'),
+
   
   // Bulk invitation endpoints
   inviteAll: (eventId) => api.post(`/event/${eventId}/invite-all`),
