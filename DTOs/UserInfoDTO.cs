@@ -18,5 +18,6 @@ namespace ASTREE_PFE.DTOs
         public DateTime CreatedDate { get; set; }
         public DepartmentDTO? Department { get; set; }
         public string ProfilePictureUrl { get; set; }
+        public string? PhoneNumber { get; set; }
     }
 }
