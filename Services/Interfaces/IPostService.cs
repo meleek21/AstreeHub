@@ -5,24 +5,30 @@ namespace ASTREE_PFE.Services.Interfaces
 {
     public interface IPostService
     {
-        Task DecrementReactionCountAsync(string postId, ReactionType reactionType);
-        Task UpdateReactionCountAsync(string postId, ReactionType oldType, ReactionType newType);
-        Task IncrementReactionCountAsync(string postId, ReactionType type);
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetAllPostsAsync(
+        public  Task<(IEnumerable<Post>, string, bool)> GetAllPostsAsync(
             string lastItemId = null,
-            int limit = 10
-        );
-        Task<Post> GetPostByIdAsync(string id);
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetPostsByAuthorAsync(
+            int limit = 10,
+            PostType? postType = null);
+
+        public  Task<Post> GetPostByIdAsync(string id);
+
+        public Task<(IEnumerable<Post>, string, bool)> GetPostsByAuthorAsync(
             string authorId,
             string lastItemId = null,
-            int limit = 10
-        );
-        Task<Post> CreatePostAsync(Post post);
-        Task UpdatePostAsync(string id, Post post);
-        Task DeletePostAsync(string id);
-        Task AddCommentAsync(string postId, Comment comment);
-        Task UpdateReactionsAsync(string postId);
-        Task<(IEnumerable<Post> Posts, string NextLastItemId, bool HasMore)> GetLibraryPostsAsync(string lastItemId = null, int limit = 10);
+            int limit = 10);
+
+        public Task<(IEnumerable<Post>, string, bool)> GetPostsByChannelIdAsync(
+            string channelId,
+            string lastItemId = null,
+            int limit = 10);
+
+        public Task<(IEnumerable<Post>, string, bool)> GetLibraryPostsAsync(
+            string lastItemId = null,
+            int limit = 10);
+
+        public Task<Post> CreatePostAsync(Post post);
+        public Task UpdatePostAsync(string id, Post post);
+        public Task DeletePostAsync(string id);
+
     }
 }
