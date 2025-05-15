@@ -7,7 +7,6 @@ using ASTREE_PFE.Repositories;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services;
 using ASTREE_PFE.Services.Interfaces;
-using AutoMapper;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
