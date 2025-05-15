@@ -97,7 +97,7 @@ namespace ASTREE_PFE.Services
             };
 
             await _reactionRepository.CreateAsync(reaction);
-            await _postService.IncrementReactionCountAsync(request.PostId, request.Type);
+            
 
             // Send notification to post author (if different from reactor)
             if (post.AuthorId != request.EmployeeId)
@@ -125,14 +125,7 @@ namespace ASTREE_PFE.Services
 
             await _reactionRepository.UpdateAsync(existingReaction.Id, existingReaction);
 
-            if (!string.IsNullOrEmpty(existingReaction.PostId))
-            {
-                await _postService.UpdateReactionCountAsync(
-                    existingReaction.PostId,
-                    previousType,
-                    request.Type
-                );
-            }
+
 
             return existingReaction;
         }
@@ -146,7 +139,6 @@ namespace ASTREE_PFE.Services
             if (reaction != null && !string.IsNullOrEmpty(reaction.PostId))
             {
                 var postId = reaction.PostId;
-                await _postService.DecrementReactionCountAsync(postId, reaction.Type);
                 await _reactionRepository.DeleteAsync(reaction.Id);
 
                 // Broadcast updated reaction summary

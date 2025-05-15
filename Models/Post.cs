@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Options;
 
 namespace ASTREE_PFE.Models
 {
-    public class Post
+     public class Post
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -21,23 +21,18 @@ namespace ASTREE_PFE.Models
         public string AuthorId { get; set; } = null!;
 
         public bool IsPublic { get; set; }
-        public List<Comment> Comments { get; set; } = new List<Comment>();
-
         public DateTime? UpdatedAt { get; set; }
+
+        // File Management
         public List<string> FileIds { get; set; } = new List<string>();
-
-        [BsonDictionaryOptions(DictionaryRepresentation.ArrayOfDocuments)]
-        public Dictionary<ReactionType, int> ReactionCounts { get; set; } = new();
-
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string ChannelId { get; set; } = null!;
-
-        [BsonIgnore]
-        public virtual Channel Channel { get; set; }
-
-        [BsonElement("Files")]
         public List<File> Files { get; set; } = new List<File>();
 
-        public bool IsLibraryPost { get; set; }
+        // Channel association (nullable for non-channel posts)
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? ChannelId { get; set; }
+
+        // Post type (General, Channel, Library)
+        [BsonRepresentation(BsonType.String)]
+        public PostType PostType { get; set; } = PostType.General;
     }
 }
