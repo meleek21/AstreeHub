@@ -551,5 +551,134 @@ namespace ASTREE_PFE.Controllers
 
             return Ok(postDto);
         }
+
+        [HttpGet("event")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PaginatedPostsDTO>> GetEventPosts(
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
+        {
+            var (posts, nextLastItemId, hasMore) = await _postService.GetEventPostsAsync(
+                lastItemId,
+                limit
+            );
+
+            // Collect all file IDs for batch loading
+            var fileIds = posts
+                .SelectMany(p => p.FileIds ?? new List<string>())
+                .Distinct()
+                .ToList();
+
+            // Batch load all files
+            var filesDictionary = new Dictionary<string, Models.File>();
+
+            if (fileIds.Any())
+            {
+                var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                foreach (var file in files)
+                {
+                    filesDictionary[file.Id] = file;
+                }
+            }
+
+            // Map posts to DTOs using AutoMapper
+            var postDtos = posts
+                .Select(post =>
+                {
+                    var postFiles = post
+                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
+                        .Select(fileId => filesDictionary[fileId])
+                        .ToList();
+
+                    return _mapper.Map<PostResponseDTO>((post, postFiles));
+                })
+                .ToList();
+
+            var paginatedResponse = new PaginatedPostsDTO
+            {
+                Posts = postDtos,
+                NextLastItemId = nextLastItemId,
+                HasMore = hasMore,
+            };
+
+            return Ok(paginatedResponse);
+        }
+
+        [HttpPost("event/create")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PostResponseDTO>> AddEventPost(
+            [FromBody] PostRequestDTO request
+        )
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Use AutoMapper to map the request to a Post
+            var post = _mapper.Map<Post>(request);
+            post.PostType = PostType.Event;
+            post.Timestamp = DateTime.UtcNow;
+
+            var createdPost = await _postService.CreatePostAsync(post);
+
+            // Get files for the created post
+            var files = await _fileService.GetFilesByIdsAsync(createdPost.FileIds);
+
+            // Map the post and files to a response DTO
+            var postDto = _mapper.Map<PostResponseDTO>((createdPost, files));
+
+            return CreatedAtAction(nameof(GetEventPosts), new { id = postDto.Id }, postDto);
+        }
+
+        [HttpPut("event/update/{id}")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PostResponseDTO>> UpdateEventPost(
+            string id,
+            [FromBody] PostRequestDTO request
+        )
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingPost = await _postService.GetPostByIdAsync(id);
+            if (existingPost == null)
+                return NotFound();
+
+            if (existingPost.PostType != PostType.Event)
+                return BadRequest("This is not an event post");
+
+            // Use AutoMapper to update the existing post
+            _mapper.Map(request, existingPost);
+            existingPost.PostType = PostType.Event; // Ensure the type remains Event
+            existingPost.UpdatedAt = DateTime.UtcNow;
+
+            await _postService.UpdatePostAsync(id, existingPost);
+
+            // Get files for the updated post
+            var files = await _fileService.GetFilesByIdsAsync(existingPost.FileIds);
+
+            // Map the post and files to a response DTO
+            var postDto = _mapper.Map<PostResponseDTO>((existingPost, files));
+
+            return Ok(postDto);
+        }
+
+        [HttpDelete("event/{id}")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult> DeleteEventPost(string id)
+        {
+            if (!ObjectId.TryParse(id, out _))
+                return BadRequest("Invalid post ID format");
+
+            var post = await _postService.GetPostByIdAsync(id);
+            if (post == null)
+                return NotFound();
+
+            if (post.PostType != PostType.Event)
+                return BadRequest("This is not an event post");
+
+            await _postService.DeletePostAsync(id);
+            return NoContent();
+        }
     }
 }
