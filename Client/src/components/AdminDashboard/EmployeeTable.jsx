@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { userAPI, adminAPI } from "../services/apiServices";
+import { userAPI, adminAPI } from "../../services/apiServices";
 import axios from "axios";
-import AdminEmployeeModal from './AdminEmployeeModal';
+import AdminEmployeeModal from "./AdminEmployeeModal";
 import EditEmployeeModal from './EditEmployeeModal';
-import '../assets/Css/EmployeeTable.css';
+import '../../assets/Css/EmployeeTable.css';
 import DataTable from 'react-data-table-component';
-import ConfirmationModal from './ConfirmationModal';
+import ConfirmationModal from '../ConfirmationModal';
 import { useNavigate } from "react-router-dom";
 
 const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
