@@ -5,7 +5,7 @@ using MongoDB.Bson.Serialization.Options;
 
 namespace ASTREE_PFE.Models
 {
-     public class Post
+    public class Post
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -29,7 +29,10 @@ namespace ASTREE_PFE.Models
 
         // Channel association (nullable for non-channel posts)
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? ChannelId { get; set; }
+        public string ChannelId { get; set; } = null!;
+
+        [BsonIgnore]
+        public virtual Channel Channel { get; set; }
 
         // Post type (General, Channel, Library)
         [BsonRepresentation(BsonType.String)]

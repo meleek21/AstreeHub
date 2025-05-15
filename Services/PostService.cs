@@ -34,9 +34,10 @@ namespace ASTREE_PFE.Services
         }
 
         public async Task<(IEnumerable<Post>, string, bool)> GetAllPostsAsync(
-            string lastItemId = null, 
-            int limit = 10, 
-            PostType? postType = null)
+            string lastItemId = null,
+            int limit = 10,
+            PostType? postType = null
+        )
         {
             return await _postRepository.GetAllAsync(lastItemId, limit, postType);
         }
@@ -52,26 +53,37 @@ namespace ASTREE_PFE.Services
         }
 
         public async Task<(IEnumerable<Post>, string, bool)> GetPostsByAuthorAsync(
-            string authorId, 
-            string lastItemId = null, 
-            int limit = 10)
+            string authorId,
+            string lastItemId = null,
+            int limit = 10
+        )
         {
             return await _postRepository.GetByAuthorIdAsync(authorId, lastItemId, limit);
         }
 
         public async Task<(IEnumerable<Post>, string, bool)> GetPostsByChannelIdAsync(
-            string channelId, 
-            string lastItemId = null, 
-            int limit = 10)
+            string channelId,
+            string lastItemId = null,
+            int limit = 10
+        )
         {
             return await _postRepository.GetPostsByChannelIdAsync(channelId, lastItemId, limit);
         }
 
         public async Task<(IEnumerable<Post>, string, bool)> GetLibraryPostsAsync(
-            string lastItemId = null, 
-            int limit = 10)
+            string lastItemId = null,
+            int limit = 10
+        )
         {
             return await _postRepository.GetAllAsync(lastItemId, limit, PostType.Library);
+        }
+
+        public async Task<(IEnumerable<Post>, string, bool)> GetEventPostsAsync(
+            string lastItemId = null,
+            int limit = 10
+        )
+        {
+            return await _postRepository.GetAllAsync(lastItemId, limit, PostType.Event);
         }
 
         public async Task<Post> CreatePostAsync(Post post)
@@ -112,7 +124,7 @@ namespace ASTREE_PFE.Services
         public async Task UpdatePostAsync(string id, Post post)
         {
             await _postRepository.UpdateAsync(id, post);
-            
+
             // Refresh files if updated
             if (post.FileIds?.Any() == true)
             {
@@ -123,7 +135,8 @@ namespace ASTREE_PFE.Services
         public async Task DeletePostAsync(string id)
         {
             var post = await _postRepository.GetByIdAsync(id);
-            if (post == null) return;
+            if (post == null)
+                return;
 
             // Delete associated files
             foreach (var fileId in post.FileIds)
@@ -131,12 +144,7 @@ namespace ASTREE_PFE.Services
                 await _fileService.DeleteFileAsync(fileId);
             }
 
-
-
-
             await _postRepository.DeleteAsync(id);
         }
-
- 
     }
 }
