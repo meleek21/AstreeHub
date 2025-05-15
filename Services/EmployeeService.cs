@@ -82,6 +82,7 @@ namespace ASTREE_PFE.Services
                 IsFirstLogin = employee.IsFirstLogin,
                 CreatedDate = employee.CreatedDate,
                 ProfilePictureUrl = employee.ProfilePictureUrl ?? string.Empty,
+                PhoneNumber = employee.PhoneNumber,
                 Department =
                     employee.Department != null
                         ? new DepartmentDTO

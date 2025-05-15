@@ -7,11 +7,16 @@ import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCopy } from '@fortawesome/free-solid-svg-icons';
 import '../assets/Css/ProfileCard.css';
+import { useNavigate } from 'react-router-dom';
+import { faCog } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../Context/AuthContext';
 
 const ProfileCard = () => {
   const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
   const { userId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [userInfo, setUserInfo] = useState({
     firstName: '',
     lastName: '',
@@ -93,6 +98,22 @@ const ProfileCard = () => {
       transition={{ duration: 0.5 }}
     >
       <div className="profile-header">
+        {user && user.id && userId && String(user.id) === String(userId) && (
+          <motion.div
+            className="edit-cog-icon-container"
+            initial={{ scale: 1, rotate: 0 }}
+            whileHover={{ scale: 1.15, rotate: 20, color: '#fd8916' }}
+            whileTap={{ scale: 0.95, rotate: -20, color: '#173b61' }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            onClick={() => navigate(`/profile/edit/${userId}`)}
+            title="paramètre"
+          >
+            <FontAwesomeIcon
+              icon={faCog}
+              className="edit-cog-icon"
+            />
+          </motion.div>
+        )}
         <motion.div
           className="profile-picture-container"
           whileHover={{ scale: 1.1 }}

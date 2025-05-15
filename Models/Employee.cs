@@ -13,7 +13,7 @@ namespace ASTREE_PFE.Models
         public RoleType Role { get; set; }
         public UserStatus Status { get; set; }
         public int? DepartmentId { get; set; }
-
+        public string? PhoneNumber { get; set; }
         // Add these missing properties referenced in AuthService
         public DateTime? LastLoginDate { get; set; }
         public bool IsFirstLogin { get; set; } = true;
