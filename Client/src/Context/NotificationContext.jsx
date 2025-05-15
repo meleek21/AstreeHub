@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { notificationAPI } from '../services/apiServices';
 import connectionManager from '../services/connectionManager';
+import { toast } from 'react-hot-toast';
 
 const NotificationContext = createContext();
 
@@ -114,11 +115,15 @@ export const NotificationProvider = ({ children }) => {
           // If it exists, don't add it again
           return prev;
         }
-        
+        // Show toast for new notification
+        toast(notification.title || notification.message || 'You have a new notification!', {
+          position: 'top-right',
+          duration: 5000,
+          icon: '🔔',
+        });
         // Add the new notification to the list
         return [notification, ...prev];
       });
-      
       // Only update unread count if the notification is unread
       if (!notification.isRead) {
         setUnreadCount(count => count + 1);

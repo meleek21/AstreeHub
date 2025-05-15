@@ -48,29 +48,29 @@ const NotificationPanel = ({ isOpen, onClose }) => {
             className={`tab-button ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
-            All
+            Toutes
           </button>
           <button 
             className={`tab-button ${activeTab === 'unread' ? 'active' : ''}`}
             onClick={() => setActiveTab('unread')}
           >
-            Unread {unreadCount > 0 && `(${unreadCount})`}
+            Non lues {unreadCount > 0 && `(${unreadCount})`}
           </button>
           <button 
             className="mark-all-read"
             onClick={handleMarkAllAsRead}
             disabled={unreadCount === 0}
           >
-            Mark all as read
+            Tout marquer comme lu
           </button>
         </div>
         
         <div className="notification-list">
           {loading ? (
-            <div className="notification-loading">Loading notifications...</div>
+            <div className="notification-loading">Chargement des notifications...</div>
           ) : filteredNotifications.length === 0 ? (
             <div className="notification-empty">
-              No {activeTab === 'unread' ? 'unread ' : ''}notifications
+              Aucune {activeTab === 'unread' ? 'notification non lue' : 'notification'}
             </div>
           ) : (
             filteredNotifications.map(notification => (

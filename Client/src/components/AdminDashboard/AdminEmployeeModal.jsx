@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../services/apiServices';
+import { adminAPI } from '../../services/apiServices';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import ModalPortal from './ModalPortal';
-import "../assets/Css/AdminModals.css";
+import ModalPortal from '../ModalPortal';
+import "../../assets/Css/AdminModals.css";
 
 const AdminEmployeeModal = ({ show, onClose, refreshEmployees }) => {
   const [formData, setFormData] = useState({
