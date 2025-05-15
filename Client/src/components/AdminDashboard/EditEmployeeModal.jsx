@@ -1,8 +1,8 @@
 import React from "react";
-import ModalPortal from './ModalPortal';
+import ModalPortal from '../ModalPortal';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import "../assets/Css/AdminModals.css";
+import "../../assets/Css/AdminModals.css";
 
 const EditEmployeeModal = ({
   show,

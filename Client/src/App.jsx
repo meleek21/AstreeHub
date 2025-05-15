@@ -14,7 +14,7 @@ import ProfileViewer from './components/ProfileViewer';
 import Calendar from './pages/Calendar';
 import Bibliotheque from './pages/Bibliotheque';
 import ChatContainer from './components/Messages/ChatContainer';
-import EmployeeTable from './components/EmployeeTable';
+import EmployeeTable from './components/AdminDashboard/EmployeeTable';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { ChatProvider } from './Context/ChatContext';
