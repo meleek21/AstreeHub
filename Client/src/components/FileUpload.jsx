@@ -145,9 +145,9 @@ function FileUpload() {
   }
 
   if (!isSuperAdmin) {
-    return <div className="file-upload-error">Vous n'avez pas la permission de télécharger des fichiers dans la bibliothèque.</div>;
+    return null;
   }
-
+  
   return (
     <div className="file-upload-container">
       <input 
