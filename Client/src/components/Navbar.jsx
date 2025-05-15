@@ -102,11 +102,13 @@ function Navbar() {
         <div className="dropdown">
           {/* Clickable Profile Picture */}
           <div className="user-avatar-container">
-            <img
-              src={userInfo.profilePicture}
-              alt={`${userInfo.firstName} ${userInfo.lastName}`}
-              className="user-avatar"
-            />
+            <Link to={`/profile/view/${userId}`}>
+              <img
+                src={userInfo.profilePicture}
+                alt={`${userInfo.firstName} ${userInfo.lastName}`}
+                className="user-avatar"
+              />
+            </Link>
             <div onClick={toggleDropdown}>
               <lord-icon
                 src="https://cdn.lordicon.com/xcrjfuzb.json"

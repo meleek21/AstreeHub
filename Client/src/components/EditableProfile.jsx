@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import '../assets/Css/EditableProfile.css';
-
+import ProfileCard from './ProfileCard';
 
 const EditableProfile = () => {
   const { userId } = useParams();
@@ -45,8 +45,6 @@ const EditableProfile = () => {
       try {
         const response = await userAPI.getUserInfo(userId);
         const userData = response.data;
-        console.log("user data: ", userData);
-        // Format the date string to yyyy-MM-dd
         const formattedDate = userData.dateOfBirth ? userData.dateOfBirth.split('T')[0] : '';
         setFormData({
           firstName: userData.firstName || '',
@@ -79,11 +77,9 @@ const EditableProfile = () => {
       return;
     }
     setIsLoading(true);
-    console.log('Sauvegarde du profil...');
     try {
       const formDataToSend = new FormData();
 
-      // Validate and append form data
       if (formData.firstName?.trim()) {
         formDataToSend.append('firstName', formData.firstName.trim());
       }
@@ -103,20 +99,16 @@ const EditableProfile = () => {
         formDataToSend.append('departmentId', formData.departmentId);
       }
 
-      // Handle profile picture
       if (formData.profilePicture instanceof File) {
         formDataToSend.append('file', formData.profilePicture);
       }
 
-      // Add validation to ensure at least one field is being updated
       if (Array.from(formDataToSend.entries()).length === 0) {
         toast.error('Veuillez mettre à jour au moins un champ');
         return;
       }
 
       const response = await userAPI.updateProfile(userId, formDataToSend);
-
-      // After successful update, fetch the updated user data
       const updatedUserData = await userAPI.getUserInfo(userId);
       setFormData((prev) => ({
         ...prev,
@@ -157,10 +149,15 @@ const EditableProfile = () => {
   };
 
   return (
-    <div className="profile-container">
+    <motion.div 
+      className="profile-container"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="profile-picture-container">
         <div className="profile-picture-wrapper">
-          <img
+          <motion.img
             src={
               formData.profilePicture instanceof File
                 ? URL.createObjectURL(formData.profilePicture)
@@ -168,13 +165,17 @@ const EditableProfile = () => {
             }
             alt={`${formData.firstName} ${formData.lastName}`}
             className="profile-picture"
+            whileHover={{ scale: 1.03 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
           />
-          <button
+          <motion.button
             className="upload-button"
             onClick={() => fileInputRef.current.click()}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             +
-          </button>
+          </motion.button>
           <input
             type="file"
             ref={fileInputRef}
@@ -187,7 +188,12 @@ const EditableProfile = () => {
 
       <div className="profile-form">
         <div className="form-row">
-          <div className="form-group">
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <label>Prénom:</label>
             <input
               type="text"
@@ -196,8 +202,13 @@ const EditableProfile = () => {
               onChange={handleChange}
               placeholder="Prénom"
             />
-          </div>
-          <div className="form-group">
+          </motion.div>
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2 }}
+          >
             <label>Nom de famille:</label>
             <input
               type="text"
@@ -206,10 +217,15 @@ const EditableProfile = () => {
               onChange={handleChange}
               placeholder="Nom de famille"
             />
-          </div>
+          </motion.div>
         </div>
         <div className="form-row">
-          <div className="form-group">
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
             <label>Email:</label>
             <input
               type="email"
@@ -219,20 +235,30 @@ const EditableProfile = () => {
               className="form-control"
               placeholder="Email"
             />
-          </div>
-          <div className="form-group">
+          </motion.div>
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
             <label>Numéro de téléphone:</label>
             <input
-              type="tel"
+              type="text"
               name="phoneNumber"
               value={formData.phoneNumber}
               onChange={handleChange}
               placeholder="Numéro de téléphone"
             />
-          </div>
+          </motion.div>
         </div>
         <div className="form-row">
-          <div className="form-group">
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 }}
+          >
             <label>Date de naissance:</label>
             <input
               type="date"
@@ -240,8 +266,13 @@ const EditableProfile = () => {
               value={formData.dateOfBirth}
               onChange={handleChange}
             />
-          </div>
-          <div className="form-group">
+          </motion.div>
+          <motion.div 
+            className="form-group"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+          >
             <label>Département:</label>
             <input
               type="text"
@@ -250,31 +281,31 @@ const EditableProfile = () => {
               readOnly
               className="form-control"
             />
-          </div>
+          </motion.div>
         </div>
         <div className="button-group">
           <motion.button
             onClick={handleSave}
             className={`save-button ${isSuccess ? 'success' : ''} ${isLoading ? 'loading' : ''}`}
             whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
             animate={isSuccess ? { scale: [1, 1.1, 1] } : {}}
             transition={{ duration: 0.5 }}
             disabled={isLoading}
           >
-            <lord-icon
-              src="https://cdn.lordicon.com/oqdmuxru.json"
-              trigger="hover"
-              colors="primary:#66d7ee"
-              style={{ width: '24px', height: '24px', marginRight: '8px' }}
-            />
             {isLoading ? 'Enregistrement...' : 'Enregistrer'}
           </motion.button>
-          <button onClick={handleCancel} className="cancel-button">
+          <motion.button 
+            onClick={handleCancel} 
+            className="cancel-button"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+          >
             Annuler
-          </button>
+          </motion.button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
