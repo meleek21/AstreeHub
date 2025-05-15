@@ -150,4 +150,11 @@ namespace ASTREE_PFE.Models
         EventStatusChange,
         ChannelPost,
     }
+
+    public enum PostType
+    {
+        General, // Regular feed posts
+        Channel, // Channel-specific posts
+        Library, // Documentation/library posts
+    }
 }

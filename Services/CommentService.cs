@@ -55,8 +55,8 @@ namespace ASTREE_PFE.Services
 
             await _commentRepository.CreateAsync(comment);
 
-            // Also add the comment to the post's Comments list
-            await _postRepository.AddCommentAsync(comment.PostId, comment);
+
+
 
             // Send notification to post author (if different from commenter)
             var post = await _postRepository.GetByIdAsync(comment.PostId);
@@ -87,7 +87,7 @@ namespace ASTREE_PFE.Services
                 await _commentRepository.DeleteAsync(id);
 
                 // Remove comment from post
-                await _postRepository.RemoveCommentAsync(comment.PostId, id);
+
             }
         }
 
