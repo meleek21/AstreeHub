@@ -23,8 +23,6 @@ namespace ASTREE_PFE.Models
         [BsonElement("priority")]
         public TodoPriority Priority { get; set; }
 
-
-
         [BsonElement("status")]
         public TodoStatus Status { get; set; }
 
