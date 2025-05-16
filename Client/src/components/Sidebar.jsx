@@ -42,7 +42,7 @@ function Sidebar({ onToggleCollapse }) {
         </li>
         {/* Home Link */}
         <li>
-          <Link to="/" className="nav-link">
+          <Link to="/home" className="nav-link">
             <lord-icon
               src="https://cdn.lordicon.com/wmwqvixz.json"
               trigger="morph"

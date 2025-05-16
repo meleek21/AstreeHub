@@ -26,7 +26,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         // Create a new todo
-        [HttpPost]
+        [HttpPost("newTask")]
         public async Task<ActionResult<TodoResponseDTO>> CreateTodo(
             [FromBody] TodoCreateDTO todoDto,
             [FromQuery] string userId
@@ -71,7 +71,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         // Get all todos with optional filtering
-        [HttpGet]
+        [HttpGet("readAll")]
         public async Task<ActionResult<IEnumerable<TodoResponseDTO>>> GetTodos(
             [FromQuery] string userId,
             [FromQuery] TodoStatus? status = null,
@@ -89,7 +89,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         // Update a todo
-        [HttpPut("{id}")]
+        [HttpPut("update/{id}")]
         public async Task<ActionResult<TodoResponseDTO>> UpdateTodo(
             string id,
             [FromBody] TodoUpdateDTO todoDto,
@@ -118,7 +118,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         // Delete a todo
-        [HttpDelete("{id}")]
+        [HttpDelete("delete/{id}")]
         public async Task<ActionResult> DeleteTodo(string id, [FromQuery] string userId)
         {
             if (string.IsNullOrEmpty(userId))
