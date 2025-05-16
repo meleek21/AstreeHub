@@ -51,68 +51,102 @@ namespace ASTREE_PFE.Controllers
             [FromQuery] PostType? postType = null
         )
         {
-            var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
-                lastItemId,
-                limit,
-                postType
-            );
-
-            // Collect all file IDs for batch loading
-            var fileIds = posts
-                .SelectMany(p => p.FileIds ?? new List<string>())
-                .Distinct()
-                .ToList();
-
-            // Batch load all files
-            var filesDictionary = new Dictionary<string, Models.File>();
-
-            if (fileIds.Any())
+            try
             {
-                var files = await _fileService.GetFilesByIdsAsync(fileIds);
-                foreach (var file in files)
+                var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
+                    lastItemId,
+                    limit,
+                    postType
+                );
+
+                // Collect all file IDs for batch loading
+                var fileIds = posts
+                    .SelectMany(p => p.FileIds ?? new List<string>())
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .Distinct()
+                    .ToList();
+
+                // Batch load all files
+                var filesDictionary = new Dictionary<string, Models.File>();
+
+                if (fileIds.Any())
                 {
-                    filesDictionary[file.Id] = file;
+                    try
+                    {
+                        var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                        foreach (var file in files)
+                        {
+                            filesDictionary[file.Id] = file;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error loading files: {ex.Message}");
+                    }
                 }
-            }
 
-            // Map posts to DTOs using AutoMapper
-            var postDtos = posts
-                .Select(post =>
+                // Map posts to DTOs using AutoMapper
+                var postDtos = posts
+                    .Select(post =>
+                    {
+                        var postFiles = (post.FileIds ?? new List<string>())
+                            .Where(fileId => filesDictionary.ContainsKey(fileId))
+                            .Select(fileId => filesDictionary[fileId])
+                            .ToList();
+
+                        // Use the tuple mapping to create the complete DTO
+                        return _mapper.Map<PostResponseDTO>((post, postFiles));
+                    })
+                    .ToList();
+
+                var paginatedResponse = new PaginatedPostsDTO
                 {
-                    var postFiles = post
-                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
-                        .Select(fileId => filesDictionary[fileId])
-                        .ToList();
+                    Posts = postDtos,
+                    NextLastItemId = nextLastItemId,
+                    HasMore = hasMore,
+                };
 
-                    // Use the tuple mapping to create the complete DTO
-                    return _mapper.Map<PostResponseDTO>((post, postFiles));
-                })
-                .ToList();
-
-            var paginatedResponse = new PaginatedPostsDTO
+                return Ok(paginatedResponse);
+            }
+            catch (Exception ex)
             {
-                Posts = postDtos,
-                NextLastItemId = nextLastItemId,
-                HasMore = hasMore,
-            };
-
-            return Ok(paginatedResponse);
+                _logger.LogError($"Error in GetAllPosts: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving posts.");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<PostResponseDTO>> GetPost(string id)
         {
-            var post = await _postService.GetPostByIdAsync(id);
-            if (post == null)
-                return NotFound();
+            try
+            {
+                var post = await _postService.GetPostByIdAsync(id);
+                if (post == null)
+                    return NotFound();
 
-            // Fetch files in a single batch
-            var files = await _fileService.GetFilesByIdsAsync(post.FileIds);
+                // Fetch files in a single batch
+                List<Models.File> files = new List<Models.File>();
+                try
+                {
+                    files = await _fileService.GetFilesByIdsAsync(
+                        post.FileIds ?? new List<string>()
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error loading files for post {id}: {ex.Message}");
+                }
 
-            // Map to DTO using the tuple mapper
-            var postDto = _mapper.Map<PostResponseDTO>((post, files));
+                // Map to DTO using the tuple mapper
+                var postDto = _mapper.Map<PostResponseDTO>((post, files));
 
-            return Ok(postDto);
+                return Ok(postDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in GetPost: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving the post.");
+            }
         }
 
         [HttpGet("author/{authorId}")]
@@ -122,51 +156,68 @@ namespace ASTREE_PFE.Controllers
             [FromQuery] int limit = 10
         )
         {
-            var (posts, nextLastItemId, hasMore) = await _postService.GetPostsByAuthorAsync(
-                authorId,
-                lastItemId,
-                limit
-            );
-
-            // Collect all file IDs for batch loading
-            var fileIds = posts
-                .SelectMany(p => p.FileIds ?? new List<string>())
-                .Distinct()
-                .ToList();
-
-            // Batch load all files
-            var filesDictionary = new Dictionary<string, Models.File>();
-
-            if (fileIds.Any())
+            try
             {
-                var files = await _fileService.GetFilesByIdsAsync(fileIds);
-                foreach (var file in files)
+                var (posts, nextLastItemId, hasMore) = await _postService.GetPostsByAuthorAsync(
+                    authorId,
+                    lastItemId,
+                    limit
+                );
+
+                // Collect all file IDs for batch loading
+                var fileIds = posts
+                    .SelectMany(p => p.FileIds ?? new List<string>())
+                    .Distinct()
+                    .ToList();
+
+                // Batch load all files
+                var filesDictionary = new Dictionary<string, Models.File>();
+
+                if (fileIds.Any())
                 {
-                    filesDictionary[file.Id] = file;
+                    try
+                    {
+                        var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                        foreach (var file in files)
+                        {
+                            filesDictionary[file.Id] = file;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            $"Error loading files for author {authorId}: {ex.Message}"
+                        );
+                    }
                 }
-            }
 
-            // Map posts to DTOs using AutoMapper
-            var postDtos = posts
-                .Select(post =>
+                // Map posts to DTOs using AutoMapper
+                var postDtos = posts
+                    .Select(post =>
+                    {
+                        var postFiles = post
+                            .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
+                            .Select(fileId => filesDictionary[fileId])
+                            .ToList();
+
+                        return _mapper.Map<PostResponseDTO>((post, postFiles));
+                    })
+                    .ToList();
+
+                var paginatedResponse = new PaginatedPostsDTO
                 {
-                    var postFiles = post
-                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
-                        .Select(fileId => filesDictionary[fileId])
-                        .ToList();
+                    Posts = postDtos,
+                    NextLastItemId = nextLastItemId,
+                    HasMore = hasMore,
+                };
 
-                    return _mapper.Map<PostResponseDTO>((post, postFiles));
-                })
-                .ToList();
-
-            var paginatedResponse = new PaginatedPostsDTO
+                return Ok(paginatedResponse);
+            }
+            catch (Exception ex)
             {
-                Posts = postDtos,
-                NextLastItemId = nextLastItemId,
-                HasMore = hasMore,
-            };
-
-            return Ok(paginatedResponse);
+                _logger.LogError($"Error in GetPostsByAuthor: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving posts.");
+            }
         }
 
         [HttpPost]
