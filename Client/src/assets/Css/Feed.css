@@ -40,7 +40,6 @@
   z-index: 2000;
   animation: fadeIn 0.3s ease forwards;
   backdrop-filter: blur(4px);
-  
 }
 
 .comments-modal.open {
@@ -59,7 +58,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
   border: 1px solid var(--border);
   animation: slideUp 0.3s ease forwards;
 }
@@ -105,5 +104,67 @@
 
 .modal-content::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
+}
+
+
+/* Single Post Modal (match Comments Modal) */
+.single-post-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease forwards;
+  backdrop-filter: blur(4px);
+}
+
+.single-post-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.single-post-modal .modal-content {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  width: 45%;
+  max-width: 600px;
+  max-height: 90vh;
+  box-shadow: var(--shadow-md);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  animation: slideUp 0.3s ease forwards;
+}
+
+.single-post-modal.open .modal-content {
+  border-radius: 15px;
+  transform: scale(1);
+  opacity: 1;
+  background-color: white;
+}
+
+.single-post-modal .close-modal {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 26px;
+  transition: all 0.3s ease;
+}
+
+.single-post-modal .close-modal:hover {
+  color: var(--error-color);
+  transform: scale(1.1);
 }
 

@@ -705,6 +705,25 @@ namespace ASTREE_PFE.Services
         public async Task<IEnumerable<BirthdayResponseDTO>> GetTodaysBirthdaysAsync()
         {
             var employees = await _employeeService.GetEmployeesByBirthDateAsync(DateTime.Today);
+            
+            // If there are employees with birthdays today, trigger notifications
+            if (employees.Any())
+            {
+                // Get all employees to receive notifications
+                var allEmployees = await _employeeService.GetAllEmployeesAsync();
+                var allEmployeeIds = allEmployees.Select(e => e.Id).ToList();
+                
+                // For each person with a birthday today, create and send notification
+                foreach (var birthdayEmployee in employees)
+                {
+                    await _notificationService.CreateBirthdayNotificationAsync(
+                        birthdayEmployee.Id,
+                        allEmployeeIds
+                    );
+                    _logger.LogInformation($"Birthday notification sent for {birthdayEmployee.FullName}");
+                }
+            }
+            
             return employees.Select(e => new BirthdayResponseDTO
             {
                 EmployeeId = e.Id,

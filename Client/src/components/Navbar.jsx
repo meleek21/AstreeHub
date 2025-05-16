@@ -4,13 +4,13 @@ import { FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useAuth } from '../Context/AuthContext';
 import { userAPI, userOnlineStatusAPI as userStatusAPI } from '../services/apiServices';
 import NotificationBell from './notifications/NotificationBell';
+import SinglePostModal from './Posts/SinglePostModal';
 
 function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const userId = user?.id;
 
-  // Default profile picture URL
   const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
   const [userInfo, setUserInfo] = useState({
@@ -22,11 +22,11 @@ function Navbar() {
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [modalPostId, setModalPostId] = useState(null);
 
-  // Fetch user info
   const fetchUserInfo = async () => {
     if (!userId) return;
-
     try {
       const [userInfoResponse, userStatusResponse] = await Promise.all([
         userAPI.getUserInfo(userId),
@@ -47,20 +47,17 @@ function Navbar() {
     fetchUserInfo();
   }, [userId]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
-
     if (isDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
     }
-
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
@@ -75,16 +72,21 @@ function Navbar() {
     navigate('/login');
   };
 
+  const handleOpenPostModal = (postId) => {
+    setModalPostId(postId);
+    setIsPostModalOpen(true);
+  };
+  const handleClosePostModal = () => {
+    setIsPostModalOpen(false);
+    setModalPostId(null);
+  };
+
   return (
     <nav className="nav-bar">
       {/* Home */}
-      <div className="navbar-home">
-        
-      </div>
-      
+      <div className="navbar-home"></div>
       {/* Notifications */}
-      <NotificationBell />
-     
+      <NotificationBell onOpenPostModal={handleOpenPostModal} />
       {/* Search Bar */}
       <div className="search-bar">
         <lord-icon
@@ -95,7 +97,6 @@ function Navbar() {
         ></lord-icon>
         <input type="text" placeholder="Que recherchez-vous ?" />
       </div>
-
       {/* User Dropdown */}
       <div className="user-dropdown" ref={dropdownRef}>
         <span className="welcome-text">Bienvenue, {userInfo.firstName} {userInfo.lastName}</span>
@@ -124,11 +125,10 @@ function Navbar() {
                   marginBottom: '10px',
                   marginRight: '-30px',
                   cursor: 'pointer'
-                }}>
-              </lord-icon>
+                }}
+              ></lord-icon>
             </div>
           </div>
-
           {/* Dropdown Content */}
           {isDropdownOpen && (
             <div className="dropdown-content">
@@ -142,6 +142,14 @@ function Navbar() {
           )}
         </div>
       </div>
+      <SinglePostModal
+        isOpen={isPostModalOpen}
+        onClose={handleClosePostModal}
+        postId={modalPostId}
+        userId={userId}
+        isAuthenticated={!!user}
+        token={user?.token}
+      />
     </nav>
   );
 }
