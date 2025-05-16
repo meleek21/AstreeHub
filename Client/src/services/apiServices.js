@@ -279,3 +279,26 @@ export const notificationAPI = {
   deleteNotification: (notificationId, userId) => api.delete(`/notification/${notificationId}?userId=${userId}`),
 };
 
+// Todo API service
+export const todoAPI = {
+  // Create a new todo
+  createTodo: (todoData, userId) => api.post(`/todo/newTask?userId=${userId}`, todoData),
+
+  // Get a specific todo by ID
+  getTodoById: (id, userId) => api.get(`/todo/${id}?userId=${userId}`),
+
+  // Get all todos with optional filtering
+  getTodos: (userId, status, priority, dueDate) => api.get('/todo/readAll', {
+    params: { userId, status, priority, dueDate }
+  }),
+
+  // Update a todo
+  updateTodo: (id, todoData, userId) => api.put(`/todo/update/${id}?userId=${userId}`, todoData),
+
+  // Delete a todo
+  deleteTodo: (id, userId) => api.delete(`/todo/delete/${id}?userId=${userId}`),
+
+  // Get summary of todos
+  getTodoSummary: (userId) => api.get(`/todo/summary?userId=${userId}`)
+};
+
