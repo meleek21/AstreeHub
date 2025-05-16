@@ -51,68 +51,102 @@ namespace ASTREE_PFE.Controllers
             [FromQuery] PostType? postType = null
         )
         {
-            var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
-                lastItemId,
-                limit,
-                postType
-            );
-
-            // Collect all file IDs for batch loading
-            var fileIds = posts
-                .SelectMany(p => p.FileIds ?? new List<string>())
-                .Distinct()
-                .ToList();
-
-            // Batch load all files
-            var filesDictionary = new Dictionary<string, Models.File>();
-
-            if (fileIds.Any())
+            try
             {
-                var files = await _fileService.GetFilesByIdsAsync(fileIds);
-                foreach (var file in files)
+                var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
+                    lastItemId,
+                    limit,
+                    postType
+                );
+
+                // Collect all file IDs for batch loading
+                var fileIds = posts
+                    .SelectMany(p => p.FileIds ?? new List<string>())
+                    .Where(id => !string.IsNullOrEmpty(id))
+                    .Distinct()
+                    .ToList();
+
+                // Batch load all files
+                var filesDictionary = new Dictionary<string, Models.File>();
+
+                if (fileIds.Any())
                 {
-                    filesDictionary[file.Id] = file;
+                    try
+                    {
+                        var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                        foreach (var file in files)
+                        {
+                            filesDictionary[file.Id] = file;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error loading files: {ex.Message}");
+                    }
                 }
-            }
 
-            // Map posts to DTOs using AutoMapper
-            var postDtos = posts
-                .Select(post =>
+                // Map posts to DTOs using AutoMapper
+                var postDtos = posts
+                    .Select(post =>
+                    {
+                        var postFiles = (post.FileIds ?? new List<string>())
+                            .Where(fileId => filesDictionary.ContainsKey(fileId))
+                            .Select(fileId => filesDictionary[fileId])
+                            .ToList();
+
+                        // Use the tuple mapping to create the complete DTO
+                        return _mapper.Map<PostResponseDTO>((post, postFiles));
+                    })
+                    .ToList();
+
+                var paginatedResponse = new PaginatedPostsDTO
                 {
-                    var postFiles = post
-                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
-                        .Select(fileId => filesDictionary[fileId])
-                        .ToList();
+                    Posts = postDtos,
+                    NextLastItemId = nextLastItemId,
+                    HasMore = hasMore,
+                };
 
-                    // Use the tuple mapping to create the complete DTO
-                    return _mapper.Map<PostResponseDTO>((post, postFiles));
-                })
-                .ToList();
-
-            var paginatedResponse = new PaginatedPostsDTO
+                return Ok(paginatedResponse);
+            }
+            catch (Exception ex)
             {
-                Posts = postDtos,
-                NextLastItemId = nextLastItemId,
-                HasMore = hasMore,
-            };
-
-            return Ok(paginatedResponse);
+                _logger.LogError($"Error in GetAllPosts: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving posts.");
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<PostResponseDTO>> GetPost(string id)
         {
-            var post = await _postService.GetPostByIdAsync(id);
-            if (post == null)
-                return NotFound();
+            try
+            {
+                var post = await _postService.GetPostByIdAsync(id);
+                if (post == null)
+                    return NotFound();
 
-            // Fetch files in a single batch
-            var files = await _fileService.GetFilesByIdsAsync(post.FileIds);
+                // Fetch files in a single batch
+                List<Models.File> files = new List<Models.File>();
+                try
+                {
+                    files = await _fileService.GetFilesByIdsAsync(
+                        post.FileIds ?? new List<string>()
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Error loading files for post {id}: {ex.Message}");
+                }
 
-            // Map to DTO using the tuple mapper
-            var postDto = _mapper.Map<PostResponseDTO>((post, files));
+                // Map to DTO using the tuple mapper
+                var postDto = _mapper.Map<PostResponseDTO>((post, files));
 
-            return Ok(postDto);
+                return Ok(postDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in GetPost: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving the post.");
+            }
         }
 
         [HttpGet("author/{authorId}")]
@@ -122,51 +156,68 @@ namespace ASTREE_PFE.Controllers
             [FromQuery] int limit = 10
         )
         {
-            var (posts, nextLastItemId, hasMore) = await _postService.GetPostsByAuthorAsync(
-                authorId,
-                lastItemId,
-                limit
-            );
-
-            // Collect all file IDs for batch loading
-            var fileIds = posts
-                .SelectMany(p => p.FileIds ?? new List<string>())
-                .Distinct()
-                .ToList();
-
-            // Batch load all files
-            var filesDictionary = new Dictionary<string, Models.File>();
-
-            if (fileIds.Any())
+            try
             {
-                var files = await _fileService.GetFilesByIdsAsync(fileIds);
-                foreach (var file in files)
+                var (posts, nextLastItemId, hasMore) = await _postService.GetPostsByAuthorAsync(
+                    authorId,
+                    lastItemId,
+                    limit
+                );
+
+                // Collect all file IDs for batch loading
+                var fileIds = posts
+                    .SelectMany(p => p.FileIds ?? new List<string>())
+                    .Distinct()
+                    .ToList();
+
+                // Batch load all files
+                var filesDictionary = new Dictionary<string, Models.File>();
+
+                if (fileIds.Any())
                 {
-                    filesDictionary[file.Id] = file;
+                    try
+                    {
+                        var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                        foreach (var file in files)
+                        {
+                            filesDictionary[file.Id] = file;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(
+                            $"Error loading files for author {authorId}: {ex.Message}"
+                        );
+                    }
                 }
-            }
 
-            // Map posts to DTOs using AutoMapper
-            var postDtos = posts
-                .Select(post =>
+                // Map posts to DTOs using AutoMapper
+                var postDtos = posts
+                    .Select(post =>
+                    {
+                        var postFiles = post
+                            .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
+                            .Select(fileId => filesDictionary[fileId])
+                            .ToList();
+
+                        return _mapper.Map<PostResponseDTO>((post, postFiles));
+                    })
+                    .ToList();
+
+                var paginatedResponse = new PaginatedPostsDTO
                 {
-                    var postFiles = post
-                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
-                        .Select(fileId => filesDictionary[fileId])
-                        .ToList();
+                    Posts = postDtos,
+                    NextLastItemId = nextLastItemId,
+                    HasMore = hasMore,
+                };
 
-                    return _mapper.Map<PostResponseDTO>((post, postFiles));
-                })
-                .ToList();
-
-            var paginatedResponse = new PaginatedPostsDTO
+                return Ok(paginatedResponse);
+            }
+            catch (Exception ex)
             {
-                Posts = postDtos,
-                NextLastItemId = nextLastItemId,
-                HasMore = hasMore,
-            };
-
-            return Ok(paginatedResponse);
+                _logger.LogError($"Error in GetPostsByAuthor: {ex.Message}");
+                return StatusCode(500, "An error occurred while retrieving posts.");
+            }
         }
 
         [HttpPost]
@@ -550,6 +601,135 @@ namespace ASTREE_PFE.Controllers
             var postDto = _mapper.Map<PostResponseDTO>((existingPost, files));
 
             return Ok(postDto);
+        }
+
+        [HttpGet("event")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PaginatedPostsDTO>> GetEventPosts(
+            [FromQuery] string lastItemId = null,
+            [FromQuery] int limit = 10
+        )
+        {
+            var (posts, nextLastItemId, hasMore) = await _postService.GetEventPostsAsync(
+                lastItemId,
+                limit
+            );
+
+            // Collect all file IDs for batch loading
+            var fileIds = posts
+                .SelectMany(p => p.FileIds ?? new List<string>())
+                .Distinct()
+                .ToList();
+
+            // Batch load all files
+            var filesDictionary = new Dictionary<string, Models.File>();
+
+            if (fileIds.Any())
+            {
+                var files = await _fileService.GetFilesByIdsAsync(fileIds);
+                foreach (var file in files)
+                {
+                    filesDictionary[file.Id] = file;
+                }
+            }
+
+            // Map posts to DTOs using AutoMapper
+            var postDtos = posts
+                .Select(post =>
+                {
+                    var postFiles = post
+                        .FileIds.Where(fileId => filesDictionary.ContainsKey(fileId))
+                        .Select(fileId => filesDictionary[fileId])
+                        .ToList();
+
+                    return _mapper.Map<PostResponseDTO>((post, postFiles));
+                })
+                .ToList();
+
+            var paginatedResponse = new PaginatedPostsDTO
+            {
+                Posts = postDtos,
+                NextLastItemId = nextLastItemId,
+                HasMore = hasMore,
+            };
+
+            return Ok(paginatedResponse);
+        }
+
+        [HttpPost("event/create")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PostResponseDTO>> AddEventPost(
+            [FromBody] PostRequestDTO request
+        )
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Use AutoMapper to map the request to a Post
+            var post = _mapper.Map<Post>(request);
+            post.PostType = PostType.Event;
+            post.Timestamp = DateTime.UtcNow;
+
+            var createdPost = await _postService.CreatePostAsync(post);
+
+            // Get files for the created post
+            var files = await _fileService.GetFilesByIdsAsync(createdPost.FileIds);
+
+            // Map the post and files to a response DTO
+            var postDto = _mapper.Map<PostResponseDTO>((createdPost, files));
+
+            return CreatedAtAction(nameof(GetEventPosts), new { id = postDto.Id }, postDto);
+        }
+
+        [HttpPut("event/update/{id}")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult<PostResponseDTO>> UpdateEventPost(
+            string id,
+            [FromBody] PostRequestDTO request
+        )
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var existingPost = await _postService.GetPostByIdAsync(id);
+            if (existingPost == null)
+                return NotFound();
+
+            if (existingPost.PostType != PostType.Event)
+                return BadRequest("This is not an event post");
+
+            // Use AutoMapper to update the existing post
+            _mapper.Map(request, existingPost);
+            existingPost.PostType = PostType.Event; // Ensure the type remains Event
+            existingPost.UpdatedAt = DateTime.UtcNow;
+
+            await _postService.UpdatePostAsync(id, existingPost);
+
+            // Get files for the updated post
+            var files = await _fileService.GetFilesByIdsAsync(existingPost.FileIds);
+
+            // Map the post and files to a response DTO
+            var postDto = _mapper.Map<PostResponseDTO>((existingPost, files));
+
+            return Ok(postDto);
+        }
+
+        [HttpDelete("event/{id}")]
+        [Authorize(Roles = "SUPERADMIN")]
+        public async Task<ActionResult> DeleteEventPost(string id)
+        {
+            if (!ObjectId.TryParse(id, out _))
+                return BadRequest("Invalid post ID format");
+
+            var post = await _postService.GetPostByIdAsync(id);
+            if (post == null)
+                return NotFound();
+
+            if (post.PostType != PostType.Event)
+                return BadRequest("This is not an event post");
+
+            await _postService.DeletePostAsync(id);
+            return NoContent();
         }
     }
 }

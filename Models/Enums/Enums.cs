@@ -156,5 +156,6 @@ namespace ASTREE_PFE.Models
         General, // Regular feed posts
         Channel, // Channel-specific posts
         Library, // Documentation/library posts
+        Event, // Event posts (accessible only to superadmin)
     }
 }
