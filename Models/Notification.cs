@@ -32,5 +32,7 @@ namespace ASTREE_PFE.Models
 
         public string? Title { get; set; }
 
+        // ID of the related entity (e.g., post, comment, etc.)
+        public string? RelatedEntityId { get; set; }
     }
 }
