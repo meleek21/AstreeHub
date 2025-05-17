@@ -11,7 +11,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<Todo> CreateTodoAsync(Todo todo);
         Task<Todo> GetTodoByIdAsync(string id, string userId);
         Task<IEnumerable<Todo>> GetUserTodosAsync(
-            string userId, 
+            string userId,
             TodoStatus? status = null,
             TodoPriority? priority = null,
             DateTime? dueDate = null

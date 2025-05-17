@@ -25,7 +25,7 @@ namespace ASTREE_PFE.Models
         [BsonRepresentation(BsonType.String)]
         public NotificationType NotificationType { get; set; }
 
-
+        
 
         // Additional properties for richer notifications
         public string? SenderName { get; set; }

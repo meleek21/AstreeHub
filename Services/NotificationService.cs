@@ -325,6 +325,23 @@ namespace ASTREE_PFE.Services
             }
         }
 
+        // New method for todo due tomorrow notification
+        public async Task CreateTodoDueTomorrowNotificationAsync(
+            string todoId,
+            string userId
+        )
+        {
+            var notification = new Notification
+            {
+                RecipientId = userId,
+                Content = $"Votre tâche est prévue pour demain",
+                NotificationType = NotificationType.TodoDueReminder,
+                RelatedEntityId = todoId, // Add todo ID as related entity
+            };
+
+            await CreateNotificationAsync(notification);
+        }
+
         // Helper methods
         private string TruncateContent(string content, int maxLength = 50)
         {
