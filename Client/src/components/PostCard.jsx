@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import '../assets/Css/PostCard.css';
 import { formatDateOrRelative } from '../utils/formatDate';
 
-const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick }) => {
+const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick, setSelectedPostId }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

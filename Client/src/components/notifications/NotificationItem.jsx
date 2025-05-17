@@ -33,6 +33,9 @@ const NotificationItem = ({ notification, onOpenPostModal }) => {
       case 'ChannelPost':
         navigate('/channels');
         break;
+        case 'TodoDueReminder':
+          navigate('/home');
+          break;
       default:
         if (notification.actionUrl) {
           navigate(notification.actionUrl);
