@@ -604,7 +604,6 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("event")]
-        [Authorize(Roles = "SUPERADMIN")]
         public async Task<ActionResult<PaginatedPostsDTO>> GetEventPosts(
             [FromQuery] string lastItemId = null,
             [FromQuery] int limit = 10

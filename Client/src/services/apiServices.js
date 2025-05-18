@@ -74,6 +74,11 @@ export const postsAPI = {
   updateChannelPost: (channelId, postId, postData) => api.put(`/post/channel/${channelId}/post/${postId}`, postData),
   deleteChannelPost: (channelId, postId) => api.delete(`/post/channel/${channelId}/${postId}`),
   getPostsByAuthor: (authorId, lastItemId, limit = 10) => api.get(`/post/author/${authorId}?lastItemId=${lastItemId || ''}&limit=${limit}`),
+  //admin-event endpoints
+  getEventPosts: (lastItemId, limit = 10) => api.get(`/post/event?lastItemId=${lastItemId || ''}&limit=${limit}`),
+  addEventPost: (eventPostData) => api.post('/post/event/create', eventPostData),
+  updateEventPost: (id, eventPostData) => api.put(`/post/event/update/${id}`, eventPostData),
+  deleteEventPost: (id) => api.delete(`/post/event/${id}`),
 };
 
 // Reactions API service
@@ -98,7 +103,7 @@ export const userAPI = {
   deleteEmployee: (id) => api.delete(`/employee/delete/${id}`)
 };
 
-// User online status API service - Updated with correct casing
+// User online status API service 
 export const userOnlineStatusAPI = {
   getOnlineUsers: () => api.get('/UserOnlineStatus/online'),
   getUserStatus: (userId) => api.get(`/UserOnlineStatus/${userId}/status`),
@@ -301,4 +306,3 @@ export const todoAPI = {
   // Get summary of todos
   getTodoSummary: (userId) => api.get(`/todo/summary?userId=${userId}`)
 };
-
