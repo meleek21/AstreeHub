@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import MiniCalendar from './MiniCalendar';
+import React from 'react';
 import '../assets/Css/EventSideBar.css';
 import ClosestBirthdays from './ClosestBirthdays';
 import { 
