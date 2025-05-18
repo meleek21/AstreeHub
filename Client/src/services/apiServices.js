@@ -306,3 +306,7 @@ export const todoAPI = {
   // Get summary of todos
   getTodoSummary: (userId) => api.get(`/todo/summary?userId=${userId}`)
 };
+
+export const weatherAPI = {
+  getWeatherData: (lat, lon) => api.get(`/weather?lat=${lat}&lon=${lon}`)
+};
