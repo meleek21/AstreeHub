@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Channel from '../components/ChannelCard';
 import { useAuth } from '../Context/AuthContext';
 import { channelsAPI } from '../services/apiServices';
-import '../assets/Css/Channel.css'; // Import your custom CSS file
+import '../assets/Css/Channel.css';
 
 function ChannelsList() {
   const [channels, setChannels] = useState([]);
@@ -34,7 +34,7 @@ function ChannelsList() {
   }, [user?.departmentId]);
 
   if (loading) {
-    return <div className="loading-container">Loading channels...</div>;
+    return <div className="loading-container">Chargement des canaux...</div>;
   }
 
   if (error) {
@@ -45,7 +45,7 @@ function ChannelsList() {
     <div className="feed-container">
       <div className="channels-grid">
         {!Array.isArray(channels) || channels.length === 0 ? (
-          <div className="no-channels">No channels available</div>
+          <div className="no-channels">Aucun canal disponible</div>
         ) : (
           channels.map((channel) => (
             <div className="channel-item" key={channel.id}>

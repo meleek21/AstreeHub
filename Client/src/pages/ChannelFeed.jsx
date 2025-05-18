@@ -5,6 +5,9 @@ import { postsAPI } from '../services/apiServices';
 import PostCard from '../components/PostCard';
 import CreatePost from '../components/CreatePost';
 import Comment from '../components/Comments/Comment';
+import Empty from '../assets/Empty.png';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
 import { createPortal } from "react-dom";
@@ -16,7 +19,7 @@ function ChannelFeed() {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const observerTarget = useRef(null);
-
+  const navigate = useNavigate();
   // State for infinite scroll
   const [lastItemId, setLastItemId] = useState(null);
   const [hasMore, setHasMore] = useState(true);
@@ -126,7 +129,7 @@ function ChannelFeed() {
   };
 
   if (loading) {
-    return <div className="loading-container">Loading posts...</div>;
+    return <div className="loading-container">Chargement des publications...</div>;
   }
 
   if (error) {
@@ -135,10 +138,36 @@ function ChannelFeed() {
 
   return (
     <div className="feed-container">
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+          <motion.button
+            onClick={() => navigate('/channels')}
+            aria-label="Back to Dashboard"
+            className="btn-back-arrow"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              marginRight: '12px',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: '1.5rem',
+              color: 'var(--primary)',
+              outline: 'none'
+            }}
+            whileHover={{ scale: 1.15, color: '#173b61' }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span style={{ marginLeft: '6px', fontSize: '1rem' }}></span>
+          </motion.button>
+        </div>
       <CreatePost channelId={channelId} />
       <div className="posts-container">
         {posts.length === 0 ? (
-          <div className="no-posts">No posts available in this channel</div>
+          <div className="no-posts">
+            <img src={Empty} alt="Empty page" style={{width:'300px',height:'300px'}} />
+          </div>
         ) : (
           posts.map((post) => (
             <PostCard
@@ -154,14 +183,14 @@ function ChannelFeed() {
             />
           ))
         )}
-        {loadingMore && <div className="loading-more">Loading more posts...</div>}
+        {loadingMore && <div className="loading-more">Chargement de plus de publications...</div>}
         <div ref={observerTarget} style={{ height: '20px' }} />
       </div>
 
       {isCommentsModalOpen && selectedPostId && (
         createPortal(
           <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
-            <button className="close-modal" onClick={closeCommentsModal}>
+            <button className="close-modal" onClick={closeCommentsModal} title="Fermer les commentaires">
               &times;
             </button>
             <Comment
