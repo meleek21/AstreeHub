@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { userAPI } from '../../services/apiServices';
 import UserBadge from '../UserBadge';
 import '../../assets/Css/ChatSidebar.css';
@@ -8,55 +9,29 @@ import { useChat } from '../../Context/ChatContext';
 import { useAuth } from '../../Context/AuthContext';
 
 const ChatSidebar = () => {
-  const { conversations, setConversations, selectedConversation, setSelectedConversation, messages, setMessages, loading, setLoading, unreadCount, setUnreadCount, selectedEmployee, setSelectedEmployee, handleSelectEmployee } = useChat();
+  const { handleSelectEmployee } = useChat();
   const { user } = useAuth();
-  const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
   const [isSidebarVisible, setSidebarVisible] = useState(false);
-  const [error, setError] = useState(null);
   const sidebarRef = useRef(null);
 
   const toggleSidebarVisibility = () => {
     setSidebarVisible(!isSidebarVisible);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        setSidebarVisible(false);
-      }
-    };
+  const { data: employees = [], isLoading, isError, error } = useQuery({
+    queryKey: ['employees'],
+    queryFn: async () => {
+      const response = await userAPI.getAllEmployees();
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5 // 5 minutes
+  });
 
-    if (isSidebarVisible) {
-      document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isSidebarVisible]);
-  // Fetch all employees
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        setLoading(true);
-        const response = await userAPI.getAllEmployees();
-        setEmployees(response.data);
-        setFilteredEmployees(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching employees:', error);
-        setError('Failed to load employees');
-        setLoading(false);
-      }
-    };
-
-    fetchEmployees();
-  }, []);
+  React.useEffect(() => {
+    setFilteredEmployees(employees);
+  }, [employees]);
 
   // Debounce search function
   const debounce = (func, delay) => {
@@ -76,12 +51,10 @@ const ChatSidebar = () => {
         setFilteredEmployees(employees);
         return;
       }
-
       const filtered = employees.filter((employee) => {
         const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase();
         return fullName.includes(searchValue.toLowerCase());
       });
-
       setFilteredEmployees(filtered);
     }, 300),
     [employees]
@@ -94,7 +67,20 @@ const ChatSidebar = () => {
     filterEmployees(value);
   };
 
-  if (loading) {
+  React.useEffect(() => {
+    if (!isSidebarVisible) return;
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        setSidebarVisible(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSidebarVisible]);
+
+  if (isLoading) {
     return (
       <div className="chat-sidebar">
         <h2>Contacts</h2>
@@ -103,29 +89,25 @@ const ChatSidebar = () => {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="chat-sidebar">
         <h2>Contacts</h2>
-        <div className="error-message">{error}</div>
+        <div className="error-message">{error?.message || 'Failed to load employees'}</div>
       </div>
     );
   }
 
- 
-
-  
-
   return (
     <div>
       <button className="peeking-ticket" onClick={toggleSidebarVisibility}>
-      <lord-icon
-        src="https://cdn.lordicon.com/wjogzler.json"
-        trigger="hover"
-        colors="primary:#ffebd0ff"
-        style={{width: '35px',height: '35px',transform: 'rotate(-180deg)' ,transition: 'transform 0.3s ease'}}>
-      </lord-icon>
-      <span className="peeking-tooltip">une date? un collegue?</span>
+        <lord-icon
+          src="https://cdn.lordicon.com/wjogzler.json"
+          trigger="hover"
+          colors="primary:#ffebd0ff"
+          style={{width: '35px',height: '35px',transform: 'rotate(-180deg)' ,transition: 'transform 0.3s ease'}}>
+        </lord-icon>
+        <span className="peeking-tooltip">une date? un collegue?</span>
       </button>
       {isSidebarVisible && (
         <ModalPortal>

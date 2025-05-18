@@ -13,6 +13,7 @@ export const ChatProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employees, setEmployees] = useState([]);
 
   // Handler for selecting a conversation - fetches messages and updates state
   const handleSelectConversation = useCallback(async (conversation) => {
@@ -91,6 +92,8 @@ export const ChatProvider = ({ children }) => {
     setUnreadCount,
     selectedEmployee,
     setSelectedEmployee,
+    employees,
+    setEmployees,
     handleSelectConversation,
     handleSelectEmployee: async (employee, currentUser) => {
       setSelectedEmployee(employee);

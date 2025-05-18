@@ -3,7 +3,6 @@ using ASTREE_PFE.Models;
 using ASTREE_PFE.Repositories.Interfaces;
 using ASTREE_PFE.Services.Interfaces;
 
-
 namespace ASTREE_PFE.Services
 {
     public class MessageService : IMessageService
@@ -14,6 +13,7 @@ namespace ASTREE_PFE.Services
         private readonly INotificationService _notificationService;
         private readonly IFileService _fileService;
         private readonly ICloudinaryService _cloudinaryService;
+        private readonly IEmployeeService _employeeService;
 
         public MessageService(
             IMessageRepository messageRepository,
@@ -21,7 +21,8 @@ namespace ASTREE_PFE.Services
             IEmployeeRepository employeeRepository,
             INotificationService notificationService,
             IFileService fileService,
-            ICloudinaryService cloudinaryService
+            ICloudinaryService cloudinaryService,
+            IEmployeeService employeeService
         )
         {
             _messageRepository = messageRepository;
@@ -30,6 +31,7 @@ namespace ASTREE_PFE.Services
             _notificationService = notificationService;
             _fileService = fileService;
             _cloudinaryService = cloudinaryService;
+            _employeeService = employeeService;
         }
 
         public async Task<MessageResponseDto> GetMessageByIdAsync(string id)
@@ -52,11 +54,101 @@ namespace ASTREE_PFE.Services
                 skip,
                 limit
             );
+
+            if (messages == null || !messages.Any())
+            {
+                return new List<MessageResponseDto>();
+            }
+
             var messageDtos = new List<MessageResponseDto>();
+
+            // Check if conversation exists
+            var conversation = await _conversationRepository.GetConversationByIdAsync(
+                conversationId
+            );
+            if (conversation == null)
+            {
+                // Return empty collection if conversation doesn't exist
+                return new List<MessageResponseDto>();
+            }
+
+            // Collect all unique sender and recipient IDs
+            var senderIds = messages
+                .Select(m => m.SenderId)
+                .Where(id => id != null)
+                .Distinct()
+                .ToList();
+
+            var recipientIds =
+                conversation.Participants?.Where(p => p != null && !senderIds.Contains(p)).ToList()
+                ?? new List<string>();
+
+            var allUserIds = senderIds
+                .Union(recipientIds)
+                .Where(id => id != null)
+                .Distinct()
+                .ToList();
+
+            // Batch fetch user info - handle potential null results
+            var userInfoList =
+                await _employeeService.GetUserInfoBatchAsync(allUserIds) ?? new List<UserInfoDTO>();
+            var userInfoDict = userInfoList
+                .Where(u => u != null && u.Id != null) // Filter out any null entries
+                .GroupBy(u => u.Id)
+                .Select(g => g.First())
+                .ToDictionary(u => u.Id, u => u);
 
             foreach (var message in messages)
             {
-                messageDtos.Add(await MapToMessageResponseDtoAsync(message));
+                if (message == null || message.SenderId == null || message.ConversationId == null)
+                {
+                    continue; // Skip invalid messages
+                }
+
+                // Handle potential null values safely
+                UserInfoDTO sender = null;
+                if (message.SenderId != null)
+                {
+                    userInfoDict.TryGetValue(message.SenderId, out sender);
+                }
+
+                string recipientId = null;
+                if (conversation?.Participants != null)
+                {
+                    recipientId = conversation.Participants.FirstOrDefault(p =>
+                        p != null && p != message.SenderId
+                    );
+                }
+
+                UserInfoDTO recipient = null;
+                if (recipientId != null)
+                {
+                    userInfoDict.TryGetValue(recipientId, out recipient);
+                }
+
+                messageDtos.Add(
+                    new MessageResponseDto
+                    {
+                        Id = message.Id,
+                        Content = message.Content,
+                        SenderId = message.SenderId,
+                        SenderName =
+                            sender != null
+                                ? ($"{sender.FirstName} {sender.LastName}".Trim())
+                                : "Unknown User",
+                        SenderProfilePicture = sender?.ProfilePictureUrl,
+                        RecipientName =
+                            recipient != null
+                                ? ($"{recipient.FirstName} {recipient.LastName}".Trim())
+                                : "Unknown User",
+                        RecipientProfilePicture = recipient?.ProfilePictureUrl,
+                        Timestamp = message.Timestamp,
+                        IsRead = message.IsRead,
+                        ReadAt = message.ReadAt,
+                        AttachmentUrl = message.AttachmentUrl,
+                        ConversationId = message.ConversationId,
+                    }
+                );
             }
 
             return messageDtos;

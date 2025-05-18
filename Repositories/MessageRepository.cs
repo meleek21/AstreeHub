@@ -14,6 +14,15 @@ namespace ASTREE_PFE.Repositories
         {
             _messages = database.GetCollection<Message>("Messages");
             _conversationCollection = database.GetCollection<Conversation>("Conversations");
+            // Ensure indexes for Messages collection
+            var messageIndexKeys = Builders<Message>.IndexKeys
+                .Ascending(m => m.ConversationId)
+                .Ascending(m => m.Timestamp);
+            var senderIdIndex = Builders<Message>.IndexKeys.Ascending(m => m.SenderId);
+            var isReadIndex = Builders<Message>.IndexKeys.Ascending(m => m.IsRead);
+            _messages.Indexes.CreateOne(new CreateIndexModel<Message>(messageIndexKeys));
+            _messages.Indexes.CreateOne(new CreateIndexModel<Message>(senderIdIndex));
+            _messages.Indexes.CreateOne(new CreateIndexModel<Message>(isReadIndex));
         }
 
         public async Task<IEnumerable<Message>> GetAllMessagesAsync()
