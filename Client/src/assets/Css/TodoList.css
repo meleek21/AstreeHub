@@ -2,11 +2,10 @@
 .todo-app {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  min-height: 100vh;
+  min-height: 80vh; /* Reduced height */
   border-radius: 15px;
   background: var(--primary-lighter);
-  padding: 32px 0 0 0;
+  padding: 16px 0 0 0; /* Reduced padding */
 }
 
 .task-board {
@@ -83,7 +82,10 @@
 }
 
 .task-card {
-  padding: 16px 12px 12px 12px;
+  width: 90%; /* Further adjust width to make it smaller */
+  max-width: 200px; /* Reduce maximum width */
+  padding: 10px 6px 6px 6px; /* Reduce padding */
+
   border-radius: 12px;
   background-color: white;
   box-shadow: var(--shadow-sm);

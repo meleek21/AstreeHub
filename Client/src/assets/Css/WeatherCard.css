@@ -1,8 +1,8 @@
 .weather-card {
     font-family: 'Nunito', sans-serif;
-    background: var(--background);
-    border-radius: 16px;
-    padding: 24px;
+    background: var(--primary-light);
+    border-radius: 20px;
+    padding: 10px;
     max-width: 320px;
     box-shadow: var(--shadow-md);
     position: relative;
@@ -25,7 +25,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
     position: relative;
   }
   
@@ -40,7 +39,6 @@
     font-size: 3.5rem;
     color: var(--accent);
     text-align: center;
-    margin: 10px 0;
     height: 80px;
     display: flex;
     align-items: center;
@@ -50,28 +48,26 @@
   .weather-temp {
     font-size: 3rem;
     font-weight: 800;
-    margin: 10px 0;
     text-align: center;
     color: var(--primary);
     position: relative;
-    display: inline-block;
   }
   
   .weather-condition {
     text-transform: capitalize;
-    color: var(--text-secondary);
+    color: var(--text-on-dark);
     text-align: center;
     font-size: 1.1rem;
-    margin: 5px 0 15px;
+    margin: 2px ;
   }
   
   .weather-stats {
     display: flex;
     justify-content: space-between;
-    margin-top: 20px;
+    margin-top: 10px;
     font-size: 0.9rem;
-    color: var(--text-secondary);
-    gap: 15px;
+    color: var(--text-on-dark);
+  
   }
   
   .weather-stats span {

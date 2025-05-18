@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+.welcome-badge {
+  font-family: 'Nunito', sans-serif;
+  background: var(--secondary);
+  color: var(--text-on-dark);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-md);
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  cursor: default;
+  border-left: 6px solid var(--accent-alt);
+}
+
+
+.welcome-icon {
+  font-size: 1.5rem;
+  color: var(--accent-alt);
+}
+
+.welcome-badge-text {
+  position: relative;
+  z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .welcome-badge {
+    font-size: 1.1rem;
+    padding: 1rem 1.5rem;
+  }
+  
+  .welcome-icon {
+    font-size: 1.2rem;
+  }
+}
