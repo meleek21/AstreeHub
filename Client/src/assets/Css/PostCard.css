@@ -1,17 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
 .post-card {
-  background-color: white;
+  background-color: var(--primary-lighter);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
   position: relative;
+  overflow: hidden;
+  font-family: 'Nunito', sans-serif;
 }
 
 .post-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.post-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  transition: var(--transition);
 }
 
 /* Post Header */
@@ -19,38 +35,56 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
 .post-meta {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .post-date {
-  font-size: 0.85em;
+  font-size: 0.85rem;
   color: var(--text-secondary);
+  font-family: 'Raleway', sans-serif;
 }
 
 /* Post Content */
 .post-content {
-  font-size: 1em;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.7;
   color: var(--text-primary);
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   white-space: pre-wrap;
+  font-family: 'Raleway', sans-serif;
 }
 
 .post-content a {
   color: var(--primary);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  position: relative;
 }
 
 .post-content a:hover {
-  text-decoration: underline;
-  color: var(--primary-light);
+  color: var(--secondary);
+}
+
+.post-content a.user-mention::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+  transition: var(--transition-fast);
+}
+
+.post-content a.user-mention:hover::after {
+  width: 100%;
 }
 
 /* Post Actions Menu */
@@ -62,16 +96,19 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.5em;
-  color: var(--text-secondary);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px;
+  border-radius: 50%;
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
 }
 
 .post-edit-toggle:hover {
+  background-color: var(--primary-lighter);
   color: var(--primary);
-  background-color: rgba(37, 58, 130, 0.1);
+  transform: rotate(90deg);
 }
 
 .post-edit-options {
@@ -80,69 +117,81 @@
   top: 100%;
   background-color: white;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-md);
-  z-index: 10;
-  min-width: 120px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 160px;
   overflow: hidden;
 }
 
 .post-edit-options button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
-  padding: 8px 16px;
+  padding: 10px 16px;
   text-align: left;
   background: none;
   border: none;
-  color: var(--text-primary);
+  color: var(--primary);
   cursor: pointer;
-  font-size: 0.9em;
-  transition: var(--transition);
+  font-size: 0.95rem;
+  transition: var(--transition-fast);
+  font-family: 'Nunito', sans-serif;
 }
 
 .post-edit-options button:hover {
-  background-color: var(--background);
+  background-color: var(--primary-lighter);
   color: var(--primary);
+}
+
+.post-edit-options button svg {
+  flex-shrink: 0;
 }
 
 /* Interaction Buttons */
 .post-interaction-buttons {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
-  margin-top: 16px;
-  padding-top: 12px;
+  justify-content: space-around;
+  margin-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 
 .view-comments-button {
-  padding: 10px 16px;
-  border-radius: 15px;
-  font-size: 15px;
-  letter-spacing: 1px;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
   background: var(--accent);
-  color: var(--background);
+  color: white;
   font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
   border: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
 .view-comments-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(37, 58, 130, 0.2);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  background: var(--gradient-accent);
+}
+
+.view-comments-button svg {
+  stroke-width: 2.5px;
 }
 
 /* Enhanced Files Section */
 .post-files {
   margin-top: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
-  padding: 0;
 }
 
 .file-item {
@@ -152,120 +201,162 @@
   border-radius: 12px;
   border: 1px solid var(--border);
   overflow: hidden;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
 }
 
 .file-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
   border-color: var(--primary-light);
 }
 
 .post-image {
   width: 100%;
-  height: 100%;
+  height: 180px;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 
-.file-item:hover .post-image {
-  transform: scale(1.05);
+.file-meta {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.file-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-size {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .file-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size:1rem;
-  padding: 4px;
   color: var(--primary);
   text-decoration: none;
-  transition: color 0.2s ease;
+  font-weight: 600;
+  transition: var(--transition-fast);
 }
 
 .file-link:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+.file-document {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px;
+}
+
+.file-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-lighter);
+  border-radius: 8px;
+  margin-right: 12px;
   color: var(--primary);
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-  .post-files {
-    gap: 0.75rem;
-  }
-  
-  .file-item {
-    width: 150px;
-  }
-  
-  .file-preview {
-    height: 100px;
-  }
+.file-icon svg {
+  width: 24px;
+  height: 24px;
 }
+
 /* Edit Mode */
 .edit-mode {
-  margin: 12px 0;
+  margin: 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .edit-textarea {
   width: 100%;
-  min-height: 120px;
-  padding: 12px;
+  min-height: 150px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 1em;
-  line-height: 1.5;
+  border-radius: 12px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
   color: var(--text-primary);
   resize: vertical;
   transition: var(--transition);
+  background: var(--background);
 }
 
 .edit-textarea:focus {
   border-color: var(--primary-light);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(37, 58, 130, 0.1);
+  box-shadow: 0 0 0 3px var(--primary-lighter);
 }
 
 .edit-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: flex-end;
 }
 
 .save-button {
-  padding: 8px 16px;
-  border-radius: 20px;
+  padding: 10px 20px;
+  border-radius: 50px;
   background: var(--gradient-primary);
   color: white;
   border: none;
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
-}
-
-.save-button:hover {
-  transform: translateY(-2px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
   box-shadow: var(--shadow-sm);
 }
 
+.save-button:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  background: var(--gradient-primary);
+}
+
+.save-button svg {
+  stroke-width: 2.5px;
+}
+
 .cancel-button {
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  background: white;
   border: 1px solid var(--border);
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 700;
   cursor: pointer;
   transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .cancel-button:hover {
-  background-color: rgba(37, 58, 130, 0.05);
-  transform: translateY(-2px);
+  background-color: var(--background);
+  transform: translateY(-3px);
+  border-color: var(--primary-light);
+}
+
+.cancel-button svg {
+  stroke-width: 2.5px;
 }
 
 /* Expanded Image */
@@ -275,29 +366,59 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  cursor: pointer;
 }
 
 .expanded-image {
   max-width: 90%;
   max-height: 90%;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  object-fit: contain;
+}
+
+.close-expanded-image {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+  backdrop-filter: blur(5px);
+}
+
+.close-expanded-image:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: rotate(90deg);
+}
+
+.close-expanded-image svg {
+  stroke: white;
+  stroke-width: 2.5px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .post-card {
-    padding: 16px;
+    padding: 20px;
+    border-radius: 12px;
   }
   
   .post-interaction-buttons {
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
   }
   
   .view-comments-button {
@@ -311,5 +432,10 @@
   
   .save-button, .cancel-button {
     width: 100%;
+    justify-content: center;
+  }
+
+  .post-files {
+    grid-template-columns: 1fr;
   }
 }

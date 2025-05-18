@@ -17,7 +17,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   const [updatedContent, setUpdatedContent] = useState(post.content);
   const [expandedImage, setExpandedImage] = useState(null);
   const textareaRef = useRef(null);
-
+  const menuRef = useRef(null);
   const handleCommentClick = onCommentClick || openCommentsModal;
 
   const formatContent = (content) => {
@@ -54,6 +54,20 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      const handleClickOutside = (event) => {
+        if (menuRef.current && !menuRef.current.contains(event.target)) {
+          closeMenu();
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [isMenuOpen]);
 
   useEffect(() => {
     if (isEditing && textareaRef.current) {
@@ -111,23 +125,47 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
           />
-          <p>{fileName}</p>
+          <div className="file-meta">
+            <span className="file-name">{fileName}</span>
+            <span className="file-size">{formatFileSize(fileSize)}</span>
+          </div>
         </motion.div>
       );
     } else if (fileType === 'application/pdf') {
       return (
-        <div className="file-item">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="file-link">
-            {fileName}
-          </a>
+        <div className="file-item file-document">
+          <div className="file-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <path d="M10 13v-1h2.5v6H10v-1"></path>
+              <path d="M14 13v-1h2v6h-2v-1"></path>
+              <path d="M6 13h1.5v3H6v-3z"></path>
+            </svg>
+          </div>
+          <div className="file-meta">
+            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="file-link">
+              {fileName}
+            </a>
+            <span className="file-size">{formatFileSize(fileSize)}</span>
+          </div>
         </div>
       );
     } else {
       return (
-        <div className="file-item">
-          <a href={fileUrl} download={fileName} className="file-link">
-            {fileName}
-          </a>
+        <div className="file-item file-document">
+          <div className="file-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </div>
+          <div className="file-meta">
+            <a href={fileUrl} download={fileName} className="file-link">
+              {fileName}
+            </a>
+            <span className="file-size">{formatFileSize(fileSize)}</span>
+          </div>
         </div>
       );
     }
@@ -139,7 +177,13 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
   };
 
   return (
-    <div key={post.id || post._id} className="post-card">
+    <motion.div 
+      key={post.id || post._id} 
+      className="post-card"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Post Header */}
       <div className="post-header">
         <div className="post-meta">
@@ -151,26 +195,35 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
         
         {post.authorId === userId && (
           <div className="post-actions">
-            <div className="post-edit-menu">
+            <div className="post-edit-menu" ref={menuRef}>
               <button
                 className="post-edit-toggle"
                 aria-label="Options"
                 onClick={toggleMenu}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <circle cx="5" cy="12" r="2"/>
-        <circle cx="12" cy="12" r="2"/>
-        <circle cx="19" cy="12" r="2"/>
-      </svg>
+                  <circle cx="5" cy="12" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="19" cy="12" r="2"/>
+                </svg>
               </button>
               {isMenuOpen && (
-                <div className="post-edit-options">
+                <motion.div 
+                  className="post-edit-options"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
                   <button
                     onClick={() => {
                       setIsEditing(true);
                       closeMenu();
                     }}
                   >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
                     Modifier
                   </button>
                   <button
@@ -179,9 +232,13 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
                       closeMenu();
                     }}
                   >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
                     Supprimer
                   </button>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
@@ -199,8 +256,21 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             className="edit-textarea"
           />
           <div className="edit-actions">
-            <button onClick={handleSave} className="save-button">Enregistrer</button>
-            <button onClick={() => setIsEditing(false)} className="cancel-button">Annuler</button>
+            <button onClick={handleSave} className="save-button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Enregistrer
+            </button>
+            <button onClick={() => setIsEditing(false)} className="cancel-button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              Annuler
+            </button>
           </div>
         </div>
       ) : (
@@ -223,6 +293,9 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
       {/* Interaction Buttons */}
       <div className="post-interaction-buttons">
         <button className="view-comments-button" onClick={() => handleCommentClick(post.id)}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
           Commentaires
         </button>
         <Reaction postId={post.id} employeeId={userId} openReactionsModal={openReactionsModal} />
@@ -247,10 +320,16 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
               exit={{ scale: 0.8 }}
               transition={{ duration: 0.3 }}
             />
+            <button className="close-expanded-image">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 };
 

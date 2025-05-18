@@ -60,6 +60,7 @@ const ReactionTrigger = ({
               src="https://cdn.lordicon.com/msyeyaka.json"
               trigger="morph"
               stroke="bold"
+              colors="primary:#f4b69c,secondary:#f24c00"
               state="hover-up" style={{ width: '35px', height: '35px' }}/> 
           )}
         </button>
