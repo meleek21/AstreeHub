@@ -9,8 +9,26 @@ import EventSideBar from '../components/EventSideBar';
 import ModalPortal from '../components/ModalPortal';
 import { eventsAPI } from '../services/apiServices';
 import '../assets/Css/Calendar.css';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Calendar = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.state?.eventId) {
+      const fetchAndShowEvent = async () => {
+        try {
+          const response = await eventsAPI.getEventById(location.state.eventId);
+          setSelectedEvent(response.data);
+          navigate(location.pathname, { replace: true }); // Clear navigation state
+        } catch (error) {
+          console.error('Failed to fetch event:', error);
+        }
+      };
+      fetchAndShowEvent();
+    }
+  }, [location.state]);
   const getEventTypeColor = (type) => {
     const typeColors = {
       'Général': '#3788d8',
