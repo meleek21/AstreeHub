@@ -259,6 +259,10 @@ builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IGoogleCalendarService, GoogleCalendarService>();
 
+//Register weather service
+builder.Services.AddScoped<IWeatherService, WeatherService>();
+builder.Services.AddHttpClient();
+
 // Add SignalR
 builder.Services.AddSignalR();
 
@@ -302,3 +306,5 @@ app.MapHub<UserHub>("/hubs/user");
 app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
+
+
