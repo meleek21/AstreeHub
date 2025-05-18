@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../Context/AuthContext';
-import { todoAPI } from '../services/apiServices';
+import { useAuth } from '../../Context/AuthContext';
+import { todoAPI } from '../../services/apiServices';
 import SummaryCards from './SummaryCards';
 import AddTaskForm from './AddTaskForm';
 import TaskBoard from './TaskBoard';
-import '../assets/Css/TodoList.css';
-import toast, { Toaster } from 'react-hot-toast';
+import '../../assets/Css/TodoList.css';
+import toast from 'react-hot-toast';
 
 const TodoList = () => {
   const [tasks, setTasks] = useState({

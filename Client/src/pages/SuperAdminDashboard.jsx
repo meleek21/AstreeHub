@@ -43,13 +43,13 @@ const SuperAdminDashboard = () => {
         
         <div 
           className="dashboard-card" 
-          onClick={() => navigate('/evenement')}
+          onClick={() => navigate('/memories')}
           aria-label="Gérer les événements"
         >
-          <h2>Événements</h2>
+          <h2>Souvenirs</h2>
           <p>
-            Planifiez et supervisez tous vos événements.<br />
-            Gestion complète des calendriers et participants.
+            Partagez et revivez les moments forts de votre équipes <br />
+            Téléchargez des photos et des vidéos de voyages de travail, de fêtes, de conférences et plus encore.
           </p>
           <div className="card-icon">
           <lord-icon

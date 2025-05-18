@@ -236,7 +236,7 @@ function FileUpload() {
             <div className="file-upload-dropzone-content">
               <img src={FileSearching} alt="Astree Logo" className="file-upload-dropzone-icon" />
               <div className="file-upload-dropzone-text">
-                Drag and Drop Files Here
+                Faites glisser et déposez les fichiers ici
               </div>
             </div>
           ) : (
