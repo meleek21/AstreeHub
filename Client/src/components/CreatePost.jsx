@@ -76,9 +76,11 @@ const CreatePost = ({ channelId }) => {
 
   if (isChannelPost && !isDirector) {
     return (
-      <div className="create-post-container create-post-restricted-wrapper">
-        <div className="create-post-restricted">
-          <p>BIENVENUE DANS LE CANAL OFFICIEL DU DEPARTEMENT</p>
+      <div className="create-post-container">
+        <div className="create-post-restricted-wrapper">
+          <div className="create-post-restricted">
+            <p>Retrouvez ici les informations officielles du département</p>
+          </div>
         </div>
       </div>
     );

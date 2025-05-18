@@ -1,7 +1,7 @@
 /* Channel Card Container */
 .channel-card-container {
   width: 300px; /* Fixed width for all cards */
-  height: 200px; /* Fixed height for all cards */
+  height: 220px; /* Slightly increased height for better spacing */
   margin: 10px;
   perspective: 1000px; /* For 3D effect */
 }
@@ -9,43 +9,57 @@
 .channel-card {
   width: 100%;
   height: 100%;
-  border-radius: var(--border-radius);
-  background-color: var(--background-color);
-  box-shadow: var(--box-shadow);
-  transition: transform var(--transition-speed), box-shadow var(--transition-speed), background-color var(--transition-speed);
+  border-radius: 12px; /* Increased border radius for modern look */
+  box-shadow: var(--shadow-md);
+  transition: var(--transition);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 16px;
+  padding: 20px;
   position: relative;
   overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 .channel-card:hover {
-  transform: translateY(-5px) scale(1.02);
-  box-shadow: var(--box-shadow-hover);
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: var(--shadow-lg);
   background-color: white;
+  border-color: var(--primary-light);
 }
 
 /* Channel Card Body */
 .channel-card-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  z-index: 2;
 }
 
 /* Channel Card Title */
 .channel-card-title {
   font-family: 'Nunito', sans-serif;
-  font-weight: 600;
-  color: var(--text-primary);
+  font-weight: 700; /* Increased weight for better hierarchy */
+  color: var(--primary);
   margin: 0;
-  font-size: 1.25rem;
-  transition: color var(--transition-speed);
+  font-size: 1.3rem;
+  transition: var(--transition-fast);
+  position: relative;
 }
 
-.channel-card:hover .channel-card-title {
-  color: var(--primary-color);
+.channel-card-title::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--gradient-accent);
+  transition: var(--transition-fast);
+}
+
+.channel-card:hover .channel-card-title::after {
+  width: 40px;
 }
 
 /* Channel Card Text */
@@ -53,71 +67,94 @@
   font-family: 'Raleway', sans-serif;
   color: var(--text-secondary);
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 /* Badge */
 .badge {
   display: inline-block;
-  padding: 4px 8px;
-  border-radius: var(--border-radius);
+  padding: 5px 10px;
+  border-radius: 20px; /* Pill shape */
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  transition: transform var(--transition-speed), opacity var(--transition-speed);
+  transition: var(--transition-fast);
+  letter-spacing: 0.5px;
 }
 
 .badge-primary {
-  background-color: var(--primary-color);
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--text-on-dark);
 }
 
 .badge-secondary {
-  background-color: var(--secondary-color);
-  color: white;
+  background: var(--secondary);
+  color: var(--text-on-dark);
 }
 
 .channel-card:hover .badge {
-  transform: translateY(-2px);
-  opacity: 0.9;
+  transform: translateY(-3px);
+  opacity: 0.95;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Channel Card Button */
 .channel-card-button {
   font-family: 'Nunito', sans-serif;
-  font-weight: 600;
-  background-color: var(--primary-color);
+  font-weight: 700;
+  background: var(--gradient-primary);
   border: none;
-  border-radius: var(--border-radius);
-  padding: 8px 16px;
+  border-radius: 8px;
+  padding: 10px 18px;
   color: white;
   cursor: pointer;
-  transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
+  transition: var(--transition);
   align-self: flex-start;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.channel-card-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: var(--transition);
 }
 
 .channel-card-button:hover {
-  background-color: var(--secondary-color);
-  transform: translateY(-2px);
-  box-shadow: var(--box-shadow);
+  background: var(--gradient-primary);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.channel-card-button:hover::before {
+  left: 100%;
 }
 
 .channel-card-button:active {
   transform: translateY(0);
-  box-shadow: none;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Channels Grid Layout */
 .channels-grid {
   background-color: white;
   display: grid;
-  border-radius: var(--border-radius);
+  border-radius: 16px;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px;
+  gap: 25px;
+  padding: 25px;
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 
 /* Channel Item */
@@ -137,32 +174,63 @@
   color: var(--text-primary);
   text-align: center;
   margin-top: 20px;
-  padding: 20px;
-  background-color: var(--background-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  padding: 30px;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+
+.loading-container {
+  background: var(--primary-lighter);
+  color: var(--primary);
 }
 
 .error-container {
-  color: var(--error-color);
+  background: rgba(164, 22, 35, 0.1);
+  color: var(--error);
+}
+
+.no-channels {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+/* Decorative elements */
+.channel-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 60px;
+  background: var(--primary-lighter);
+  border-radius: 0 0 0 100%;
+  transition: var(--transition);
+}
+
+.channel-card:hover::after {
+  width: 80px;
+  height: 80px;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .channels-grid {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
-    padding: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
   }
 
   .channel-card-container {
     width: 100%;
     height: auto;
+    min-height: 200px;
     margin: 0;
   }
 
   .channel-card {
     height: auto;
-    padding: 12px;
+    padding: 18px;
   }
 }
