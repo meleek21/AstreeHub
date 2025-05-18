@@ -52,14 +52,19 @@ namespace ASTREE_PFE.Repositories
             int limit = 10
         )
         {
-            var filter = Builders<Post>.Filter.Eq(p => p.ChannelId, channelId);
+            // Create a filter that matches both the channel ID and Channel post type
+            var filterBuilder = Builders<Post>.Filter;
+            var filter = filterBuilder.And(
+                filterBuilder.Eq(p => p.ChannelId, channelId),
+                filterBuilder.Eq(p => p.PostType, PostType.Channel)
+            );
 
             if (!string.IsNullOrEmpty(lastItemId))
             {
                 var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
                 if (lastPost != null)
                 {
-                    filter &= Builders<Post>.Filter.Lt(p => p.Timestamp, lastPost.Timestamp);
+                    filter &= filterBuilder.Lt(p => p.Timestamp, lastPost.Timestamp);
                 }
             }
 

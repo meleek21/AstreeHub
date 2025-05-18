@@ -67,6 +67,7 @@ namespace ASTREE_PFE.Services
             int limit = 10
         )
         {
+            // This will now get only posts with PostType.Channel for the given channelId
             return await _postRepository.GetPostsByChannelIdAsync(channelId, lastItemId, limit);
         }
 
