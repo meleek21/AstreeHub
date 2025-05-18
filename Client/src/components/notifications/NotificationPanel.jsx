@@ -5,7 +5,7 @@ import { useNotifications } from '../../Context/NotificationContext';
 import NotificationItem from './NotificationItem';
 import '../../assets/Css/Notifications.css';
 
-const NotificationPanel = ({ isOpen, onClose }) => {
+const NotificationPanel = ({ isOpen, onClose, onOpenPostModal }) => {
   const { notifications, unreadCount, loading, markAllAsRead } = useNotifications();
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
   const [mountedClass, setMountedClass] = useState('');
@@ -77,6 +77,7 @@ const NotificationPanel = ({ isOpen, onClose }) => {
               <NotificationItem 
                 key={`notification-${notification.id}`} 
                 notification={notification} 
+                onOpenPostModal={onOpenPostModal}
               />
             ))
           )}

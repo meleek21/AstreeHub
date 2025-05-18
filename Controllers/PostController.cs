@@ -124,17 +124,22 @@ namespace ASTREE_PFE.Controllers
                 if (post == null)
                     return NotFound();
 
-                // Fetch files in a single batch
+                // Fetch files in a single batch but only for this post's FileIds
                 List<Models.File> files = new List<Models.File>();
-                try
+
+                if (post.FileIds != null && post.FileIds.Any())
                 {
-                    files = await _fileService.GetFilesByIdsAsync(
-                        post.FileIds ?? new List<string>()
-                    );
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Error loading files for post {id}: {ex.Message}");
+                    try
+                    {
+                        files = await _fileService.GetFilesByIdsAsync(post.FileIds);
+
+                        // Ensure we only include files that belong to this post
+                        files = files.Where(file => post.FileIds.Contains(file.Id)).ToList();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Error loading files for post {id}: {ex.Message}");
+                    }
                 }
 
                 // Map to DTO using the tuple mapper

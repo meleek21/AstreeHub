@@ -149,6 +149,7 @@ namespace ASTREE_PFE.Models
         Birthday,
         EventStatusChange,
         ChannelPost,
+        TodoDueReminder,
     }
 
     public enum PostType

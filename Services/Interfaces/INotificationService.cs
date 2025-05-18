@@ -1,4 +1,3 @@
-
 using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.Services.Interfaces
@@ -16,11 +15,7 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<Notification> CreateNotificationAsync(Notification notification);
         Task MarkAsReadAsync(string id);
         Task MarkAllAsReadAsync(string recipientId);
-
-        // Added method for notification deletion
         Task<bool> DeleteNotificationAsync(string notificationId, string userId);
-
-        // Specific notification type methods
         Task CreateMessageNotificationAsync(
             string senderId,
             string receiverId,
@@ -57,9 +52,9 @@ namespace ASTREE_PFE.Services.Interfaces
         Task CreateEventStatusChangeNotificationAsync(
             string eventId,
             string eventTitle,
-            string attendeeId,
+            string organizerId,
             AttendanceStatus status,
-            string updaterId
+            string attendeeName
         );
         Task CreateChannelPostNotificationAsync(
             string posterId,
@@ -68,5 +63,8 @@ namespace ASTREE_PFE.Services.Interfaces
             string postId,
             string postContent
         );
+
+        // New method for todo due tomorrow notification
+        Task CreateTodoDueTomorrowNotificationAsync(string todoId, string userId);
     }
 }
