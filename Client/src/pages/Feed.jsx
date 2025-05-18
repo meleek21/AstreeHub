@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { createPortal } from "react-dom";
 import ModalPortal from '../components/ModalPortal';
+import CommentModal from '../components/Comments/CommentModal';
 
 function Feed() {
   const [posts, setPosts] = useState([]);
@@ -188,23 +189,14 @@ function Feed() {
       )}
 
       {/* Comments Modal */}
-      {isCommentsModalOpen && (
-        <ModalPortal>
-          <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
-            <div className="modal-content" ref={commentsModalRef}>
-              <button className="close-modal" onClick={closeCommentsModal}>
-                <FontAwesomeIcon icon={faTimes}/>
-              </button>
-              <Comment
-                postId={selectedPostId}
-                userId={userId}
-                isAuthenticated={isAuthenticated}
-                token={token}
-              />
-            </div>
-          </div>
-        </ModalPortal>
-      )}
+      <CommentModal
+        isOpen={isCommentsModalOpen}
+        onClose={closeCommentsModal}
+        postId={selectedPostId}
+        userId={userId}
+        isAuthenticated={isAuthenticated}
+        token={token}
+      />
     </div>
   );
 }

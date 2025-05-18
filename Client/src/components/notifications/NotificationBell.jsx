@@ -3,7 +3,7 @@ import { useNotifications } from '../../Context/NotificationContext';
 import NotificationPanel from './NotificationPanel';
 import '../../assets/Css/Notifications.css';
 
-const NotificationBell = () => {
+const NotificationBell = ({ onOpenPostModal }) => {
   const { unreadCount } = useNotifications();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -59,7 +59,7 @@ const NotificationBell = () => {
           </span>
         )}
       </div>
-      <NotificationPanel isOpen={isPanelOpen} onClose={closePanel} />
+      <NotificationPanel isOpen={isPanelOpen} onClose={closePanel} onOpenPostModal={onOpenPostModal} />
     </div>
   );
 };

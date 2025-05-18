@@ -4,36 +4,39 @@ import { useNotifications } from '../../Context/NotificationContext';
 import { formatDistanceToNow } from 'date-fns';
 import '../../assets/Css/Notifications.css';
 
-const NotificationItem = ({ notification }) => {
+const NotificationItem = ({ notification, onOpenPostModal }) => {
   const navigate = useNavigate();
   const { markAsRead, deleteNotification } = useNotifications();
 
   const handleClick = () => {
-    // Mark as read when clicked
     if (!notification.isRead) {
       markAsRead(notification.id);
     }
-    
-    // Navigate based on notification type
     switch (notification.notificationType) {
       case 'Message':
-        navigate('/messages'); // Navigate to chat page
+        navigate('/messages');
         break;
       case 'PostReaction':
       case 'Comment':
-        navigate('/feed'); // Navigate to feed page
+        if (onOpenPostModal && notification.relatedEntityId) {
+          onOpenPostModal(notification.relatedEntityId);
+        } else {
+          navigate('/feed');
+        }
         break;
       case 'EventInvitation':
       case 'EventUpdate':
       case 'EventStatusChange':
       case 'Birthday':
-        navigate('/evenement'); // Navigate to events page
+        navigate('/evenement');
         break;
       case 'ChannelPost':
-        navigate('/channels'); // Navigate to channels page
+        navigate('/channels');
         break;
+        case 'TodoDueReminder':
+          navigate('/home');
+          break;
       default:
-        // If actionUrl is provided, use it; otherwise, do nothing
         if (notification.actionUrl) {
           navigate(notification.actionUrl);
         }

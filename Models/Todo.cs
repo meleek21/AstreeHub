@@ -31,5 +31,7 @@ namespace ASTREE_PFE.Models
 
         [BsonElement("updatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        
+        public bool DueDateNotificationSent { get; set; } = false;
     }
 }
