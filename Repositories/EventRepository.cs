@@ -38,8 +38,8 @@ namespace ASTREE_PFE.Repositories
         public async Task<IEnumerable<Event>> GetUpcomingEventsAsync()
         {
             var filter = Builders<Event>.Filter.And(
-                Builders<Event>.Filter.Eq(e => e.Status, EventStatus.ÀVenir),
-                Builders<Event>.Filter.Gt(e => e.EventDateTime, DateTime.UtcNow)
+                Builders<Event>.Filter.Gte(e => e.EventDateTime, DateTime.UtcNow),
+                Builders<Event>.Filter.Lte(e => e.EventDateTime, DateTime.UtcNow.AddDays(10))
             );
             return await _events.Find(filter).ToListAsync();
         }

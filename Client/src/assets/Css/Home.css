@@ -1,0 +1,94 @@
+/* Dashboard Container */
+.dashboard-container {
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--primary-lighter);
+  }
+  
+  /* Header Styles */
+  .home-header {
+    color: white;
+    padding: 1.5rem 2rem;
+  }
+  
+  .home-header-content {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+ 
+  
+  /* Main Content Area */
+  .dashboard-main {
+    display: flex;
+    flex: 1;
+    padding: 0.5rem;
+    max-width: 1400px;
+
+    width: 100%;
+  }
+  
+  /* Column Styles */
+  .dashboard-column {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .left-column {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .center-column {
+    flex: 3;
+  }
+  
+  .column-content {
+    background: white;
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .dashboard-main {
+      flex-direction: column;
+    }
+    
+    .dashboard-column {
+      width: 100%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .home-header {
+      padding: 1rem;
+    }
+    
+    .home-header-content {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    
+    .header-widgets {
+      width: 100%;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .dashboard-main {
+      padding: 1rem;
+      gap: 1rem;
+    }
+    
+    .column-content {
+      padding: 1rem;
+    }
+  }
