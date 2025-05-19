@@ -69,6 +69,7 @@ const AdminEmployeeModal = ({ show, onClose, refreshEmployees }) => {
         Role: formData.role,
         Email: formData.Email
       };
+      console.log(payload);
       await adminAPI.createEmployee(payload);
       toast.success('Employé créé avec succès');
       refreshEmployees();

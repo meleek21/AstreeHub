@@ -1,13 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
 .chat-container {
   display: flex;
   height: 95vh;
   width: 100%;
-  background-color: #f5f7fb;
   border-radius: 20px;
   overflow: hidden;
   position: relative;
   flex-direction: row;
   justify-content: flex-start;
+  font-family: 'Nunito', sans-serif;
+  transition: var(--transition);
+}
+
+.chat-container:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 /* Adjust width distribution for the three components */

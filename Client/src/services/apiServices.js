@@ -46,9 +46,9 @@ api.interceptors.response.use(
 // Auth API service
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
-  register: (formData) => api.post('/auth/register', formData),
   logout: () => api.post('/auth/logout'),
   getUserInfo: () => api.get('/auth/me'),
+  changePassword: (data) => api.post('/auth/change-password', data),
 };
 
 // Posts API service
@@ -95,6 +95,11 @@ export const reactionsAPI = {
 export const userAPI = {
   getUserInfo: (employeeId) => api.get(`/employee/user-info/${employeeId}`),
   updateProfile: (userId, formData) => api.put(`/employee/${userId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  updateOwnProfile: (formData) => api.put('/employee/me/update-profile', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }

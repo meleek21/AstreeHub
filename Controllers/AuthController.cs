@@ -59,21 +59,12 @@ namespace ASTREE_PFE.Controllers
                         user.LastName,
                         user.Email,
                         user.Role,
+                        user.IsFirstLogin
                     },
                 }
             );
         }
 
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Register(RegisterDTO model)
-        {
-            var (success, message) = await _authService.RegisterAsync(model);
-            if (!success)
-                return BadRequest(new { message });
-
-            return Ok(new { message });
-        }
 
         [Authorize]
         [HttpPost("logout")]
@@ -142,6 +133,35 @@ namespace ASTREE_PFE.Controllers
                     new { message = "An error occurred while fetching user data" }
                 );
             }
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User ID not found in token" });
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound(new { message = "User not found" });
+
+            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            if (!result.Succeeded)
+                return BadRequest(new { message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+
+            // Mark first login as complete
+            if (user.IsFirstLogin)
+            {
+                user.IsFirstLogin = false;
+                await _userManager.UpdateAsync(user);
+            }
+
+            return Ok(new { message = "Password changed successfully" });
         }
     }
 }

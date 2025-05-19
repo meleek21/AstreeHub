@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../../Context/AuthContext";
-import { postsAPI } from "../../services/apiServices";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -11,9 +10,7 @@ import ImageModal from "./Modals/ImageModal";
 import "../../assets/Css/AdminMemories.css";
 
 function AdminMemories() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate ();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [form, setForm] = useState({ content: "", fileIds: [] });
   const [editingId, setEditingId] = useState(null);
@@ -25,28 +22,11 @@ function AdminMemories() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  const fetchEvents = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await postsAPI.getEventPosts();
-      setEvents(res.data.posts || res.data.Posts || []);
-    } catch (err) {
-      toast.error("Échec de la récupération des événements.");
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
   const handleSubmitSuccess = () => {
     setForm({ content: "", fileIds: [] });
     setFiles([]);
     setProgress(0);
     setEditingId(null);
-    fetchEvents();
     toast.success("Publication d'événement soumise avec succès.");
   };
 
@@ -133,11 +113,10 @@ function AdminMemories() {
         onClose={() => setSelectedImage(null)}
       />
       <EventList
-        events={events}
-        loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onImageSelect={setSelectedImage}
+        user={user}
       />
     </div>
   );

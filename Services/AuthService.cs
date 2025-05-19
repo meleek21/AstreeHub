@@ -48,56 +48,13 @@ namespace ASTREE_PFE.Services
                 return (false, "Invalid credentials", null);
 
             user.LastLoginDate = DateTime.UtcNow;
-            user.IsFirstLogin = false;
+            // Do not set IsFirstLogin to false here; it should remain true until profile completion
             await _userManager.UpdateAsync(user);
 
             var token = await GenerateJwtTokenAsync(user);
             return (true, "Login successful", token);
         }
 
-        public async Task<(bool success, string message)> RegisterAsync(RegisterDTO model)
-        {
-            // Validate DepartmentId if provided
-            if (model.DepartmentId.HasValue)
-            {
-                bool departmentExists = await _dbContext.Departments.AnyAsync(d =>
-                    d.Id == model.DepartmentId.Value
-                );
-                if (!departmentExists)
-                {
-                    return (false, $"Department with ID {model.DepartmentId.Value} does not exist");
-                }
-            }
-
-            var user = new Employee
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Role = model.Role,
-                Status = Models.UserStatus.Active,
-                DepartmentId = null, // Set to null initially
-                IsFirstLogin = true,
-                CreatedDate = DateTime.UtcNow,
-                DateOfBirth = model.DateOfBirth,
-            };
-
-            // Only set DepartmentId if it has a value and we've already validated it exists
-            if (model.DepartmentId.HasValue)
-            {
-                user.DepartmentId = model.DepartmentId.Value;
-            }
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-                return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
-
-            // Assign the role to the user
-            await _userManager.AddToRoleAsync(user, model.Role.ToString());
-
-            return (true, "Registration successful");
-        }
 
         public async Task<string> GenerateJwtTokenAsync(Employee user)
         {

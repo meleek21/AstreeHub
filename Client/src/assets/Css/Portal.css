@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
+.portal-container {
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--primary-lighter);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Nunito', 'Segoe UI', Arial, sans-serif;
+  
+}
+
+.portal-header {
+  display: flex;
+  align-items: center;
+  width: 90%;
+  margin: auto;
+  border-radius: 20px;
+  justify-content: space-between;
+  padding: 0px 32px;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 10;
+}
+
+.portal-logo {
+  height: 100px;
+  width: 100px;
+  cursor: pointer;
+}
+
+.search-bar input::placeholder {
+  color: var(--primary-light);
+}
+
+.portal-header-icons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.portal-login-btn {
+  padding: 10px 24px;
+  background: var(--accent);
+  color: var(--text-on-dark);
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  font-family: 'Nunito', sans-serif;
+  transition: var(--transition-fast);
+}
+
+.portal-main {
+  display: flex;
+  flex: 1;
+  padding: 24px;
+  gap: 10px;
+  
+}
+
+.portal-left {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.portal-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  overflow-x: none;
+}
+
+.portal-right {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.portal-weather, 
+.portal-announcements, 
+.portal-birthdays, 
+.portal-events, 
+.portal-image, 
+.portal-news, 
+.portal-calendar {
+  background: #fff;
+  border-radius: 16px;
+  min-height: 80px;
+  box-shadow: var(--shadow-sm);
+  padding: 16px;
+  transition: var(--transition-fast);
+  border: 1px solid var(--border);
+}
+
+.portal-weather:hover, 
+.portal-announcements:hover, 
+.portal-birthdays:hover, 
+.portal-events:hover, 
+.portal-image:hover, 
+.portal-news:hover, 
+.portal-calendar:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.portal-image-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.portal-image-text {
+  font-family: 'Raleway', sans-serif;
+  color: var(--primary);
+  text-align: center;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-fast);
+  border-left: 6px solid var(--secondary);
+  padding: 20px;
+  font-weight: 700;
+  font-size: 2.25rem;
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.portal-image-text::after {
+  content: '';
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: var(--gradient-accent);
+  margin: 0.5rem auto 0;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.portal-image-text:hover::after {
+  width: 120px;
+}
+.portal-image {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  border: 1px solid var(--border);
+  background-color: white;
+  border-radius: 16px;
+}
+
+.portal-image img {
+  width: 450px;
+  height: 450px;
+  border-radius: 8px;
+  object-fit: cover;
+  position: relative;
+  z-index: 2;
+  transition: var(--transition);
+}
+
+.portal-image:hover img {
+  transform: scale(1.02);
+}
+
+
+
+@media (max-width: 1200px) {
+  .portal-main {
+    flex-direction: column;
+  }
+  
+  .portal-left, .portal-right {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .portal-weather, 
+  .portal-announcements, 
+  .portal-calendar,
+  .portal-birthdays, 
+  .portal-events {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .portal-image img {
+    width: 300px;
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .portal-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+  }
+  
+  .search-bar {
+    width: 100%;
+  }
+  
+  .portal-image {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .portal-image img {
+    width: 100%;
+    height: auto;
+    max-height: 300px;
+  }
+}

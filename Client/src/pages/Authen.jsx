@@ -1,36 +1,21 @@
-import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import Signup from '../components/Signup';
 import Login from '../components/Login';
 import '../assets/CSS/Authen.css';
+import { motion } from 'framer-motion';
 
 function Authen() {
-  const location = useLocation();
-  const [isSignup, setIsSignup] = useState(location.state?.isSignup ?? true);
-
+ 
   return (
-    <div className="authen-container">
+    <motion.div className="authen-container" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
       {/* Welcome Panel */}
-      <div className={`welcome-panel ${isSignup ? 'left' : 'right'}`}>
-        <h1>Bienvenue !</h1>
-        <p>
-          {isSignup
-            ? 'Vous avez déjà un compte ?'
-            : 'Vous avez besoin d’un compte ?'}
-        </p>
-        <button
-          className="toggle-button"
-          onClick={() => setIsSignup(!isSignup)}
-        >
-          {isSignup ? 'Se connecter' : "S'inscrire"}
-        </button>
-      </div>
+      <motion.div className={`welcome-panel`} initial={{ x: '-100vw' }} animate={{ x: 0 }} transition={{ type: 'spring', stiffness: 50 }}>
+        {/*this section has image in the background*/}
+      </motion.div>
 
       {/* Form Panel */}
-      <div className={`form-panel ${isSignup ? 'right' : 'left'}`}>
-        {isSignup ? <Signup /> : <Login />}
-      </div>
-    </div>
+      <motion.div className={`form-panel`} initial={{ x: '100vw' }} animate={{ x: 0 }} transition={{ type: 'spring', stiffness: 50 }}>
+        <Login />
+      </motion.div>
+    </motion.div>
   );
 }
 

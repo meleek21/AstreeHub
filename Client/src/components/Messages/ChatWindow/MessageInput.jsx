@@ -100,7 +100,7 @@ const MessageInput = ({
       )}
 
       <div className="input-container">
-        <div className="input-wrapper">
+        <div className="chat-input-wrapper">
           <input
             type="text"
             value={messageText}

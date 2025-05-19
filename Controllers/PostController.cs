@@ -610,6 +610,7 @@ public async Task<ActionResult<PaginatedPostsDTO>> GetAllPosts(
         }
 
         [HttpGet("event")]
+        [AllowAnonymous]
         public async Task<ActionResult<PaginatedPostsDTO>> GetEventPosts(
             [FromQuery] string lastItemId = null,
             [FromQuery] int limit = 10

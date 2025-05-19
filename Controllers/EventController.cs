@@ -600,6 +600,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("birthdays/closest")]
+        
         public async Task<IActionResult> GetClosestBirthdays()
         {
             try
