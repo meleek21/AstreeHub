@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import QuiltedGrid from "./QuiltedGrid";
 
-function EventItem({ event, onEdit, onDelete, onImageSelect }) {
+function EventItem({ event, onEdit, onDelete, onImageSelect,user }) {
   return (
     <motion.li 
       className="event-item"
@@ -27,7 +27,8 @@ function EventItem({ event, onEdit, onDelete, onImageSelect }) {
           />
         </div>
       )}
-      <div className="event-actions">
+      {user?.role === 'SuperAdmin' && (
+        <div className="event-actions">
         <button onClick={() => onEdit(event)} className="edit-button" aria-label="Modifier l'événement" tabIndex="0">
           Modifier
         </button>
@@ -40,6 +41,8 @@ function EventItem({ event, onEdit, onDelete, onImageSelect }) {
           Supprimer
         </button>
       </div>
+      )}
+      
     </motion.li>
   );
 }

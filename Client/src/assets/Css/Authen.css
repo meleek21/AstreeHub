@@ -1,11 +1,12 @@
 /* Authentication Container */
 .authen-container {
+  background-color: var(--primary-lighter);
   display: flex;
   width: 95%;
   height: 95vh;
   overflow: hidden;
   position: relative;
-  margin: auto;
+  margin: 15px auto;
   border-radius: 32px;
   box-shadow: var(--box-shadow);
 }
@@ -22,15 +23,15 @@
   padding: 20px;
   box-sizing: border-box;
   position: absolute;
-  width: 50%; /* Each panel takes half the container */
   height: 100%;
   top: 0;
 }
 
 /* Welcome Panel */
 .welcome-panel {
-  background-color: var(--background-color);
-  color: var(--secondary-color);
+  background-image: url('../WorkTime.png');
+  background-size: cover;
+  width: 50%;
   border-radius: 32px 0 0 32px;
   left: 0;
   transform: translateX(0);
@@ -38,44 +39,8 @@
 
 /* Form Panel */
 .form-panel {
-  background: var(--gradient-primary); /* Use your preferred color */
-  color: var(--primary-color);
+  
   border-radius: 30px;
   right: 0;
-  transform: translateX(0);
 }
 
-/* Slide Left Animation */
-.welcome-panel.left {
-  transform: translateX(0);
-}
-
-.welcome-panel.right {
-  transform: translateX(100%);
-}
-
-.form-panel.left {
-  transform: translateX(-100%);
-}
-
-.form-panel.right {
-  transform: translateX(0);
-}
-
-/* Toggle Button */
-.toggle-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border: none;
-  background: var(--gradient-primary);
-  color: white;
-  border-radius: var(--border-radius);
-  margin-top: 20px;
-  transition: background-color var(--transition-duration) ease-in-out, transform var(--transition-duration) ease-in-out;
-}
-
-.toggle-button:hover {
-  background: linear-gradient(135deg, #3b87d3 0%, var(--primary-color) 100%);
-  transform: scale(1.05);
-}

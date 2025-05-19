@@ -95,15 +95,7 @@
     position: relative;
   }
   
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #444;
-    font-size: 0.9rem;
-    transform-origin: left center;
-    transition: all 0.3s ease;
-  }
+ 
   
   .modal-input, .modal-select {
     width: 100%;

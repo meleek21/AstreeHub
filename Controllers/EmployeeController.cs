@@ -27,7 +27,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpGet("user-info/{id}")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult<UserInfoDTO>> GetUserInfo(string id)
         {
             var userInfo = await _employeeService.GetUserInfoAsync(id);
@@ -349,6 +349,85 @@ namespace ASTREE_PFE.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
             return Ok(new { profilePictureUrl = employee.ProfilePictureUrl });
+        }
+
+        [Authorize]
+        [HttpPut("me/update-profile")]
+        public async Task<ActionResult> UpdateOwnProfile([FromForm] EmployeeUpdateDto employeeDto)
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User ID not found in token" });
+
+            var existingEmployee = await _employeeService.GetEmployeeByIdAsync(userId);
+            if (existingEmployee == null)
+                return NotFound(new { message = "Employee not found" });
+
+            bool isUpdated = false;
+
+            if (employeeDto.FirstName != null)
+            {
+                existingEmployee.FirstName = employeeDto.FirstName;
+                isUpdated = true;
+            }
+            if (employeeDto.LastName != null)
+            {
+                existingEmployee.LastName = employeeDto.LastName;
+                isUpdated = true;
+            }
+            if (employeeDto.Email != null)
+            {
+                existingEmployee.Email = employeeDto.Email;
+                isUpdated = true;
+            }
+            if (employeeDto.PhoneNumber != null)
+            {
+                existingEmployee.PhoneNumber = employeeDto.PhoneNumber;
+                isUpdated = true;
+            }
+            if (employeeDto.DateOfBirth.HasValue)
+            {
+                existingEmployee.DateOfBirth = employeeDto.DateOfBirth.Value;
+                isUpdated = true;
+            }
+            if (employeeDto.ProfilePictureUrl != null)
+            {
+                existingEmployee.ProfilePictureUrl = employeeDto.ProfilePictureUrl;
+                isUpdated = true;
+            }
+            if (employeeDto.File != null)
+            {
+                var uploadResult = await _cloudinaryService.UploadImageAsync(employeeDto.File);
+                if (uploadResult == null)
+                {
+                    return StatusCode(500, "Failed to upload profile picture.");
+                }
+                existingEmployee.ProfilePictureUrl = uploadResult.SecureUrl.ToString();
+                isUpdated = true;
+            }
+
+            if (!isUpdated)
+            {
+                return BadRequest("No fields were updated.");
+            }
+
+            // Mark first login as complete if all required fields are filled
+            if (existingEmployee.IsFirstLogin &&
+                !string.IsNullOrWhiteSpace(existingEmployee.FirstName) &&
+                !string.IsNullOrWhiteSpace(existingEmployee.LastName) &&
+                existingEmployee.DateOfBirth != default &&
+                !string.IsNullOrWhiteSpace(existingEmployee.ProfilePictureUrl))
+            {
+                existingEmployee.IsFirstLogin = false;
+            }
+
+            var result = await _employeeService.UpdateEmployeeAsync(userId, existingEmployee);
+            if (!result)
+            {
+                return BadRequest("Failed to update profile");
+            }
+
+            return Ok(new { message = "Profile updated successfully" });
         }
     }
 }

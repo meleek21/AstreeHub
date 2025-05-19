@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
-import Signup from './components/Signup';
 import Authen from './pages/Authen';
 import Layout from './pages/Layout';
 import Home from './pages/Home';
@@ -25,7 +24,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import ChangePassword from './components/ChangePassword';
+import CompleteProfile from './components/CompleteProfile';
+import Portal from './components/Portal';
 // Create a client
 const queryClient = new QueryClient();
 
@@ -42,10 +43,12 @@ function App() {
                 <Toaster />
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<Authen />} />
+            <Route path="/" element={<Portal />} />
+            <Route path="/se-connecter" element={<Authen />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/" element={<Navigate to="authen" />} />
+            <Route path="/change-password" element={<ChangePassword />} />
+            <Route path="/complete-profile" element={<CompleteProfile />} />
+         
 
             {/* Private routes wrapped in Layout */}
             <Route element={<Layout />}>
@@ -73,7 +76,7 @@ function App() {
             </Route>
 
             {/* Redirect to home if no route matches */}
-            <Route path="*" element={<Navigate to="/home" />} />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
               </div>
               </NotificationProvider>

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { eventsAPI } from '../services/apiServices';
+import { eventsAPI, userAPI } from '../services/apiServices';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBirthdayCake, faGift } from '@fortawesome/free-solid-svg-icons';
-import UserBadge from './UserBadge';
 import Confetti from 'react-confetti';
 import '../assets/Css/ClosestBirthdays.css';
+
+const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
 const ClosestBirthdays = () => {
   const [birthdays, setBirthdays] = useState([]);
@@ -16,13 +17,37 @@ const ClosestBirthdays = () => {
     height: window.innerHeight 
   });
 
+  const fetchUserInfo = async (employeeId) => {
+    try {
+      const response = await userAPI.getUserInfo(employeeId);
+      return {
+        firstName: response.data.firstName,
+        lastName: response.data.lastName,
+        profilePicture: response.data.profilePictureUrl || defaultProfilePicture
+      };
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+      return {
+        firstName: '',
+        lastName: '',
+        profilePicture: defaultProfilePicture
+      };
+    }
+  };
+
   useEffect(() => {
     const fetchClosestBirthdays = async () => {
       setLoading(true);
       setError(null);
       try {
         const response = await eventsAPI.GetClosestBirthdays();
-        setBirthdays(response.data);
+        const birthdaysWithUserInfo = await Promise.all(
+          response.data.map(async b => ({
+            ...b,
+            ...(await fetchUserInfo(b.employeeId))
+          }))
+        );
+        setBirthdays(birthdaysWithUserInfo);
       } catch (err) {
         setError('Failed to fetch birthdays');
       } finally {
@@ -96,7 +121,14 @@ const ClosestBirthdays = () => {
             <div className="birthday-ribbon"></div>
             <div className="birthday-content">
               <div className="birthday-avatar-container">
-                <UserBadge userId={b.employeeId} />
+                <img
+                  src={b.profilePicture || defaultProfilePicture}
+                  alt={`${b.firstName} ${b.lastName}`}
+                  className="birthday-avatar"
+                />
+                <div className='birthday-name'>
+                  {b.firstName} {b.lastName}
+                </div>
               </div>
               
               <div className="birthday-info">

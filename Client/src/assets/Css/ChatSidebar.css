@@ -1,4 +1,6 @@
 /* ChatSidebar.css */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
+
 :root {
   --primary: #173b61ff;
   --primary-light: #7697a0ff;
@@ -8,7 +10,6 @@
   --accent-light: rgba(253, 137, 22, 0.1);
   --accent-alt: #FFA07A;
   --background: #ffebd0ff;
-  
   
   /* Neutrals */
   --text-primary: #1A1A1A;
@@ -31,6 +32,10 @@
   --shadow-lg: 0 8px 24px rgba(23, 59, 97, 0.16);
   --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
   --transition-fast: all 0.2s ease-out;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
 }
 
 .group-sidebar-overlay {

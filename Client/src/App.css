@@ -34,7 +34,7 @@
 }
 body {
   font-family: 'Nunito', sans-serif;
-  background-color: var(--background);
+  background-color: var(--primary-lighter);
   color: var(--text-primary);
   margin: 0;
   padding: 0;
