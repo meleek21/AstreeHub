@@ -1,36 +1,9 @@
-/* ProfileCard.css */
-:root {
-  --primary: #173b61ff;
-  --primary-light: #7697a0ff;
-  --primary-lighter: rgba(118, 151, 160, 0.1);
-  --secondary: #17616eff;
-  --accent: #fd8916ff;
-  --accent-light: rgba(253, 137, 22, 0.1);
-  --accent-alt: #FFA07A;
-  --background: #ffebd0ff;
-  --text-primary: #1A1A1A;
-  --text-secondary: #4A4A4A;
-  --text-on-dark: #FFFFFF;
-  --border: rgba(23, 59, 97, 0.15);
-  --error: #A41623;
-  --success: #2E933C;
-  --warning: #FFC107;
-  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
-  --shadow-sm: 0 1px 3px rgba(23, 59, 97, 0.08);
-  --shadow-md: 0 4px 12px rgba(23, 59, 97, 0.12);
-  --shadow-lg: 0 8px 24px rgba(23, 59, 97, 0.16);
-  --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  --transition-fast: all 0.2s ease-out;
-  --border-radius: 12px;
-}
-
 .profile-card-container {
   background: white;
   border-radius: var(--border-radius);
   padding: 1rem;
   margin: 0 auto;
-  width: 450px;
+  width: 380px;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border);
   transition: var(--transition);
@@ -50,8 +23,7 @@
 /* Cog icon absolute positioning and micro-interactions */
 .edit-cog-icon-container {
   position: absolute;
-  top: 16px;
-  left: 350px;
+  left: 270px;
   z-index: 2;
   cursor: pointer;
   display: flex;
@@ -120,6 +92,7 @@
   font-weight: 700;
   letter-spacing: -0.5px;
   background: var(--gradient-primary);
+  text-transform: capitalize;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -133,8 +106,8 @@
 
 .detail-row {
   display: flex;
-  gap: 1rem;
-  padding: 0.5rem 1rem;
+  gap: 0.2rem;
+  padding: 0.5rem;
   background-color: var(--primary-lighter);
   border: 1px solid var(--border);
   border-radius: var(--border-radius);
@@ -158,10 +131,7 @@
 .detail-value {
   color: var(--text-primary);
   font-weight: 500;
-  text-align: right;
   max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Department badge style */

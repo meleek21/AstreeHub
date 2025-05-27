@@ -115,16 +115,16 @@ function Sidebar({ onToggleCollapse }) {
         </li>
         {/* New Post Button */}
         <li className="new-post-button">
-          <button className="create-post-btn">
+          <Link to="/recherche-equipe" className="create-post-btn">
             <lord-icon
               src="https://cdn.lordicon.com/hqymfzvj.json"
               trigger="hover"
               colors="primary:#ffebd0ff"
               style={{ width: '30px', height: '30px' }}
             ></lord-icon>
-            {!collapsed && <span>Nouvelle annonce</span>}
-            {collapsed && <span className="sidebar-tooltip">Nouvelle annonce</span>}
-          </button>
+            {!collapsed && <span>Equipe</span>}
+            {collapsed && <span className="sidebar-tooltip">Equipe</span>}
+          </Link>
         </li>
       </ul>
     </aside>
