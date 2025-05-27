@@ -1,39 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Pacifico&family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
-
-:root {
-  --primary: #173b61ff;
-  --primary-light: #7697a0ff;
-  --primary-lighter: rgba(118, 151, 160, 0.1);
-  --secondary: #17616eff;
-  --accent: #fd8916ff;
-  --accent-light: rgba(253, 137, 22, 0.1);
-  --accent-alt: #FFA07A;
-  --background: #ffebd0ff;
-  
-  /* Neutrals */
-  --text-primary: #1A1A1A;
-  --text-secondary: #4A4A4A;
-  --text-on-dark: #FFFFFF;
-  --border: rgba(23, 59, 97, 0.15);
-  
-  /* Functional Colors */
-  --error: #A41623;
-  --success: #2E933C;
-  --warning: #FFC107;
-  
-  /* Enhanced Gradients */
-  --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-  --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-alt) 100%);
-  
-  /* Enhanced Effects */
-  --shadow-sm: 0 1px 3px rgba(23, 59, 97, 0.08);
-  --shadow-md: 0 4px 12px rgba(23, 59, 97, 0.12);
-  --shadow-lg: 0 8px 24px rgba(23, 59, 97, 0.16);
-  --transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-  --transition-fast: all 0.2s ease-out;
-}
-
-
 .auth-container {
   max-width: 550px;
   margin: 2rem auto;

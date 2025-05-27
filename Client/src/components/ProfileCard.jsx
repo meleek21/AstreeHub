@@ -11,10 +11,11 @@ import { useNavigate } from 'react-router-dom';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../Context/AuthContext';
 
-const ProfileCard = () => {
+const ProfileCard = (props) => {
   const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';
 
-  const { userId } = useParams();
+  const params = useParams();
+  const userId = props.userId || params.userId;
   const navigate = useNavigate();
   const { user } = useAuth();
   const [userInfo, setUserInfo] = useState({
@@ -32,7 +33,6 @@ const ProfileCard = () => {
 
   const copyEmailToClipboard = () => {
     if (!userInfo.email) return;
-    
     navigator.clipboard.writeText(userInfo.email)
       .then(() => {
         toast.success('Email copié dans le presse-papiers!', {
@@ -53,7 +53,6 @@ const ProfileCard = () => {
         console.error('Erreur lors de la récupération des départements:', error);
       }
     };
-
     fetchDepartments();
   }, []);
 
@@ -64,11 +63,9 @@ const ProfileCard = () => {
           console.error('ID utilisateur non défini');
           return;
         }
-
         const response = await userAPI.getUserInfo(userId);
         const userData = response.data;
         const formattedDate = userData.dateOfBirth ? userData.dateOfBirth.split('T')[0] : '';
-
         setUserInfo({
           firstName: userData.firstName || '',
           lastName: userData.lastName || '',
@@ -86,7 +83,6 @@ const ProfileCard = () => {
         });
       }
     };
-
     fetchUserInfo();
   }, [userId]);
 
