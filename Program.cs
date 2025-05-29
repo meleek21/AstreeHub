@@ -97,7 +97,6 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IConversationRepository, ConversationRepository>();
 builder.Services.AddScoped<ITodoRepository, TodoRepository>();
 
-
 // Add DbContext with SQL Server
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -159,17 +158,18 @@ builder
     });
 
 // Add Identity Configuration
-builder.Services.AddIdentity<Employee, IdentityRole>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequireLowercase = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequiredLength = 4;
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<ApplicationDbContext>()
-.AddDefaultTokenProviders();
+builder
+    .Services.AddIdentity<Employee, IdentityRole>(options =>
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequiredLength = 4;
+        options.User.RequireUniqueEmail = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders();
 
 // Configure cookie settings for API endpoints
 builder.Services.ConfigureApplicationCookie(cookieOptions =>
@@ -307,5 +307,3 @@ app.MapHub<UserHub>("/hubs/user");
 app.MapHub<NotificationHub>("/notificationHub");
 
 app.Run();
-
-

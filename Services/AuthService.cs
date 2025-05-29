@@ -162,7 +162,7 @@ namespace ASTREE_PFE.Services
                 {
                     var resetToken = await GeneratePasswordResetTokenAsync(model.Email);
                     var resetLink =
-                        $"http://localhost/reset-password?token={resetToken}&email={model.Email}";
+                        $"http://localhost:5173/reset-password?token={resetToken}&email={model.Email}";
 
                     await _emailService.SendPasswordResetEmailAsync(model.Email, resetLink);
                 }

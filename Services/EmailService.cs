@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using ASTREE_PFE.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using ASTREE_PFE.Services.Interfaces;
 
 namespace ASTREE_PFE.Services
 {
@@ -28,7 +28,8 @@ namespace ASTREE_PFE.Services
         public async Task SendPasswordResetEmailAsync(string email, string resetLink)
         {
             string subject = "Reset Your Password";
-            string htmlContent = $@"<html>
+            string htmlContent =
+                $@"<html>
                 <body>
                     <h2>Reset Your Password</h2>
                     <p>You have requested to reset your password. Please click the link below to set a new password:</p>
@@ -39,18 +40,27 @@ namespace ASTREE_PFE.Services
                 </body>
             </html>";
 
-            string plainTextContent = $"Reset Your Password\n\nYou have requested to reset your password. Please use the following link to set a new password: {resetLink}\n\nIf you did not request a password reset, please ignore this email or contact support if you have concerns.\n\nThis link will expire in 15 minutes.\n\nThank you,\nThe ASTREE Team";
+            string plainTextContent =
+                $"Reset Your Password\n\nYou have requested to reset your password. Please use the following link to set a new password: {resetLink}\n\nIf you did not request a password reset, please ignore this email or contact support if you have concerns.\n\nThis link will expire in 15 minutes.\n\nThank you,\nThe ASTREE Team";
 
             await SendEmailAsync(email, subject, htmlContent, plainTextContent);
         }
 
-        public async Task<bool> SendEmailAsync(string toEmail, string subject, string htmlContent, string plainTextContent = null)
+        public async Task<bool> SendEmailAsync(
+            string toEmail,
+            string subject,
+            string htmlContent,
+            string plainTextContent = null
+        )
         {
             try
             {
                 if (string.IsNullOrEmpty(_apiKey))
                 {
-                    _logger.LogWarning("SendGrid API Key is not configured. Email would be sent to: {Email}", toEmail);
+                    _logger.LogWarning(
+                        "SendGrid API Key is not configured. Email would be sent to: {Email}",
+                        toEmail
+                    );
                     _logger.LogInformation("Subject: {Subject}", subject);
                     _logger.LogInformation("Content: {Content}", htmlContent);
                     return true; // Return true in development to not block the flow
@@ -59,7 +69,13 @@ namespace ASTREE_PFE.Services
                 var client = new SendGridClient(_apiKey);
                 var from = new EmailAddress(_fromEmail, _fromName);
                 var to = new EmailAddress(toEmail);
-                var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent ?? htmlContent, htmlContent);
+                var msg = MailHelper.CreateSingleEmail(
+                    from,
+                    to,
+                    subject,
+                    plainTextContent ?? htmlContent,
+                    htmlContent
+                );
                 var response = await client.SendEmailAsync(msg);
 
                 if (response.IsSuccessStatusCode)
@@ -69,7 +85,11 @@ namespace ASTREE_PFE.Services
                 }
                 else
                 {
-                    _logger.LogError("Failed to send email to {Email}. Status code: {StatusCode}", toEmail, response.StatusCode);
+                    _logger.LogError(
+                        "Failed to send email to {Email}. Status code: {StatusCode}",
+                        toEmail,
+                        response.StatusCode
+                    );
                     return false;
                 }
             }
