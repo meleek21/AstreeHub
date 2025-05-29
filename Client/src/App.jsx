@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { Toaster } from 'react-hot-toast';
 import Login from './components/Login';
 import Authen from './pages/Authen';
@@ -47,6 +49,8 @@ function App() {
             <Route path="/" element={<Portal />} />
             <Route path="/se-connecter" element={<Authen />} />
             <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/change-password" element={<ChangePassword />} />
             <Route path="/complete-profile" element={<CompleteProfile />} />
          

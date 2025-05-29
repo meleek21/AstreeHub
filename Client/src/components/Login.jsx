@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
-import { motion } from 'framer-motion';
-import { authAPI } from '../services/apiServices';
-import { FaLock, FaEye, FaEyeSlash, FaArrowRight } from 'react-icons/fa';
-import '../assets/Css/Auth.css';
-import { useAuth } from '../Context/AuthContext';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { motion } from "framer-motion";
+import { authAPI } from "../services/apiServices";
+import { FaLock, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
+import "../assets/Css/Auth.css";
+import { useAuth } from "../Context/AuthContext";
 
 const Login = () => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFocused, setIsFocused] = useState({
     email: false,
-    password: false
+    password: false,
   });
   const navigate = useNavigate();
 
@@ -30,16 +30,16 @@ const Login = () => {
   };
 
   const handleFocus = (field) => {
-    setIsFocused(prev => ({ ...prev, [field]: true }));
+    setIsFocused((prev) => ({ ...prev, [field]: true }));
   };
 
   const handleBlur = (field) => {
-    setIsFocused(prev => ({ ...prev, [field]: false }));
+    setIsFocused((prev) => ({ ...prev, [field]: false }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
@@ -47,36 +47,39 @@ const Login = () => {
       if (response.data && response.data.token) {
         const user = response.data.user;
         if (user && user.isFirstLogin) {
-          localStorage.setItem('token', response.data.token);
+          localStorage.setItem("token", response.data.token);
           login(response.data);
-          toast('Bienvenue ! Veuillez changer votre mot de passe.', { 
-            icon: '🔒',
+          toast("Bienvenue ! Veuillez changer votre mot de passe.", {
+            icon: "🔒",
             style: {
-              background: 'var(--primary)',
-              color: 'var(--text-on-dark)'
-            }
+              background: "var(--primary)",
+              color: "var(--text-on-dark)",
+            },
           });
-          navigate('/change-password');
+          navigate("/change-password");
         } else {
           login(response.data);
-          toast.success('Connexion réussie ! Redirection en cours...', {
+          toast.success("Connexion réussie ! Redirection en cours...", {
             style: {
-              background: 'var(--success)',
-              color: 'var(--text-on-dark)'
-            }
+              background: "var(--success)",
+              color: "var(--text-on-dark)",
+            },
           });
         }
       } else {
-        throw new Error('Token not found in response');
+        throw new Error("Token not found in response");
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Une erreur est survenue. Veuillez réessayer.';
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Une erreur est survenue. Veuillez réessayer.";
       setError(errorMessage);
       toast.error(errorMessage, {
         style: {
-          background: 'var(--error)',
-          color: 'var(--text-on-dark)'
-        }
+          background: "var(--error)",
+          color: "var(--text-on-dark)",
+        },
       });
     } finally {
       setIsLoading(false);
@@ -84,13 +87,13 @@ const Login = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="auth-container"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <motion.div 
+      <motion.div
         className="auth-header"
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
@@ -100,16 +103,15 @@ const Login = () => {
         <p>Bienvenue de retour ! Connectez-vous pour accéder à votre compte.</p>
       </motion.div>
 
-
       <form onSubmit={handleSubmit}>
-        <motion.div 
+        <motion.div
           className="login-form-group"
           whileHover={{ scale: 1.01 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <label 
+          <label
             htmlFor="email"
-            className={isFocused.email || formData.email ? 'active' : ''}
+            className={isFocused.email || formData.email ? "active" : ""}
           >
             Email
           </label>
@@ -119,12 +121,12 @@ const Login = () => {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            onFocus={() => handleFocus('email')}
-            onBlur={() => handleBlur('email')}
+            onFocus={() => handleFocus("email")}
+            onBlur={() => handleBlur("email")}
             placeholder=" "
             required
           />
-          <motion.div 
+          <motion.div
             className="input-underline"
             initial={{ scaleX: 0 }}
             animate={{ scaleX: isFocused.email ? 1 : 0 }}
@@ -132,26 +134,26 @@ const Login = () => {
           />
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="login-form-group"
           whileHover={{ scale: 1.01 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <label 
+          <label
             htmlFor="password"
-            className={isFocused.password || formData.password ? 'active' : ''}
+            className={isFocused.password || formData.password ? "active" : ""}
           >
             Mot de passe
           </label>
           <div className="password-input">
             <input
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
               onChange={handleChange}
-              onFocus={() => handleFocus('password')}
-              onBlur={() => handleBlur('password')}
+              onFocus={() => handleFocus("password")}
+              onBlur={() => handleBlur("password")}
               placeholder=" "
               required
             />
@@ -159,13 +161,15 @@ const Login = () => {
               type="button"
               className="toggle-password"
               onClick={() => setShowPassword(!showPassword)}
-              
-              
-              aria-label={showPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
+              aria-label={
+                showPassword
+                  ? "Cacher le mot de passe"
+                  : "Afficher le mot de passe"
+              }
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </motion.button>
-            <motion.div 
+            <motion.div
               className="input-underline"
               initial={{ scaleX: 0 }}
               animate={{ scaleX: isFocused.password ? 1 : 0 }}
@@ -176,7 +180,7 @@ const Login = () => {
 
         <div className="auth-actions">
           <Link to="/forgot-password" className="forgot-password">
-            Mot de passe oublié ?
+            Forgot Password?
           </Link>
         </div>
 
@@ -184,24 +188,26 @@ const Login = () => {
           type="submit"
           className="login-button"
           disabled={isLoading}
-          whileHover={!isLoading ? { scale: 1.02, boxShadow: 'var(--shadow-md)' } : {}}
+          whileHover={
+            !isLoading ? { scale: 1.02, boxShadow: "var(--shadow-md)" } : {}
+          }
           whileTap={!isLoading ? { scale: 0.98 } : {}}
-          initial={{ background: 'var(--primary)' }}
-          animate={{ 
-            background: isLoading ? 'var(--primary-light)' : 'var(--primary)'
+          initial={{ background: "var(--primary)" }}
+          animate={{
+            background: isLoading ? "var(--primary-light)" : "var(--primary)",
           }}
           transition={{ duration: 0.3 }}
         >
           {isLoading ? (
             <motion.span
               animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
             >
               <FaLock />
             </motion.span>
           ) : (
             <>
-              Se connecter <FaArrowRight style={{ marginLeft: '8px' }} />
+              Se connecter <FaArrowRight style={{ marginLeft: "8px" }} />
             </>
           )}
         </motion.button>

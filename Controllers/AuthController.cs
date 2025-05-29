@@ -59,12 +59,11 @@ namespace ASTREE_PFE.Controllers
                         user.LastName,
                         user.Email,
                         user.Role,
-                        user.IsFirstLogin
+                        user.IsFirstLogin,
                     },
                 }
             );
         }
-
 
         [Authorize]
         [HttpPost("logout")]
@@ -150,9 +149,15 @@ namespace ASTREE_PFE.Controllers
             if (user == null)
                 return NotFound(new { message = "User not found" });
 
-            var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+            var result = await _userManager.ChangePasswordAsync(
+                user,
+                model.CurrentPassword,
+                model.NewPassword
+            );
             if (!result.Succeeded)
-                return BadRequest(new { message = string.Join(", ", result.Errors.Select(e => e.Description)) });
+                return BadRequest(
+                    new { message = string.Join(", ", result.Errors.Select(e => e.Description)) }
+                );
 
             // Mark first login as complete
             if (user.IsFirstLogin)
@@ -166,13 +171,15 @@ namespace ASTREE_PFE.Controllers
 
         [HttpPost("request-password-reset")]
         [AllowAnonymous]
-        public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDTO model)
+        public async Task<IActionResult> RequestPasswordReset(
+            [FromBody] RequestPasswordResetDTO model
+        )
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var (success, message) = await _authService.RequestPasswordResetAsync(model);
-            
+
             // Always return 200 OK to prevent email enumeration attacks
             return Ok(new { message });
         }
@@ -185,7 +192,7 @@ namespace ASTREE_PFE.Controllers
                 return BadRequest(ModelState);
 
             var (success, message) = await _authService.ResetPasswordAsync(model);
-            
+
             if (!success)
                 return BadRequest(new { message });
 

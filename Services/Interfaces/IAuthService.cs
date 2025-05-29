@@ -9,7 +9,9 @@ namespace ASTREE_PFE.Services.Interfaces
         Task<(bool success, string message)> LogoutAsync();
         Task<string> GenerateJwtTokenAsync(Employee user);
         Task<string> ValidateTokenAsync(string token);
-        Task<(bool success, string message)> RequestPasswordResetAsync(RequestPasswordResetDTO model);
+        Task<(bool success, string message)> RequestPasswordResetAsync(
+            RequestPasswordResetDTO model
+        );
         Task<(bool success, string message)> ResetPasswordAsync(ResetPasswordDTO model);
         Task<string> GeneratePasswordResetTokenAsync(string email);
         Task<(bool isValid, string email)> ValidatePasswordResetTokenAsync(string token);
