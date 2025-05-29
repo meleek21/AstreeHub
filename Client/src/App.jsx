@@ -15,6 +15,7 @@ import Bibliotheque from './pages/Bibliotheque';
 import ChatContainer from './components/Messages/ChatContainer';
 import EmployeeTable from './components/AdminDashboard/EmployeeTable';
 import AdminMemories from './components/AdminMemories/AdminMemories';
+import Equipe from './components/Equipe';
 import { AuthProvider } from './Context/AuthContext';
 import { OnlineStatusProvider } from './Context/OnlineStatusContext';
 import { ChatProvider } from './Context/ChatContext';
@@ -61,6 +62,7 @@ function App() {
               <Route path="/evenement" element={<ErrorBoundary><Calendar /></ErrorBoundary>} />
               <Route path="/messages" element={<ErrorBoundary><ChatContainer /></ErrorBoundary>} />
               <Route path="/bibliotheque" element={<ErrorBoundary><Bibliotheque /></ErrorBoundary>} />
+              <Route path="/recherche-equipe" element={<ErrorBoundary><Equipe /></ErrorBoundary>} />
               <Route path="/equipes" element={<ErrorBoundary><EmployeeTable /></ErrorBoundary>} />
               <Route path="/memories" element={<ErrorBoundary><AdminMemories /></ErrorBoundary>} />
               
