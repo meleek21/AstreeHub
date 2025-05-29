@@ -252,6 +252,7 @@ builder.Services.AddScoped<IReactionService, ReactionService>();
 builder.Services.AddScoped<IChannelService, ChannelService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ITodoService, TodoService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 // Register UserOnlineStatusService as Singleton due to its stateful nature (timer, connection tracking)
 builder.Services.AddSingleton<IUserOnlineStatusService, UserOnlineStatusService>();

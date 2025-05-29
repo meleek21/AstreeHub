@@ -27,4 +27,25 @@ namespace ASTREE_PFE.DTOs
         [StringLength(100, MinimumLength = 6)]
         public string NewPassword { get; set; } = null!;
     }
+
+    public class RequestPasswordResetDTO
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = null!;
+    }
+
+    public class ResetPasswordDTO
+    {
+        [Required]
+        public string Token { get; set; } = null!;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        [StringLength(100, MinimumLength = 6)]
+        public string NewPassword { get; set; } = null!;
+    }
 }

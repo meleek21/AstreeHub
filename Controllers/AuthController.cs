@@ -163,5 +163,33 @@ namespace ASTREE_PFE.Controllers
 
             return Ok(new { message = "Password changed successfully" });
         }
+
+        [HttpPost("request-password-reset")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDTO model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (success, message) = await _authService.RequestPasswordResetAsync(model);
+            
+            // Always return 200 OK to prevent email enumeration attacks
+            return Ok(new { message });
+        }
+
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDTO model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var (success, message) = await _authService.ResetPasswordAsync(model);
+            
+            if (!success)
+                return BadRequest(new { message });
+
+            return Ok(new { message });
+        }
     }
 }
