@@ -3,12 +3,27 @@ using ASTREE_PFE.Models;
 
 namespace ASTREE_PFE.DTOs
 {
-    public class AttendanceStatusUpdateDTO
+    // Birthday DTOs
+    public class BirthdayResponseDTO
     {
-        [Required]
-        public AttendanceStatus Status { get; set; }
+        public string EmployeeId { get; set; }
+        public string FullName { get; set; }
+        public DateTime? DateOfBirth { get; set; }
+        public int Age { get; set; }
+        public string ProfilePictureUrl { get; set; }
+        public DateTime NextBirthday { get; set; }
+        public int DaysUntilNextBirthday { get; set; }
     }
 
+    public class BirthdayEventDTO
+    {
+        public string Title { get; set; }
+        public DateTime Date { get; set; }
+        public string EmployeeName { get; set; }
+        public int TurningAge { get; set; }
+    }
+
+    // Event DTOs
     public class EventCreateDTO
     {
         [Required]
@@ -78,7 +93,7 @@ namespace ASTREE_PFE.DTOs
         public string Location { get; set; } = null!;
         public string Organizer { get; set; } = null!;
         public EventCategory Category { get; set; }
-        public EventType Type { get; set; } // Added to expose event type
+        public EventType Type { get; set; }
         public List<string> Attendees { get; set; } = new List<string>();
         public EventStatus Status { get; set; }
         public bool IsOpenEvent { get; set; }
@@ -92,6 +107,12 @@ namespace ASTREE_PFE.DTOs
     {
         [Required]
         public string EmployeeId { get; set; } = null!;
+    }
+
+    public class AttendanceStatusUpdateDTO
+    {
+        [Required]
+        public AttendanceStatus Status { get; set; }
     }
 
     public class AttendanceStatusResponseDTO

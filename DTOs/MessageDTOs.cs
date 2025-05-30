@@ -74,9 +74,5 @@ namespace ASTREE_PFE.DTOs
         public int Limit { get; set; } = 50;
     }
 
-    public class GetConversationWithUserDto
-    {
-        public string UserId { get; set; } = null!;
-        public string OtherUserId { get; set; } = null!;
-    }
+
 }

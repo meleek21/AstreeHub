@@ -1,8 +1,8 @@
-using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ASTREE_PFE.Services.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace ASTREE_PFE.Services
 {
