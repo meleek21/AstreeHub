@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../Context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { postsAPI } from "../../services/apiServices";
 import toast from "react-hot-toast";
 import EventForm from "./EventForm/EventForm";
 import EventList from "./EventList/EventList";
@@ -21,12 +22,19 @@ function AdminMemories() {
   const userId = user?.id;
   const [selectedImage, setSelectedImage] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [events, setEvents] = useState([]);
+
+  // Fetch events when component mounts and when events are updated
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const handleSubmitSuccess = () => {
     setForm({ content: "", fileIds: [] });
     setFiles([]);
     setProgress(0);
     setEditingId(null);
+    fetchEvents(); // Refresh the events list after successful submission
     toast.success("Publication d'événement soumise avec succès.");
   };
 
@@ -38,43 +46,54 @@ function AdminMemories() {
     setEditingId(event.id || event.Id);
   };
 
+  const fetchEvents = async () => {
+    try {
+      const res = await postsAPI.getEventPosts();
+      setEvents(res.data.posts || res.data.Posts || []);
+    } catch (err) {
+      toast.error("Échec de la récupération des événements");
+    }
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
-    setError("");
     try {
       await postsAPI.deleteEventPost(id);
-      fetchEvents();
+      // Update the local state immediately instead of fetching again
+      setEvents(prevEvents => prevEvents.filter(event => event.id !== id));
       toast.success("Événement supprimé avec succès.");
     } catch (err) {
-      toast.error("Échec de la suppression de l'événement.");
+      console.error("Erreur de suppression:", err);
+      toast.error("Échec de la suppression: " + (err.response?.data?.message || "Erreur serveur"));
     }
   };
 
   return (
     <div className="admin-memories-container" tabIndex="0" aria-label="Section de gestion des événements d'administration">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-          <motion.button
-            onClick={() => navigate('/dashboard')}
-            aria-label="Back to Dashboard"
-            className="btn-back-arrow"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              marginRight: '12px',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '1.5rem',
-              color: 'var(--primary)',
-              outline: 'none'
-            }}
-            whileHover={{ scale: 1.15, color: '#173b61' }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            <span style={{ marginLeft: '6px', fontSize: '1rem' }}></span>
-          </motion.button></div>
+        <motion.button
+          onClick={() => navigate('/dashboard')}
+          aria-label="Back to Dashboard"
+          className="btn-back-arrow"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            marginRight: '12px',
+            padding: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '1.5rem',
+            color: 'var(--primary)',
+            outline: 'none'
+          }}
+          whileHover={{ scale: 1.15, color: '#173b61' }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          <span style={{ marginLeft: '6px', fontSize: '1rem' }}></span>
+        </motion.button>
+      </div>
       <h2 className="admin-title" tabIndex="0">Gestion des souvenirs de l'équipes</h2>
       <EventForm
         form={form}
@@ -105,7 +124,7 @@ function AdminMemories() {
         onSubmit={() => {
           setIsPreviewOpen(false);
           const submitEvent = new Event('submit');
-          document.querySelector('.event-form').dispatchEvent(submitEvent);
+          document.querySelector('.memories-event-form').dispatchEvent(submitEvent);
         }}
       />
       <ImageModal
@@ -113,6 +132,7 @@ function AdminMemories() {
         onClose={() => setSelectedImage(null)}
       />
       <EventList
+        events={events} // Pass the events data to EventList
         onEdit={handleEdit}
         onDelete={handleDelete}
         onImageSelect={setSelectedImage}

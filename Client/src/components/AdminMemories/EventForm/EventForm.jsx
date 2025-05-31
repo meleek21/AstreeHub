@@ -97,7 +97,7 @@ function EventForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="event-form">
+    <form onSubmit={handleSubmit} className="memories-event-form">
       <input
         type="text"
         name="content"

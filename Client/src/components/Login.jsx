@@ -49,22 +49,11 @@ const Login = () => {
         if (user && user.isFirstLogin) {
           localStorage.setItem("token", response.data.token);
           login(response.data);
-          toast("Bienvenue ! Veuillez changer votre mot de passe.", {
-            icon: "🔒",
-            style: {
-              background: "var(--primary)",
-              color: "var(--text-on-dark)",
-            },
-          });
+          toast("Bienvenue ! Veuillez changer votre mot de passe.", {icon: "🔒"});
           navigate("/change-password");
         } else {
           login(response.data);
-          toast.success("Connexion réussie ! Redirection en cours...", {
-            style: {
-              background: "var(--success)",
-              color: "var(--text-on-dark)",
-            },
-          });
+          toast.success("Connexion réussie ! Redirection en cours...");
         }
       } else {
         throw new Error("Token not found in response");
@@ -75,12 +64,7 @@ const Login = () => {
         err.message ||
         "Une erreur est survenue. Veuillez réessayer.";
       setError(errorMessage);
-      toast.error(errorMessage, {
-        style: {
-          background: "var(--error)",
-          color: "var(--text-on-dark)",
-        },
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -180,7 +164,7 @@ const Login = () => {
 
         <div className="auth-actions">
           <Link to="/forgot-password" className="forgot-password">
-            Forgot Password?
+            Mot de passe oublié?
           </Link>
         </div>
 

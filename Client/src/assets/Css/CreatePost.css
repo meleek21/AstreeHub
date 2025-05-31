@@ -151,7 +151,7 @@
   padding: 1.5rem;
   border-radius: 1rem;
   width: 40%;
-  max-height: 90vh;
+  
   box-shadow: var(--shadow-md);
   position: relative;
   display: flex;
@@ -191,7 +191,6 @@
 
 /* Textarea and Preview */
 .post-editor-textarea-container {
-  margin-bottom: 1.5rem;
   padding: 20px;
 }
 

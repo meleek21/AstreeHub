@@ -9,6 +9,21 @@ const NotificationPanel = ({ isOpen, onClose, onOpenPostModal }) => {
   const { notifications, unreadCount, loading, markAllAsRead } = useNotifications();
   const [activeTab, setActiveTab] = useState('all'); // 'all' or 'unread'
   const [mountedClass, setMountedClass] = useState('');
+  const panelRef = React.useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event) {
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   // Apply mounted class after initial render for animation
   useEffect(() => {
@@ -35,11 +50,11 @@ const NotificationPanel = ({ isOpen, onClose, onOpenPostModal }) => {
   return (
     <div className={`notification-panel-container ${mountedClass}`}>
       <div className="notification-panel-backdrop" onClick={onClose}></div>
-      <div className="notification-panel">
+      <div className="notification-panel" ref={panelRef}>
         <div className="notification-header">
           <h3>Notifications</h3>
           <button className="close-button" onClick={onClose}>
-            <FontAwesomeIcon icon={faTimes} style={{ color: '#A41623' }}/>
+            <FontAwesomeIcon icon={faTimes} style={{ color: '#fff' }}/>
           </button>
         </div>
         

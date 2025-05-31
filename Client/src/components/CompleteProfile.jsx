@@ -58,23 +58,13 @@ const CompleteProfile = () => {
         data.append('File', formData.file);
       }
       await userAPI.updateOwnProfile(data);
-      toast.success('Profil complété avec succès. Veuillez vous reconnecter.', {
-        style: {
-          background: 'var(--success)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.success('Profil complété avec succès. Veuillez vous reconnecter.');
       await logout();
       navigate('/login');
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Erreur lors de la mise à jour du profil.';
       setError(errorMessage);
-      toast.error(errorMessage, {
-        style: {
-          background: 'var(--error)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

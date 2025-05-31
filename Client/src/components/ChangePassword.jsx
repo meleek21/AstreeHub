@@ -188,24 +188,14 @@ const ChangePassword = () => {
     
     if (formData.newPassword !== formData.confirmNewPassword) {
       setError('Les nouveaux mots de passe ne correspondent pas.');
-      toast.error('Les nouveaux mots de passe ne correspondent pas.', {
-        style: {
-          background: 'var(--error)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.error('Les nouveaux mots de passe ne correspondent pas.');
       return;
     }
     
     const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
     if (!allRequirementsMet) {
       setError('Le nouveau mot de passe ne respecte pas tous les critères de sécurité.');
-      toast.error('Le nouveau mot de passe ne respecte pas tous les critères de sécurité.', {
-        style: {
-          background: 'var(--error)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.error('Le nouveau mot de passe ne respecte pas tous les critères de sécurité.');
       return;
     }
     
@@ -215,22 +205,12 @@ const ChangePassword = () => {
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword
       });
-      toast.success('Mot de passe changé avec succès. Veuillez compléter votre profil.', {
-        style: {
-          background: 'var(--success)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.success('Mot de passe changé avec succès. Veuillez compléter votre profil.');
       navigate('/complete-profile');
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Erreur lors du changement de mot de passe.';
       setError(errorMessage);
-      toast.error(errorMessage, {
-        style: {
-          background: 'var(--error)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

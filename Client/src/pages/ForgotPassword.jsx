@@ -15,21 +15,11 @@ const ForgotPassword = () => {
     try {
       await authAPI.requestPasswordReset({ email });
       setSubmitted(true);
-      toast.success('If an account with that email exists, a reset link has been sent.', {
-        style: {
-          background: 'var(--success)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.success('Un lien de réinitialisation a été envoyé à votre adresse e-mail.');
     } catch (err) {
       // Always show success message for security
       setSubmitted(true);
-      toast.success('If an account with that email exists, a reset link has been sent.', {
-        style: {
-          background: 'var(--success)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.success('Un lien de réinitialisation a été envoyé à votre adresse e-mail.')
     } finally {
       setIsLoading(false);
     }
@@ -48,13 +38,12 @@ const ForgotPassword = () => {
         animate={{ scale: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <h2>Forgot Password</h2>
-        <p>Enter your email address to receive a password reset link.</p>
+        <h2>Mot de passe oublié</h2>
+        <p>Entrez votre adresse e-mail pour recevoir un lien de réinitialisation de mot de passe.</p>
       </motion.div>
       {submitted ? (
         <div className="success-message" style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 500 }}>
-          If an account with that email exists, a reset link has been sent.
-        </div>
+         Un lien de réinitialisation a été envoyé à votre adresse e-mail. Veuillez vérifier votre boîte de réception, y compris les spams. </div>
       ) : (
         <form onSubmit={handleSubmit}>
           <motion.div 
@@ -62,7 +51,7 @@ const ForgotPassword = () => {
             whileHover={{ scale: 1.01 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
           >
-            <label htmlFor="email" className={email ? 'active' : ''}>Email</label>
+            <label htmlFor="email" className={email ? 'active' : ''}>E-mail</label>
             <input
               id="email"
               type="email"
@@ -91,7 +80,7 @@ const ForgotPassword = () => {
             }}
             transition={{ duration: 0.3 }}
           >
-            {isLoading ? 'Sending...' : 'Send Reset Link'}
+            {isLoading ? 'Envoi...' : 'Envoyer le lien de réinitialisation'}
           </motion.button>
         </form>
       )}

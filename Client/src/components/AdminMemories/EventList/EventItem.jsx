@@ -27,7 +27,7 @@ function EventItem({ event, onEdit, onDelete, onImageSelect,user }) {
           />
         </div>
       )}
-      {user?.role === 'SuperAdmin' && (
+      {user?.role === 'SUPERADMIN' && (
         <div className="event-actions">
         <button onClick={() => onEdit(event)} className="edit-button" aria-label="Modifier l'événement" tabIndex="0">
           Modifier

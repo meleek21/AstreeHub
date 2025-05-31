@@ -125,7 +125,7 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
           </div>
           
           <form onSubmit={handleSubmit} className="post-editor-textarea-container">
-            <div className="form-group">
+            <div className="chat-form-group">
               <input
                 ref={groupNameRef}
                 type="text"
@@ -142,7 +142,7 @@ const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="form-control search-input"
+                className="search-input"
                 placeholder='Rechercher des participants'
               />
             </div>

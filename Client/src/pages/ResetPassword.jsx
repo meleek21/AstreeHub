@@ -19,7 +19,7 @@ const ResetPassword = () => {
 
   useEffect(() => {
     if (!token || !email) {
-      setError('Invalid or missing password reset link.');
+      setError('Lien de réinitialisation de mot de passe invalide ou manquant.');
     }
   }, [token, email]);
 
@@ -27,22 +27,17 @@ const ResetPassword = () => {
     e.preventDefault();
     setError('');
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError('Les mots de passe ne correspondent pas.');
       return;
     }
     setIsLoading(true);
     try {
       const res = await authAPI.resetPassword({ token, email, newPassword });
       setSuccess(true);
-      toast.success('Your password has been reset. You can now log in.', {
-        style: {
-          background: 'var(--success)',
-          color: 'var(--text-on-dark)'
-        }
-      });
+      toast.success('Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter.');
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to reset password. The link may have expired.');
+      setError(err?.response?.data?.message || 'Échec de la réinitialisation du mot de passe. Le lien a peut-être expiré.');
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +47,7 @@ const ResetPassword = () => {
     return (
       <div className="auth-container">
         <div className="auth-header">
-          <h2>Reset Password</h2>
+          <h2>Réinitialiser le mot de passe</h2>
         </div>
         <div className="error-message" style={{ color: 'var(--danger)', textAlign: 'center', fontWeight: 500 }}>{error}</div>
       </div>
@@ -72,12 +67,12 @@ const ResetPassword = () => {
         animate={{ scale: 1 }}
         transition={{ delay: 0.2 }}
       >
-        <h2>Reset Password</h2>
-        <p>Enter your new password below.</p>
+        <h2>Réinitialiser le mot de passe</h2>
+        <p>Entrez votre nouveau mot de passe ci-dessous.</p>
       </motion.div>
       {success ? (
         <div className="success-message" style={{ textAlign: 'center', color: 'var(--success)', fontWeight: 500 }}>
-          Your password has been reset. Redirecting to login...
+          Votre mot de passe a été réinitialisé. Redirection vers la connexion...
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
@@ -86,7 +81,7 @@ const ResetPassword = () => {
             whileHover={{ scale: 1.01 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
           >
-            <label htmlFor="newPassword" className={newPassword ? 'active' : ''}>New Password</label>
+            <label htmlFor="newPassword" className={newPassword ? 'active' : ''}>Nouveau mot de passe</label>
             <input
               id="newPassword"
               type="password"
@@ -109,7 +104,7 @@ const ResetPassword = () => {
             whileHover={{ scale: 1.01 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
           >
-            <label htmlFor="confirmPassword" className={confirmPassword ? 'active' : ''}>Confirm Password</label>
+            <label htmlFor="confirmPassword" className={confirmPassword ? 'active' : ''}>Confirmer le mot de passe</label>
             <input
               id="confirmPassword"
               type="password"
@@ -139,7 +134,7 @@ const ResetPassword = () => {
             }}
             transition={{ duration: 0.3 }}
           >
-            {isLoading ? 'Resetting...' : 'Reset Password'}
+            {isLoading ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
           </motion.button>
         </form>
       )}
