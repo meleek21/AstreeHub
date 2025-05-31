@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userAPI } from '../services/apiServices';
-import { eventsAPI } from '../services/apiServices';
+import { departmentAPI} from '../services/apiServices';
 import ProfileCard from './ProfileCard';
 import '../assets/Css/Equipe.css';
 import Poeple from '../assets/People-search.png';
@@ -19,7 +19,7 @@ function Equipe() {
         setIsLoading(true);
         const [empRes, deptRes] = await Promise.all([
           userAPI.getAllEmployees(),
-          eventsAPI.getAllDepartments()
+          departmentAPI.getAllDepartments()
         ]);
         
         setEmployees(empRes.data);

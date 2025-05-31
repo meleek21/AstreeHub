@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import toast from 'react-hot-toast';
-import { eventsAPI, userAPI } from '../../services/apiServices';
+import { eventsAPI, userAPI , departmentAPI } from '../../services/apiServices';
 import { useAuth } from '../../Context/AuthContext';
 import StatusSummary from './StatusSummary';
 import InvitationModeSelector from '../Invitations/InvitationModeSelector';
@@ -87,7 +87,7 @@ const AttendeeManagement = ({ event, isOrganizer, onUpdate, isEditing }) => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await eventsAPI.getAllDepartments();
+        const response = await departmentAPI.getAllDepartments();
         setDepartments(response.data);
       } catch (error) {
         toast.error('Échec de charger les départements');

@@ -58,7 +58,12 @@ namespace ASTREE_PFE.Services
             int limit = 10
         )
         {
-            return await _postRepository.GetByAuthorIdAsync(authorId, lastItemId, limit);
+            return await _postRepository.GetByAuthorIdAsync(
+                authorId,
+                lastItemId,
+                limit,
+                PostType.General
+            );
         }
 
         public async Task<(IEnumerable<Post>, string, bool)> GetPostsByChannelIdAsync(

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
-import { userAPI } from '../services/apiServices';
+import { userAPI , departmentAPI } from '../services/apiServices';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -47,7 +47,7 @@ const ProfileCard = (props) => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get('http://localhost:5126/api/department/public');
+        const response = await departmentAPI.getAllDepartments(); 
         setDepartments(response.data);
       } catch (error) {
         console.error('Erreur lors de la récupération des départements:', error);

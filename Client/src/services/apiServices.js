@@ -291,9 +291,6 @@ export const eventsAPI = {
 
   // Employee search and invitation endpoints
 
-  getDepartmentEmployees: (departmentId) =>
-    api.get(`/department/${departmentId}`),
-  getAllDepartments: () => api.get("/department"),
 
   // Bulk invitation endpoints
   inviteAll: (eventId) => api.post(`/event/${eventId}/invite-all`),
@@ -325,6 +322,10 @@ export const eventsAPI = {
 export const departmentAPI = {
   getEmployeesInDepartment: (departmentId) =>
     api.get(`/Department/${departmentId}/employees`),
+  getDepartmentEmployees: (departmentId) =>
+    api.get(`/department/${departmentId}`),
+  getAllDepartments: () => api.get("/department"),
+  
 };
 
 // Admin API service

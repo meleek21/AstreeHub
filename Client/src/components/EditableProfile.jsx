@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { userAPI } from '../services/apiServices';
+import { userAPI , departmentAPI } from '../services/apiServices';
 import { toast } from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -31,7 +31,7 @@ const EditableProfile = () => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get('http://localhost:5126/api/department/public');
+        const response = await departmentAPI.getAllDepartments(); 
         setDepartments(response.data);
       } catch (error) {
         console.error('Error fetching departments:', error);
