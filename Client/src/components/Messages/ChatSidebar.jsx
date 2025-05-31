@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { userAPI } from '../../services/apiServices';
 import UserBadge from '../UserBadge';
 import '../../assets/Css/ChatSidebar.css';
@@ -29,11 +30,7 @@ const ChatSidebar = () => {
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
 
-  React.useEffect(() => {
-    setFilteredEmployees(employees);
-  }, [employees]);
-
-  // Debounce search function
+  // Restore debounce utility function at top
   const debounce = (func, delay) => {
     let timeoutId;
     return (...args) => {
@@ -44,9 +41,13 @@ const ChatSidebar = () => {
     };
   };
 
-  // Filter employees based on search term
-  const filterEmployees = useCallback(
-    debounce((searchValue) => {
+  React.useEffect(() => {
+    setFilteredEmployees(employees);
+  }, [employees.length]);
+
+  // Use useMemo for stable debounce reference
+  const debouncedFilter = useMemo(() => {
+    return debounce((searchValue) => {
       if (!searchValue.trim()) {
         setFilteredEmployees(employees);
         return;
@@ -56,9 +57,15 @@ const ChatSidebar = () => {
         return fullName.includes(searchValue.toLowerCase());
       });
       setFilteredEmployees(filtered);
-    }, 300),
-    [employees]
+    }, 300);
+  }, [employees]); // Only recreate when employees change
+
+  const filterEmployees = useCallback(
+    (searchValue) => debouncedFilter(searchValue),
+    [debouncedFilter]
   );
+
+ 
 
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -78,7 +85,7 @@ const ChatSidebar = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isSidebarVisible]);
+  }, [isSidebarVisible]); // Removed unnecessary dependencies
 
   if (isLoading) {
     return (
@@ -107,7 +114,7 @@ const ChatSidebar = () => {
           colors="primary:#ffebd0ff"
           style={{width: '35px',height: '35px',transform: 'rotate(-180deg)' ,transition: 'transform 0.3s ease'}}>
         </lord-icon>
-        <span className="peeking-tooltip">une date? un collegue?</span>
+        <span className="peeking-tooltip">une date? un collègue?</span>
       </button>
       {isSidebarVisible && (
         <ModalPortal>
@@ -120,7 +127,7 @@ const ChatSidebar = () => {
                   placeholder="Search contacts..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="search-input"
+                  className="chat-search-input"
                 />
               </div>
               {filteredEmployees.length === 0 ? (

@@ -45,7 +45,6 @@
   border: none;
   font-size: 20px;
   cursor: pointer;
-  color: var(--text-secondary);
   transition: var(--transition-fast);
   padding: 4px;
   border-radius: 4px;

@@ -27,21 +27,21 @@ namespace ASTREE_PFE.Services
 
         public async Task SendPasswordResetEmailAsync(string email, string resetLink)
         {
-            string subject = "Reset Your Password";
+            string subject = "Réinitialisez votre mot de passe";
             string htmlContent =
                 $@"<html>
                 <body>
-                    <h2>Reset Your Password</h2>
-                    <p>You have requested to reset your password. Please click the link below to set a new password:</p>
-                    <p><a href=""{resetLink}"" target=""_blank"">Reset Password</a></p>
-                    <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
-                    <p>This link will expire in 15 minutes.</p>
-                    <p>Thank you,<br>The ASTREE Team</p>
+                    <h2>Réinitialisez votre mot de passe</h2>
+                    <p>Vous avez demandé à réinitialiser votre mot de passe. Veuillez cliquer sur le lien ci-dessous pour définir un nouveau mot de passe :</p>
+                    <p><a href=""{resetLink}"" target=""_blank"">Réinitialiser le mot de passe</a></p>
+                    <p>Si vous n'avez pas demandé de réinitialisation de mot de passe, veuillez ignorer cet e-mail ou contacter le support si vous avez des préoccupations.</p>
+                    <p>Ce lien expirera dans 15 minutes.</p>
+                    <p>Merci,<br>L'équipe ASTREE</p>
                 </body>
             </html>";
 
             string plainTextContent =
-                $"Reset Your Password\n\nYou have requested to reset your password. Please use the following link to set a new password: {resetLink}\n\nIf you did not request a password reset, please ignore this email or contact support if you have concerns.\n\nThis link will expire in 15 minutes.\n\nThank you,\nThe ASTREE Team";
+                $"Réinitialisez votre mot de passe\n\nVous avez demandé à réinitialiser votre mot de passe. Veuillez utiliser le lien suivant pour définir un nouveau mot de passe : {resetLink}\n\nSi vous n'avez pas demandé de réinitialisation de mot de passe, veuillez ignorer cet e-mail ou contacter le support si vous avez des préoccupations.\n\nCe lien expirera dans 15 minutes.\n\nMerci,\nL'équipe ASTREE";
 
             await SendEmailAsync(email, subject, htmlContent, plainTextContent);
         }
