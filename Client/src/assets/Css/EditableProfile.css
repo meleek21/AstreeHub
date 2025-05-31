@@ -173,6 +173,54 @@
   background: var(--error);
   color: white;
 }
+/* Add to your existing EditableProfile.css */
+.password-change-container {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.change-password-button {
+  background-color: #4a6fa5;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  margin-left: auto;
+}
+
+.change-password-button:hover {
+  background-color: #3a5a8a;
+}
+
+.button-group {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.secondary-button {
+  background-color: #6c757d;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.secondary-button:hover {
+  background-color: #5a6268;
+}
 
 @keyframes spin {
   to {
@@ -200,4 +248,5 @@
   .button-group {
     justify-content: center;
   }
+  
 }

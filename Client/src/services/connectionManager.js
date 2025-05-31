@@ -489,49 +489,40 @@ class ConnectionManager {
     // Clear promises to prevent new callers attaching to old stop attempts
     const userStopPromise = this.userConnectionPromise;
     const messageStopPromise = this.messageConnectionPromise;
+    const notificationStopPromise = this.notificationConnectionPromise;
     this.userConnectionPromise = null;
     this.messageConnectionPromise = null;
+    this.notificationConnectionPromise = null;
 
     // Wait for any ongoing start attempts before stopping
     try {
-      await Promise.all([userStopPromise, messageStopPromise].filter((p) => p));
+      await Promise.all([userStopPromise, messageStopPromise, notificationStopPromise].filter((p) => p));
     } catch (error) {
-      console.warn(
-        "Error during pending connection start while stopping:",
-        error
-      );
-      // Proceed with stop regardless
+      console.warn("Error during pending connection start while stopping:", error);
     }
 
-    const stopUser = this.userConnection
-      ? this.userConnection.stop()
-      : Promise.resolve();
-    const stopMessage = this.messageConnection
-      ? this.messageConnection.stop()
-      : Promise.resolve();
-    const stopNotification = this.notificationConnection
-      ? this.notificationConnection.stop()
-      : Promise.resolve();
 
-    try {
-      await Promise.all([stopUser, stopMessage, stopNotification]);
-      console.log("All connections stopped.");
-    } catch (error) {
-      console.error("Error stopping connections:", error);
-      // Handle potential errors during stop
-    } finally {
-      this.userConnection = null;
-      this.messageConnection = null;
-      this.notificationConnection = null;
-      // Clear activity listeners on final stop
-      this.activityListeners.clear();
-      // Ensure state is DISCONNECTED unless a reconnect started somehow
-      if (this.state !== ConnectionState.RECONNECTING) {
-        this.setState(ConnectionState.DISCONNECTED);
-      }
-      console.log("Connection manager stopped.");
+  // Stop all connections including notification
+  const stopUser = this.userConnection ? this.userConnection.stop() : Promise.resolve();
+  const stopMessage = this.messageConnection ? this.messageConnection.stop() : Promise.resolve();
+  const stopNotification = this.notificationConnection ? this.notificationConnection.stop() : Promise.resolve(); // ADD THIS
+
+  try {
+    await Promise.all([stopUser, stopMessage, stopNotification]); // UPDATE THIS
+    console.log("All connections stopped.");
+  } catch (error) {
+    console.error("Error stopping connections:", error);
+  } finally {
+    this.userConnection = null;
+    this.messageConnection = null;
+    this.notificationConnection = null; // ADD THIS
+    this.activityListeners.clear();
+    if (this.state !== ConnectionState.RECONNECTING) {
+      this.setState(ConnectionState.DISCONNECTED);
     }
+    console.log("Connection manager stopped.");
   }
+}
 
   // --- Event Handlers Setup ---
   setupEventHandlers(connection, connectionType, callbacks) {
@@ -599,8 +590,25 @@ class ConnectionManager {
         connection.on("MessageDeleted", callbacks.onMessageDeleted);
         connection.on("messagedeleted", callbacks.onMessageDeleted);
       }
+    }else if (connectionType === "notification") {
+      // ADD NOTIFICATION HANDLERS
+      if (callbacks.onReceiveNotification) {
+        connection.off("ReceiveNotification");
+        connection.off("receivenotification");
+        connection.on("ReceiveNotification", callbacks.onReceiveNotification);
+        connection.on("receivenotification", callbacks.onReceiveNotification);
+      }
+      
+      // Add other notification event handlers as needed
+      if (callbacks.onNotificationRead) {
+        connection.off("NotificationRead");
+        connection.off("notificationread");
+        connection.on("NotificationRead", callbacks.onNotificationRead);
+        connection.on("notificationread", callbacks.onNotificationRead);
+      }
     }
   }
+  
 
   // --- Message Hub Event Handling ---
   registerMessageHandler(eventName, callback) {
@@ -1019,6 +1027,23 @@ class ConnectionManager {
     if (this.messageConnection?.state === "Connected") {
       this.messageConnection.off("MessageDeleted");
       this.messageConnection.off("messagedeleted");
+    }
+  }
+  onReceiveNotification(callback) {
+    this.notificationCallbacks.onReceiveNotification = callback;
+    if (this.notificationConnection?.state === "Connected") {
+      this.notificationConnection.off("ReceiveNotification");
+      this.notificationConnection.off("receivenotification");
+      this.notificationConnection.on("ReceiveNotification", callback);
+      this.notificationConnection.on("receivenotification", callback);
+    }
+  }
+  
+  offReceiveNotification() {
+    delete this.notificationCallbacks.onReceiveNotification;
+    if (this.notificationConnection?.state === "Connected") {
+      this.notificationConnection.off("ReceiveNotification");
+      this.notificationConnection.off("receivenotification");
     }
   }
 }

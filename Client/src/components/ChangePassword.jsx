@@ -76,7 +76,6 @@ const PasswordRequirements = ({ requirements }) => {
       animate={{ opacity: 1, height: 'auto' }}
       transition={{ duration: 0.3 }}
     >
-
       <div className="progress-container">
         <div className="progress" style={{ height: '6px' }}>
           <motion.div
@@ -131,8 +130,9 @@ const PasswordRequirements = ({ requirements }) => {
   );
 };
 
-const ChangePassword = () => {
+const ChangePassword = ({ onSuccess, onCancel, isFirstLogin = true }) => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -154,7 +154,6 @@ const ChangePassword = () => {
     newPassword: false,
     confirmNewPassword: false
   });
-  const navigate = useNavigate();
 
   const handleFocus = (field) => {
     setIsFocused(prev => ({ ...prev, [field]: true }));
@@ -205,8 +204,14 @@ const ChangePassword = () => {
         currentPassword: formData.currentPassword,
         newPassword: formData.newPassword
       });
-      toast.success('Mot de passe changé avec succès. Veuillez compléter votre profil.');
-      navigate('/complete-profile');
+      
+      toast.success('Mot de passe changé avec succès.');
+      
+      if (isFirstLogin) {
+        navigate('/complete-profile');
+      } else {
+        if (onSuccess) onSuccess();
+      }
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Erreur lors du changement de mot de passe.';
       setError(errorMessage);
@@ -230,7 +235,7 @@ const ChangePassword = () => {
         transition={{ delay: 0.2 }}
       >
         <h2>Changer le mot de passe</h2>
-       </motion.div>
+      </motion.div>
 
       <AnimatePresence>
         {error && (
@@ -247,20 +252,22 @@ const ChangePassword = () => {
       </AnimatePresence>
 
       <form className='login-form-group' onSubmit={handleSubmit}>
-        <PasswordInput
-          label="Mot de passe actuel"
-          value={formData.currentPassword}
-          onChange={handleChange}
-          showPassword={showNewPassword}
-          togglePasswordVisibility={() => setShowNewPassword(!showNewPassword)}
-          id="currentPassword"
-          isFocused={isFocused.currentPassword}
-          onFocus={() => handleFocus('currentPassword')}
-          onBlur={() => handleBlur('currentPassword')}
-        />
+        {!isFirstLogin && (
+          <PasswordInput
+            label="Mot de passe actuel"
+            value={formData.currentPassword}
+            onChange={handleChange}
+            showPassword={showNewPassword}
+            togglePasswordVisibility={() => setShowNewPassword(!showNewPassword)}
+            id="currentPassword"
+            isFocused={isFocused.currentPassword}
+            onFocus={() => handleFocus('currentPassword')}
+            onBlur={() => handleBlur('currentPassword')}
+          />
+        )}
 
         <PasswordInput
-          label="Nouveau mot de passe"
+          label={isFirstLogin ? "Nouveau mot de passe" : "Nouveau mot de passe"}
           value={formData.newPassword}
           onChange={handleChange}
           showPassword={showNewPassword}
@@ -310,6 +317,18 @@ const ChangePassword = () => {
             </>
           )}
         </motion.button>
+
+        {!isFirstLogin && (
+          <motion.button
+            type="button"
+            className="secondary-button"
+            onClick={onCancel}
+            whileHover={{ scale: 1.02, boxShadow: 'var(--shadow-sm)' }}
+            whileTap={{ scale: 0.98 }}
+          >
+            Annuler
+          </motion.button>
+        )}
       </form>
     </motion.div>
   );

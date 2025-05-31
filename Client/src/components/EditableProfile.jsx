@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import '../assets/Css/EditableProfile.css';
 import ProfileCard from './ProfileCard';
+import ChangePassword from './ChangePassword';
 
 const EditableProfile = () => {
   const { userId } = useParams();
@@ -24,6 +25,7 @@ const EditableProfile = () => {
   const [departments, setDepartments] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -148,6 +150,15 @@ const EditableProfile = () => {
     toast('Modifications annulées', { icon: '⚠️' });
   };
 
+  const handlePasswordChangeSuccess = () => {
+    setShowChangePassword(false);
+    toast.success('Mot de passe changé avec succès');
+  };
+
+  const handleCancelPasswordChange = () => {
+    setShowChangePassword(false);
+  };
+
   return (
     <motion.div 
       className="profile-container"
@@ -155,156 +166,176 @@ const EditableProfile = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="profile-picture-container">
-        <div className="profile-picture-wrapper">
-          <motion.img
-            src={
-              formData.profilePicture instanceof File
-                ? URL.createObjectURL(formData.profilePicture)
-                : formData.profilePicture
-            }
-            alt={`${formData.firstName} ${formData.lastName}`}
-            className="profile-picture"
-            whileHover={{ scale: 1.03 }}
-            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-          />
-          <motion.button
-            className="upload-button"
-            onClick={() => fileInputRef.current.click()}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            +
-          </motion.button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept="image/*"
-            onChange={handleFileChange}
-            style={{ display: 'none' }}
+      {showChangePassword ? (
+        <div className="password-change-container">
+          <ChangePassword 
+            onSuccess={handlePasswordChangeSuccess}
+            onCancel={handleCancelPasswordChange}
+            isFirstLogin={false}
           />
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="profile-picture-container">
+            <div className="profile-picture-wrapper">
+              <motion.img
+                src={
+                  formData.profilePicture instanceof File
+                    ? URL.createObjectURL(formData.profilePicture)
+                    : formData.profilePicture
+                }
+                alt={`${formData.firstName} ${formData.lastName}`}
+                className="profile-picture"
+                whileHover={{ scale: 1.03 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              />
+              <motion.button
+                className="upload-button"
+                onClick={() => fileInputRef.current.click()}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                +
+              </motion.button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleFileChange}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
 
-      <div className="profile-form">
-        <div className="form-row">
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <label>Prénom:</label>
-            <input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              placeholder="Prénom"
-            />
-          </motion.div>
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <label>Nom de famille:</label>
-            <input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Nom de famille"
-            />
-          </motion.div>
-        </div>
-        <div className="form-row">
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <label>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              readOnly
-              className="form-control"
-              placeholder="Email"
-            />
-          </motion.div>
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <label>Numéro de téléphone:</label>
-            <input
-              type="text"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Numéro de téléphone"
-            />
-          </motion.div>
-        </div>
-        <div className="form-row">
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            <label>Date de naissance:</label>
-            <input
-              type="date"
-              name="dateOfBirth"
-              value={formData.dateOfBirth}
-              onChange={handleChange}
-            />
-          </motion.div>
-          <motion.div 
-            className="form-group"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <label>Département:</label>
-            <input
-              type="text"
-              name="departmentId"
-              value={departments.find(dept => dept.id === parseInt(formData.departmentId))?.name || 'Département non assigné'}
-              readOnly
-              className="form-control"
-            />
-          </motion.div>
-        </div>
-        <div className="button-group">
-          <motion.button
-            onClick={handleSave}
-            className={`save-button ${isSuccess ? 'success' : ''} ${isLoading ? 'loading' : ''}`}
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            animate={isSuccess ? { scale: [1, 1.1, 1] } : {}}
-            transition={{ duration: 0.5 }}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Enregistrement...' : 'Enregistrer'}
-          </motion.button>
-          <motion.button 
-            onClick={handleCancel} 
-            className="cancel-button"
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-          >
-            Annuler
-          </motion.button>
-        </div>
-      </div>
+          <div className="profile-form">
+            <div className="form-row">
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <label>Prénom:</label>
+                <input
+                  type="text"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Prénom"
+                />
+              </motion.div>
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <label>Nom de famille:</label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Nom de famille"
+                />
+              </motion.div>
+            </div>
+            <div className="form-row">
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <label>Email:</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  readOnly
+                  className="form-control"
+                  placeholder="Email"
+                />
+              </motion.div>
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <label>Numéro de téléphone:</label>
+                <input
+                  type="text"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="Numéro de téléphone"
+                />
+              </motion.div>
+            </div>
+            <div className="form-row">
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <label>Date de naissance:</label>
+                <input
+                  type="date"
+                  name="dateOfBirth"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                />
+              </motion.div>
+              <motion.div 
+                className="form-group"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <label>Département:</label>
+                <input
+                  type="text"
+                  name="departmentId"
+                  value={departments.find(dept => dept.id === parseInt(formData.departmentId))?.name || 'Département non assigné'}
+                  readOnly
+                  className="form-control"
+                />
+              </motion.div>
+            </div>
+            <div className="button-group">
+              <motion.button
+                onClick={handleSave}
+                className={`save-button ${isSuccess ? 'success' : ''} ${isLoading ? 'loading' : ''}`}
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+                animate={isSuccess ? { scale: [1, 1.1, 1] } : {}}
+                transition={{ duration: 0.5 }}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+              </motion.button>
+              <motion.button 
+                onClick={handleCancel} 
+                className="cancel-button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                Annuler
+              </motion.button>
+              <motion.button 
+                onClick={() => setShowChangePassword(true)}
+                className="change-password-button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                Changer le mot de passe
+              </motion.button>
+            </div>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };
