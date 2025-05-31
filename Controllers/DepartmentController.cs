@@ -1,9 +1,9 @@
-
 using ASTREE_PFE.DTOs;
 using ASTREE_PFE.Models;
 using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 namespace ASTREE_PFE.Controllers
 {
     [Route("api/[controller]")]
@@ -37,18 +37,6 @@ namespace ASTREE_PFE.Controllers
                     Description = d.Description,
                     DirectorId = d.DirectorId,
                 })
-                .ToList();
-
-            return departmentDtos;
-        }
-
-        [HttpGet("public")]
-        [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<DepartmentListDto>>> GetPublicDepartments()
-        {
-            var departments = await _departmentService.GetAllDepartmentsAsync();
-            var departmentDtos = departments
-                .Select(d => new DepartmentListDto { Id = d.Id, Name = d.Name })
                 .ToList();
 
             return departmentDtos;

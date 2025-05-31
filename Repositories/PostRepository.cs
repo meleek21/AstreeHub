@@ -90,17 +90,25 @@ namespace ASTREE_PFE.Repositories
         public async Task<(IEnumerable<Post>, string, bool)> GetByAuthorIdAsync(
             string authorId,
             string lastItemId = null,
-            int limit = 10
+            int limit = 10,
+            PostType? postType = null // Add this parameter
         )
         {
-            var filter = Builders<Post>.Filter.Eq(p => p.AuthorId, authorId);
+            var filterBuilder = Builders<Post>.Filter;
+            var filter = filterBuilder.Eq(p => p.AuthorId, authorId);
+
+            // Add postType filter if specified
+            if (postType.HasValue)
+            {
+                filter &= filterBuilder.Eq(p => p.PostType, postType.Value);
+            }
 
             if (!string.IsNullOrEmpty(lastItemId))
             {
                 var lastPost = await _posts.Find(p => p.Id == lastItemId).FirstOrDefaultAsync();
                 if (lastPost != null)
                 {
-                    filter &= Builders<Post>.Filter.Lt(p => p.Timestamp, lastPost.Timestamp);
+                    filter &= filterBuilder.Lt(p => p.Timestamp, lastPost.Timestamp);
                 }
             }
 
