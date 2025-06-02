@@ -291,7 +291,7 @@ const EmployeeTable = () => {
           className="role-badge"
           whileHover={{ scale: 1.05 }}
         >
-          {row.role}
+          {row.role === 'EMPLOYEE' ? 'Employé' : row.role === 'SUPERADMIN' ? 'Administrateur' : row.role === 'DIRECTOR' ? 'Directeur' : row.role}
         </motion.span>
       ),
     },

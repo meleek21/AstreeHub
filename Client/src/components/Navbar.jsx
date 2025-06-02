@@ -87,16 +87,6 @@ function Navbar() {
       <div className="navbar-home"></div>
       {/* Notifications */}
       <NotificationBell onOpenPostModal={handleOpenPostModal} />
-      {/* Search Bar */}
-      <div className="search-bar">
-        <lord-icon
-          src="https://cdn.lordicon.com/fkdzyfle.json"
-          trigger="hover"
-          colors="primary:#AB9DFF"
-          style={{ width: '25px', height: '25px' }}
-        ></lord-icon>
-        <input type="text" placeholder="Que recherchez-vous ?" />
-      </div>
       {/* User Dropdown */}
       <div className="user-dropdown" ref={dropdownRef}>
         <span className="welcome-text">Bienvenue, {userInfo.firstName} {userInfo.lastName}</span>
