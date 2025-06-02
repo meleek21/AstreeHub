@@ -1,7 +1,5 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBuilding } from '@fortawesome/free-solid-svg-icons';
 import { departmentAPI } from '../../services/apiServices';
 import AttendeeItem from '../Attendees/AttendeeItem';
 
@@ -11,7 +9,6 @@ const InviteDepartmentSection = ({
   handleDepartmentChange,
   handleInviteDepartment,
   isSending,
-  user,
   isOrganizer,
   isEditing,
   userAttendanceStatus,

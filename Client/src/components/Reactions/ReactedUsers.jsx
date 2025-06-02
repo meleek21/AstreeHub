@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import { Tooltip } from '@mui/material'; 
 
 
-const ReactedUsers = ({ users, userInfoMap }) => {
+const ReactedUsers = ({ users }) => {
   const groupedReactions = users.reduce((acc, reaction) => {
     if (!acc[reaction.employeeId]) {
       acc[reaction.employeeId] = [];

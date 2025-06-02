@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { userAPI } from '../services/apiServices';
-import { useAuth } from '../Context/AuthContext';
-import { FaArrowRight, FaArrowLeft, FaCheck, FaTimes, FaUserCircle } from 'react-icons/fa';
-import '../assets/Css/Auth.css';
+import { userAPI } from '../../services/apiServices';
+import { useAuth } from '../../Context/AuthContext';
+import { FaArrowRight, FaCheck, FaTimes, FaUserCircle } from 'react-icons/fa';
+import '../../assets/Css/Auth.css';
 
 const CompleteProfile = () => {
   const { user, logout } = useAuth();

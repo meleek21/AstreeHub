@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import { authAPI } from '../services/apiServices';
-import { useAuth } from '../Context/AuthContext';
-import { FaLock, FaUnlock, FaEye, FaEyeSlash, FaArrowRight, FaCheck, FaTimes } from 'react-icons/fa';
-import '../assets/Css/Auth.css';
+import { authAPI } from '../../services/apiServices';
+import { useAuth } from '../../Context/AuthContext';
+import { FaLock,FaEye, FaEyeSlash, FaArrowRight, FaCheck, FaTimes } from 'react-icons/fa';
+import '../../assets/Css/Auth.css';
 
 const PasswordInput = ({ 
   label, 

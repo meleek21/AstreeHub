@@ -1,11 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import { useState } from "react";
 import { MentionsInput, Mention } from "react-mentions";
-import { userAPI } from "../services/apiServices";
+import { userAPI } from "../../services/apiServices";
 import toast from "react-hot-toast";
-import '../assets/Css/MentionsInput.css';
+import '../../assets/Css/MentionsInput.css';
 
-const MentionInput = React.memo(({ content, setContent, isEditing }) => {
+const MentionInput = React.memo(({ content, setContent }) => {
   const [users, setUsers] = useState([]);
   const mentionsInputRef = useRef(null);
 

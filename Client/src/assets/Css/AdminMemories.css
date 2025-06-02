@@ -525,6 +525,7 @@
 
 .preview-cancel,
 .preview-confirm {
+  all: unset;
   padding: 0.85rem 1.75rem;
   border-radius: 0.75rem;
   font-family: 'Nunito', sans-serif;
@@ -540,12 +541,13 @@
 
 .preview-cancel {
   background-color: white;
-  color: var(--text-primary);
+  color: var(--error);
   border: 1px solid var(--border);
 }
 
 .preview-cancel:hover {
-  background-color: #f5f5f5;
+  background-color: var(--error);
+  color: white;
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -675,6 +677,7 @@
 .event-actions {
   display: flex;
   gap: 1rem;
+  margin-bottom: 1.5rem;
   margin-top: 1.5rem;
 }
 

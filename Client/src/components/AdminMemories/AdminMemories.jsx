@@ -9,6 +9,7 @@ import EventList from "./EventList/EventList";
 import PreviewModal from "./Modals/PreviewModal";
 import ImageModal from "./Modals/ImageModal";
 import "../../assets/Css/AdminMemories.css";
+import ConfirmationModal from "../ConfirmationModal";
 
 function AdminMemories() {
   const navigate = useNavigate();
@@ -23,7 +24,8 @@ function AdminMemories() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [events, setEvents] = useState([]);
-
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
   // Fetch events when component mounts and when events are updated
   useEffect(() => {
     fetchEvents();
@@ -68,6 +70,25 @@ function AdminMemories() {
     }
   };
 
+  const handleDeleteRequest = (id) => {
+    setPendingDeleteId(id);
+    setShowConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await postsAPI.deleteEventPost(pendingDeleteId);
+      setEvents(prevEvents => prevEvents.filter(event => event.id !== pendingDeleteId));
+      toast.success("Événement supprimé avec succès.");
+    } catch (err) {
+      console.error("Erreur de suppression:", err);
+      toast.error("Échec de la suppression: " + (err.response?.data?.message || "Erreur serveur"));
+    } finally {
+      setShowConfirm(false);
+      setPendingDeleteId(null);
+    }
+  };
   return (
     <div className="admin-memories-container" tabIndex="0" aria-label="Section de gestion des événements d'administration">
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -132,11 +153,18 @@ function AdminMemories() {
         onClose={() => setSelectedImage(null)}
       />
       <EventList
-        events={events} // Pass the events data to EventList
+        events={events}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteRequest}
         onImageSelect={setSelectedImage}
         user={user}
+      />
+      <ConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => { setShowConfirm(false); setPendingDeleteId(null); }}
+        onConfirm={handleConfirmDelete}
+        title="Confirmer la suppression"
+        message="Êtes-vous sûr de vouloir supprimer cet événement ?"
       />
     </div>
   );

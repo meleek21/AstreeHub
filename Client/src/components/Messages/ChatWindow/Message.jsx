@@ -77,7 +77,7 @@ const Message = ({ message, currentUser, conversation, onEditMessage, onUnsendMe
           <div className="modal-content">
             <img src={modalImage} alt="Enlarged content" />
             <button 
-              className="close-modal"
+              className="chat-close-modal"
               onClick={() => setShowImageModal(false)}
               aria-label="Close image"
             >

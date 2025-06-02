@@ -76,13 +76,13 @@
     background: none;
     border: none;
     cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--text-on-dark);
     font-size: 26px;
     transition: all 0.3s ease;
 }
 
 .close-modal:hover {
-    color: var(--error-color);
+    color: var(--error);
     transform: scale(1.1);
 }
 
@@ -131,7 +131,7 @@
   background-color: white;
   padding: 1.5rem;
   border-radius: 1rem;
-  width: 45%;
+  width: 55%;
   max-width: 600px;
   max-height: 90vh;
   box-shadow: var(--shadow-md);

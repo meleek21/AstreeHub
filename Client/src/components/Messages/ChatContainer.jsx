@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { messagesAPI } from '../../services/apiServices';
 import ConversationList from './ConversationList';
 import ChatWindow from './ChatWindow/ChatWindow';
-import ChatSidebar from './ChatSidebar';
 import '../../assets/Css/Chat.css';
 import {useAuth} from '../../Context/AuthContext';
 import connectionManager from '../../services/connectionManager';
@@ -10,7 +9,7 @@ import ConfirmationModal from '../ConfirmationModal';
 import { useChat } from '../../Context/ChatContext';
 
 const ChatContainer = () => {
-  const { conversations, setConversations, selectedConversation, setSelectedConversation, messages, setMessages, loading, setLoading, unreadCount, setUnreadCount, selectedEmployee, setSelectedEmployee } = useChat();
+  const { conversations, setConversations, selectedConversation, setSelectedConversation, messages, setMessages, loading, setLoading, unreadCount, setUnreadCount } = useChat();
   const { user: currentUser } = useAuth();
   const [confirmModal, setConfirmModal] = useState({ open: false, onConfirm: null, title: '', message: '' });
   

@@ -1,4 +1,4 @@
-import Login from '../components/Login';
+import Login from '../components/Authentification/Login';
 import '../assets/CSS/Authen.css';
 import { motion } from 'framer-motion';
 

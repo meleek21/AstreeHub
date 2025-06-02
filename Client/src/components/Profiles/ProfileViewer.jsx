@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { postsAPI } from '../services/apiServices';
-import '../assets/Css/ProfileViewer.css';
-import PostCard from './PostCard';
+import { postsAPI } from '../../services/apiServices';
+import '../../assets/Css/ProfileViewer.css';
+import PostCard from '../Posts/PostCard';
 import ProfileCard from './ProfileCard';
-import CommentModal from '../components/Comments/CommentModal';
+import CommentModal from '../Comments/CommentModal';
 
 const ProfileViewer = () => {
   const { userId } = useParams();

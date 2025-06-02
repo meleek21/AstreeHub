@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -18,14 +19,15 @@ import {
   faUser,
   faPhone
 } from '@fortawesome/free-solid-svg-icons';
-import { faGoogle } from '@fortawesome/free-brands-svg-icons';
 import AttendeeManagement from '../Attendees/AttendeeManagement';
 import AttendeeItem from '../Attendees/AttendeeItem';
 import toast from 'react-hot-toast';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import { eventsAPI } from '../../services/apiServices';
+import ConfirmationModal from '../ConfirmationModal';
 
 const getEventTypeColor = (type) => {
+  const [showConfirm, setShowConfirm] = useState(false);
   const typeColors = {
     'Général': '#3788d8',
     'Réunion': '#2c3e50',
@@ -76,6 +78,7 @@ const EventDetailsView = ({
 }) => {
   const startDate = new Date(event.eventDateTime);
   const endDate = event.endDateTime ? new Date(event.endDateTime) : new Date(startDate.getTime() + 60 * 60 * 1000);
+  const [showConfirm, setShowConfirm] = React.useState(false);
 
   return (
     <div className="post-editor-content event-details">
@@ -232,15 +235,26 @@ const EventDetailsView = ({
             
             <button 
               className="delete-btn" 
-              onClick={onDelete}
+              onClick={() => setShowConfirm(true)}
             >
               <FontAwesomeIcon icon={faTrashAlt} /> Supprimer l'événement
             </button>
           </>
         )}
+        <ConfirmationModal
+  isOpen={showConfirm}
+  onClose={() => setShowConfirm(false)}
+  onConfirm={() => {
+    setShowConfirm(false);
+    onDelete();
+  }}
+  title="Confirmation de suppression"
+  message="Êtes-vous sûr de vouloir supprimer cet événement ?"
+/>
       </div>
     </div>
   );
 };
 
 export default EventDetailsView;
+

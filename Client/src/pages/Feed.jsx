@@ -2,15 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
-import CreatePost from '../components/CreatePost';
-import PostCard from '../components/PostCard';
-import Comment from '../components/Comments/Comment';
+import CreatePost from '../components/Posts/CreatePost';
+import PostCard from '../components/Posts/PostCard';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { createPortal } from "react-dom";
-import ModalPortal from '../components/ModalPortal';
 import CommentModal from '../components/Comments/CommentModal';
 
 function Feed() {

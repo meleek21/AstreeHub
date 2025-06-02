@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faUserMinus } from '@fortawesome/free-solid-svg-icons';
 

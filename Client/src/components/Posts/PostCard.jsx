@@ -1,21 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Reaction from './Reactions/Reaction';
-import '../assets/Css/Reactions.css';
-import '../assets/Css/Comment.css';
-import UserBadge from './UserBadge';
+import Reaction from '../Reactions/Reaction';
+import '../../assets/Css/Reactions.css';
+import '../../assets/Css/Comment.css';
+import UserBadge from '../Profiles/UserBadge';
 import toast from 'react-hot-toast';
 import DOMPurify from 'dompurify';
 import { useNavigate } from 'react-router-dom';
-import '../assets/Css/PostCard.css';
-import { formatDateOrRelative } from '../utils/formatDate';
+import '../../assets/Css/PostCard.css';
+import { formatDateOrRelative } from '../../utils/formatDate';
+import ConfirmationModal from '../ConfirmationModal';
 
-const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick, setSelectedPostId }) => {
+const PostCard = ({ post, userId, onDeletePost, onUpdatePost, openCommentsModal, onCommentClick, setSelectedPostId, showCommentsButton = true }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [updatedContent, setUpdatedContent] = useState(post.content);
   const [expandedImage, setExpandedImage] = useState(null);
+  const [showConfirm, setShowConfirm] = useState(false);
   const textareaRef = useRef(null);
   const menuRef = useRef(null);
   const handleCommentClick = onCommentClick || openCommentsModal;
@@ -192,7 +194,6 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
             {formatDateOrRelative(post.createdAt || post.timestamp)}
           </span>
         </div>
-        
         {post.authorId === userId && (
           <div className="post-actions">
             <div className="post-edit-menu" ref={menuRef}>
@@ -228,7 +229,7 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
                   </button>
                   <button
                     onClick={() => {
-                      onDeletePost(post.id);
+                      setShowConfirm(true);
                       closeMenu();
                     }}
                   >
@@ -292,12 +293,14 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
 
       {/* Interaction Buttons */}
       <div className="post-interaction-buttons">
-        <button className="view-comments-button" onClick={() => handleCommentClick(post.id)}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          Commentaires
-        </button>
+        {showCommentsButton && (
+          <button className="view-comments-button" onClick={() => handleCommentClick(post.id)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            Commentaires
+          </button>
+        )}
         <Reaction postId={post.id} employeeId={userId} openReactionsModal={openReactionsModal} />
       </div>
 
@@ -329,6 +332,16 @@ const PostCard = ({ post, userId, isAuthenticated, token, onDeletePost, onUpdate
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmationModal
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={() => {
+          onDeletePost(post.id);
+          setShowConfirm(false);
+        }}
+        title="Confirmer la suppression"
+        message="Êtes-vous sûr de vouloir supprimer cette publication ?"
+      />
     </motion.div>
   );
 };

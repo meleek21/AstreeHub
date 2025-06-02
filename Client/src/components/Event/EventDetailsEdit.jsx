@@ -11,7 +11,7 @@ import {
   faTimes,
   faLayerGroup
 } from '@fortawesome/free-solid-svg-icons';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import AttendeeManagement from '../Attendees/AttendeeManagement';
 
 const EventDetailsEdit = ({ 
@@ -19,8 +19,7 @@ const EventDetailsEdit = ({
   onClose, 
   onSave, 
   onFieldChange, 
-  isSaving,
-  getEventTypeLabel
+  isSaving
 }) => {
   return (
     <div className="post-editor-content event-details">

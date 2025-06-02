@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { adminAPI } from '../../services/apiServices';
+import { adminAPI, departmentAPI } from '../../services/apiServices';
 import { toast } from 'react-hot-toast';
-import axios from 'axios';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import ModalPortal from '../ModalPortal';
@@ -23,7 +22,7 @@ const AdminEmployeeModal = ({ show, onClose, refreshEmployees }) => {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await axios.get('http://localhost:5126/api/department/public');
+        const response = await departmentAPI.getAllDepartments();
         setDepartments(response.data);
       } catch (error) {
         toast.error('Échec du chargement des départements');

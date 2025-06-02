@@ -1,8 +1,6 @@
 import React from "react";
 import Carousel from "react-bootstrap/Carousel";
 import EventItem from "./EventItem";
-import { postsAPI } from "../../../services/apiServices";
-import toast from "react-hot-toast";
 
 function EventList({ events, onEdit, onDelete, onImageSelect, user, loading }) {
   if (loading) {

@@ -1,11 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import ModalPortal from "../ModalPortal";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import { postsAPI } from "../../services/apiServices";
-import PostCard from "../PostCard";
+import PostCard from "./PostCard";
 import Comment from "../Comments/Comment";
-import Reaction from "../Reactions/Reaction";
 
 const SinglePostModal = ({ isOpen, onClose, postId, userId, isAuthenticated, token }) => {
   const [post, setPost] = useState(null);
@@ -50,9 +47,7 @@ const SinglePostModal = ({ isOpen, onClose, postId, userId, isAuthenticated, tok
     <ModalPortal>
       <div className={`single-post-modal ${isOpen ? "open" : ""}`}>
         <div className="modal-content" ref={modalRef}>
-          <button className="close-modal" onClick={onClose}>
-            <FontAwesomeIcon icon={faTimes} />
-          </button>
+         
           {loading && <div>Loading...</div>}
           {error && <div style={{color: 'red'}}>{error}</div>}
           {post && (
@@ -63,8 +58,9 @@ const SinglePostModal = ({ isOpen, onClose, postId, userId, isAuthenticated, tok
                 isAuthenticated={isAuthenticated}
                 token={token}
                 onCommentClick={null} /* Disable comment button in modal */
+                showCommentsButton={false}
               />
-              <div style={{marginTop: 24}}>
+              <div >
                 <Comment
                   postId={post.id}
                   userId={userId}
