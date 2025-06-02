@@ -111,6 +111,8 @@ const ProfileCard = (props) => {
           className="profile-picture-container"
           whileHover={{ scale: 1.1 }}
           transition={{ type: 'spring', stiffness: 300 }}
+          onClick={() => navigate(`/profile/view/${userId}`)}
+          style={{ cursor: 'pointer' }}
         >
           <img
             src={userInfo.profilePicture}
