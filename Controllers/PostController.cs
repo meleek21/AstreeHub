@@ -56,7 +56,7 @@ public async Task<ActionResult<PaginatedPostsDTO>> GetAllPosts(
         var (posts, nextLastItemId, hasMore) = await _postService.GetAllPostsAsync(
             lastItemId,
             limit,
-            PostType.General // Now fixed to General type
+            null // Remove type filter to include all post types
         );
 
         // Collect all file IDs for batch loading
