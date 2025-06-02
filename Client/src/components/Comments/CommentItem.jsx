@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faReply, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { formatDateOrRelative } from '../../utils/formatDate';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import ReplyForm from './ReplyForm';
 import RepliesList from './RepliesList';
 
@@ -10,7 +10,6 @@ const CommentItem = ({
   comment, 
   userId, 
   onAddReply, 
-  onEditComment, 
   onDeleteComment,
   onEditReply,
   onDeleteReply,

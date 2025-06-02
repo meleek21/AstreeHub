@@ -2,10 +2,10 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-import { authAPI } from "../services/apiServices";
+import { authAPI } from "../../services/apiServices";
 import { FaLock, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
-import "../assets/Css/Auth.css";
-import { useAuth } from "../Context/AuthContext";
+import "../../assets/Css/Auth.css";
+import { useAuth } from "../../Context/AuthContext";
 
 const Login = () => {
   const { login } = useAuth();

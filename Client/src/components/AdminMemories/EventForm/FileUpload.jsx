@@ -1,6 +1,4 @@
-import React, { useRef } from "react";
-import { useState } from "react";
-import { motion } from "framer-motion";
+import React,{ useState }  from "react";
 import FileSearching from "../../../assets/FileSearching.png";
 import FilePreview from "./FilePreview";
 

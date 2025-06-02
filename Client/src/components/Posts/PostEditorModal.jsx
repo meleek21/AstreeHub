@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
-import { postsAPI } from "../services/apiServices";
+import { postsAPI } from "../../services/apiServices";
 import toast from "react-hot-toast";
-import "../assets/Css/CreatePost.css";
+import "../../assets/Css/CreatePost.css";
 import { useNavigate } from "react-router-dom";
-import EmojiPicker from "./EmojiPicker";
+import EmojiPicker from "../EmojiPicker";
 import MentionInput from "./MentionInput";
-import ModalPortal from "./ModalPortal";
+import ModalPortal from "../ModalPortal";
 
 /**
  * Modal component for creating and editing posts

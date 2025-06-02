@@ -1,15 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { useParams } from 'react-router-dom';
-import { userAPI , departmentAPI } from '../services/apiServices';
+import { useParams, useNavigate } from 'react-router-dom';
+import { userAPI , departmentAPI } from '../../services/apiServices';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCopy } from '@fortawesome/free-solid-svg-icons';
-import '../assets/Css/ProfileCard.css';
-import { useNavigate } from 'react-router-dom';
-import { faCog } from '@fortawesome/free-solid-svg-icons';
-import { useAuth } from '../Context/AuthContext';
+import { faCopy, faCog } from '@fortawesome/free-solid-svg-icons';
+import '../../assets/Css/ProfileCard.css';
+import { useAuth } from '../../Context/AuthContext';
 
 const ProfileCard = (props) => {
   const defaultProfilePicture = 'https://res.cloudinary.com/REMOVED/image/upload/frheqydmq3cexbfntd7e.jpg';

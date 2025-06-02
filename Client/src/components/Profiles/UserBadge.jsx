@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../Context/AuthContext';
-import { userAPI, userOnlineStatusAPI } from '../services/apiServices';
-import useOnlineStatus from '../hooks/useOnlineStatus';
+import { useAuth } from '../../Context/AuthContext';
+import { userAPI, userOnlineStatusAPI } from '../../services/apiServices';
+import useOnlineStatus from '../../hooks/useOnlineStatus';
 
 const UserBadge = ({ userId }) => {
   const { user: loggedInUser } = useAuth();

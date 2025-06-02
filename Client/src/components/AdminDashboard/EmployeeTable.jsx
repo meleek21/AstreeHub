@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { userAPI, adminAPI } from "../../services/apiServices";
-import axios from "axios";
+import { userAPI, adminAPI, departmentAPI } from "../../services/apiServices";
 import AdminEmployeeModal from "./AdminEmployeeModal";
 import EditEmployeeModal from './EditEmployeeModal';
 import '../../assets/Css/EmployeeTable.css';
@@ -77,7 +76,7 @@ const EmployeeTable = () => {
         setLoading(true);
         const [employeesRes, departmentsRes] = await Promise.all([
           userAPI.getAllEmployees(),
-          axios.get("http://localhost:5126/api/department/public")
+          departmentAPI.getAllDepartments()
         ]);
         setEmployees(employeesRes.data);
         setFilteredEmployees(employeesRes.data);
@@ -137,6 +136,7 @@ const EmployeeTable = () => {
       const formData = new FormData();
       formData.append('FirstName', editForm.firstName);
       formData.append('LastName', editForm.lastName);
+      formData.append('Email', editForm.email);
       formData.append('PhoneNumber', editForm.phoneNumber);
       formData.append('DateOfBirth', editForm.dateOfBirth);
       formData.append('DepartmentId', parseInt(editForm.departmentId));

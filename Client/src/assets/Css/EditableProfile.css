@@ -106,7 +106,7 @@
 
 .button-group {
   display: flex;
-  justify-content: flex-end;
+  justify-content:center;
   gap: 1rem;
   margin-top: 1.5rem;
   border-radius: 15px;
@@ -155,8 +155,9 @@
   color: white;
 }
 
-.cancel-button {
+.cancel-edit-button {
   padding: 0.75rem 1.5rem;
+  border-radius: 50px;
   background: white;
   color: var(--error);
   border: none;
@@ -169,59 +170,36 @@
   align-items: center;
 }
 
-.cancel-button:hover {
+.cancel-edit-button:hover {
   background: var(--error);
   color: white;
 }
 /* Add to your existing EditableProfile.css */
 .password-change-container {
-  width: 100%;
   max-width: 500px;
   margin: 0 auto;
-  padding: 20px;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .change-password-button {
-  background-color: #4a6fa5;
-  color: white;
+  background-color: white;
+  color: var(--secondary);
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  margin-left: auto;
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  border-radius:50px ;
 }
 
 .change-password-button:hover {
-  background-color: #3a5a8a;
-}
-
-.button-group {
-  display: flex;
-  gap: 15px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-}
-
-.secondary-button {
-  background-color: #6c757d;
+  background-color: var(--secondary);
   color: white;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s ease;
 }
-
-.secondary-button:hover {
-  background-color: #5a6268;
-}
-
 @keyframes spin {
   to {
     transform: translate(-50%, -50%) rotate(360deg);

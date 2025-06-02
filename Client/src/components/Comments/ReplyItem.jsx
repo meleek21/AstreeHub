@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { formatDateOrRelative } from '../../utils/formatDate';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 
 const ReplyItem = ({ reply, userId, parentId, onEditReply, onDeleteReply }) => {
   const [isHovered, setIsHovered] = useState(false);

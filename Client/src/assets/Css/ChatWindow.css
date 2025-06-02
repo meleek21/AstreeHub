@@ -403,7 +403,7 @@
   box-shadow: var(--shadow-lg);
 }
 
-.close-modal {
+.chat-close-modal {
   position: absolute;
   top: -40px;
   right: 0;

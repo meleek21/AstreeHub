@@ -2,15 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 import { postsAPI } from '../services/apiServices';
-import PostCard from '../components/PostCard';
-import CreatePost from '../components/CreatePost';
-import Comment from '../components/Comments/Comment';
+import PostCard from '../components/Posts/PostCard';
+import CreatePost from '../components/Posts/CreatePost';
+import CommentModal from '../components/Comments/CommentModal';
 import Empty from '../assets/Empty.png';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import '../assets/Css/Feed.css';
 import toast from 'react-hot-toast';
-import { createPortal } from "react-dom";
 
 function ChannelFeed() {
   const { channelId } = useParams();
@@ -186,23 +185,15 @@ function ChannelFeed() {
         {loadingMore && <div className="loading-more">Chargement de plus de publications...</div>}
         <div ref={observerTarget} style={{ height: '20px' }} />
       </div>
+ {/* Comments Modal */}
+ <CommentModal
+        isOpen={isCommentsModalOpen}
+        onClose={closeCommentsModal}
+        postId={selectedPostId}
+        userId={user?.id}
+        isAuthenticated={true}
+        token={localStorage.getItem('token')}/>
 
-      {isCommentsModalOpen && selectedPostId && (
-        createPortal(
-          <div className={`comments-modal ${isCommentsModalOpen ? 'open' : ''}`}>
-            <button className="close-modal" onClick={closeCommentsModal} title="Fermer les commentaires">
-              &times;
-            </button>
-            <Comment
-              postId={selectedPostId}
-              userId={user?.id}
-              isAuthenticated={true}
-              token={localStorage.getItem('token')}
-            />
-          </div>,
-          document.body
-        )
-      )}
     </div>
   );
 }

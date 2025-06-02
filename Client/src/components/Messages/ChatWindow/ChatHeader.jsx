@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import TypingIndicator from './TypingIndicator';
 import {messagesAPI, userAPI} from '../../../services/apiServices';
 import ModalPortal from '../../ModalPortal';
-import UserBadge from '../../UserBadge';
+import UserBadge from '../../Profiles/UserBadge';
 import ConfirmationModal from '../../ConfirmationModal';
 import toast from 'react-hot-toast';
 

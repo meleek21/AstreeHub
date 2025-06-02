@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import EmojiPicker from '../../EmojiPicker';
-import connectionManager from '../../../services/connectionManager'; // Import connectionManager
-import { debounce } from 'lodash'; // Import debounce
+import connectionManager from '../../../services/connectionManager'; 
+import { debounce } from 'lodash'; 
 
 const MessageInput = ({ 
   messageText, 

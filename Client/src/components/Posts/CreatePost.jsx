@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../Context/AuthContext";
-import { postsAPI } from "../services/apiServices";
+import { useAuth } from "../../Context/AuthContext";
+import { postsAPI } from "../../services/apiServices";
 import toast from "react-hot-toast";
 import PostEditorModal from "./PostEditorModal";
-import "../assets/Css/CreatePost.css";
+import "../../assets/Css/CreatePost.css";
 
 const placeholderPhrases = [
   "Qu'avez-vous en tête aujourd'hui ?",

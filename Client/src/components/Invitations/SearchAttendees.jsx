@@ -4,9 +4,7 @@ import { faSearch, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const SearchAttendees = ({
   searchQuery,
-  setSearchQuery,
-  attendees,
-  isLoading
+  setSearchQuery
 }) => {
   // Cette fonction est maintenant utilisée pour filtrer les participants existants
   // au lieu de rechercher de nouveaux utilisateurs à inviter

@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { userAPI } from '../../services/apiServices';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import '../../assets/Css/ChatSidebar.css';
 import MiniCalendar from '../MiniCalendar';
 import ModalPortal from '../ModalPortal';

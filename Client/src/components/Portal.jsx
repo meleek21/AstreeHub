@@ -1,4 +1,5 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import "../assets/Css/Portal.css";
 import WeatherCard from "./WeatherCard";
@@ -10,9 +11,26 @@ import Brainstorming from '../assets/Brainstorming.png';
 import DateTimeCard from "./DateTimeCard";
 import astreeLogo from '../assets/astree.png'
 import { Link, useNavigate } from "react-router-dom";
+import { postsAPI } from "../services/apiServices";
 
 const Portal = () => {
   const navigate = useNavigate();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await postsAPI.getEventPosts();
+        setEvents(res.data.posts || res.data.Posts || []);
+      } catch (err) {
+        // Optionally handle error
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
   
   // Animation variants
   const containerVariants = {
@@ -129,7 +147,7 @@ const Portal = () => {
     </div>
   </motion.div>
   <motion.div className="portal-news" variants={itemVariants}>
-    <EventList/>
+    <EventList events={events} loading={loading} />
   </motion.div>
 </div>
         

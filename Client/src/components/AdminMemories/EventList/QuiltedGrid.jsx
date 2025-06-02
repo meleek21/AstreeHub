@@ -1,6 +1,5 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { getFileIconClass } from "../../../utils/fileUtils";
 
 function QuiltedGrid({ files, onImageSelect }) {
   return (

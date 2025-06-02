@@ -9,7 +9,9 @@
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
   position: relative;
-  overflow: hidden;
+
+  border-left: 4px solid var(--primary);
+  animation: slideUp 0.3s ease forwards;
   font-family: 'Nunito', sans-serif;
 }
 
@@ -17,17 +19,6 @@
   transform: translateY(-5px);
   box-shadow: var(--shadow-md);
   border-color: var(--primary-light);
-}
-
-.post-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  background: var(--primary);
-  transition: var(--transition);
 }
 
 /* Post Header */

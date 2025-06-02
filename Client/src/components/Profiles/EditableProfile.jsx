@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { userAPI , departmentAPI } from '../services/apiServices';
+import { userAPI , departmentAPI } from '../../services/apiServices';
 import { toast } from 'react-hot-toast';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import axios from 'axios';
-import '../assets/Css/EditableProfile.css';
-import ProfileCard from './ProfileCard';
-import ChangePassword from './ChangePassword';
+import '../../assets/Css/EditableProfile.css';
+import ChangePassword from '../Authentification/ChangePassword';
 
 const EditableProfile = () => {
   const { userId } = useParams();
@@ -305,6 +303,14 @@ const EditableProfile = () => {
               </motion.div>
             </div>
             <div className="button-group">
+            <motion.button 
+                onClick={() => setShowChangePassword(true)}
+                className="change-password-button"
+                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.05 }}
+              >
+                Changer le mot de passe
+              </motion.button>
               <motion.button
                 onClick={handleSave}
                 className={`save-button ${isSuccess ? 'success' : ''} ${isLoading ? 'loading' : ''}`}
@@ -318,20 +324,13 @@ const EditableProfile = () => {
               </motion.button>
               <motion.button 
                 onClick={handleCancel} 
-                className="cancel-button"
+                className="cancel-edit-button"
                 whileTap={{ scale: 0.95 }}
                 whileHover={{ scale: 1.05 }}
               >
                 Annuler
               </motion.button>
-              <motion.button 
-                onClick={() => setShowChangePassword(true)}
-                className="change-password-button"
-                whileTap={{ scale: 0.95 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                Changer le mot de passe
-              </motion.button>
+              
             </div>
           </div>
         </>

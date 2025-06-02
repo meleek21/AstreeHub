@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { FiClock, FiCalendar } from "react-icons/fi";
+import {FiCalendar } from "react-icons/fi";
 import "../assets/Css/DateTimeCard.css";
 
 const DateTimeCard = () => {

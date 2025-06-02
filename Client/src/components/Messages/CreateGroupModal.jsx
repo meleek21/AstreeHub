@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import ModalPortal from '../ModalPortal';
 import { userAPI, messagesAPI } from '../../services/apiServices';
-import UserBadge from '../UserBadge';
+import UserBadge from '../Profiles/UserBadge';
 import toast from 'react-hot-toast';
 
 const CreateGroupModal = ({ isOpen, onClose, currentUser, onGroupCreated }) => {

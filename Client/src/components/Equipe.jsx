@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { userAPI } from '../services/apiServices';
 import { departmentAPI} from '../services/apiServices';
-import ProfileCard from './ProfileCard';
+import ProfileCard from './Profiles/ProfileCard';
 import '../assets/Css/Equipe.css';
 import Poeple from '../assets/People-search.png';
 function Equipe() {
