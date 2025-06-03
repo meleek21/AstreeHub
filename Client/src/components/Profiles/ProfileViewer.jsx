@@ -5,9 +5,11 @@ import '../../assets/Css/ProfileViewer.css';
 import PostCard from '../Posts/PostCard';
 import ProfileCard from './ProfileCard';
 import CommentModal from '../Comments/CommentModal';
+import { useAuth } from '../../Context/AuthContext';
 
 const ProfileViewer = () => {
-  const { userId } = useParams();
+  const { userId } = useParams(); // This is the profile being viewed
+  const { user } = useAuth(); // This is the logged-in user
   const [posts, setPosts] = useState([]);
   const [isCommentsModalOpen, setIsCommentsModalOpen] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -43,14 +45,20 @@ const ProfileViewer = () => {
       </div>
       <div className="posts-section">
         {posts.map(post => (
-          <PostCard key={post.id} post={post} userId={userId} onCommentClick={openCommentsModal} setSelectedPostId={setSelectedPostId} />
+          <PostCard 
+            key={post.id} 
+            post={post} 
+            userId={user?.id} // Pass the logged-in user's ID, not the profile owner's ID
+            onCommentClick={openCommentsModal} 
+            setSelectedPostId={setSelectedPostId} 
+          />
         ))}
       </div>
       <CommentModal
         isOpen={isCommentsModalOpen}
         onClose={closeCommentsModal}
         postId={selectedPostId}
-        userId={userId}
+        userId={user?.id} // Also use logged-in user's ID here
         isAuthenticated={true}
         token={null}
       />

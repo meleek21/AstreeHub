@@ -4,7 +4,6 @@ using ASTREE_PFE.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace ASTREE_PFE.Controllers
 {
     [Route("api/[controller]")]
@@ -127,13 +126,20 @@ namespace ASTREE_PFE.Controllers
             }
 
             // Generate default password: Capitalized first name + '@' + departmentId
-            var capitalizedFirstName = employeeDto.FirstName.Length > 0 ? char.ToUpper(employeeDto.FirstName[0]) + employeeDto.FirstName.Substring(1) : string.Empty;
+            var capitalizedFirstName =
+                employeeDto.FirstName.Length > 0
+                    ? char.ToUpper(employeeDto.FirstName[0]) + employeeDto.FirstName.Substring(1)
+                    : string.Empty;
             var defaultPassword = $"{capitalizedFirstName}@{employeeDto.DepartmentId}";
 
             var employee = new Employee
             {
-                UserName = employeeDto.Email ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
-                Email = employeeDto.Email ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
+                UserName =
+                    employeeDto.Email
+                    ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
+                Email =
+                    employeeDto.Email
+                    ?? $"{employeeDto.FirstName.ToLower()}.{employeeDto.LastName.ToLower()}@company.com",
                 FirstName = employeeDto.FirstName,
                 LastName = employeeDto.LastName,
                 DepartmentId = employeeDto.DepartmentId,
@@ -151,7 +157,7 @@ namespace ASTREE_PFE.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Roles = "SUPERADMIN")]
+        [Authorize]
         public async Task<ActionResult> UpdateEmployee(
             string id,
             [FromForm] EmployeeUpdateDto employeeDto
@@ -412,11 +418,13 @@ namespace ASTREE_PFE.Controllers
             }
 
             // Mark first login as complete if all required fields are filled
-            if (existingEmployee.IsFirstLogin &&
-                !string.IsNullOrWhiteSpace(existingEmployee.FirstName) &&
-                !string.IsNullOrWhiteSpace(existingEmployee.LastName) &&
-                existingEmployee.DateOfBirth != default &&
-                !string.IsNullOrWhiteSpace(existingEmployee.ProfilePictureUrl))
+            if (
+                existingEmployee.IsFirstLogin
+                && !string.IsNullOrWhiteSpace(existingEmployee.FirstName)
+                && !string.IsNullOrWhiteSpace(existingEmployee.LastName)
+                && existingEmployee.DateOfBirth != default
+                && !string.IsNullOrWhiteSpace(existingEmployee.ProfilePictureUrl)
+            )
             {
                 existingEmployee.IsFirstLogin = false;
             }

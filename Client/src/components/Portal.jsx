@@ -98,15 +98,6 @@ const Portal = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         />
-        <div className="search-bar">
-          <lord-icon
-            src="https://cdn.lordicon.com/fkdzyfle.json"
-            trigger="hover"
-            colors="primary:#AB9DFF"
-            style={{ width: '25px', height: '25px' }}
-          ></lord-icon>
-          <input type="text" placeholder="Que recherchez-vous ?" />
-        </div>
         <motion.div className="portal-header-icons">
           <motion.button
             className="portal-login-btn"
