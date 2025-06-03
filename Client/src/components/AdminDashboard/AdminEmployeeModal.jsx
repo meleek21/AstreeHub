@@ -183,7 +183,8 @@ const AdminEmployeeModal = ({ show, onClose, refreshEmployees }) => {
                   required
                 >
                   <option value="EMPLOYEE">Employé</option>
-                  <option value="ADMIN">Administrateur</option>
+                  <option value="SUPERADMIN">Administrateur</option>
+                  <option value="DIRECTOR">Directeur</option>
                 </select>
                 {errors.role && <span className="error-message">{errors.role}</span>}
               </div>

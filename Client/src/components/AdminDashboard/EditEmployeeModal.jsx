@@ -139,16 +139,19 @@ const EditEmployeeModal = ({
 
             <div className="full-width-field">
               <div className="form-group">
-                <label htmlFor="role">Poste*</label>
-                <input
+                <label htmlFor="role">Rôle*</label>
+                <select
                   id="role"
                   name="role"
                   value={editForm.role}
                   onChange={onChange}
-                  placeholder="Développeur front-end, Chef de projet..."
-                  className={`modal-input ${errors.role ? 'input-error' : ''}`}
+                  className={`modal-select ${errors.role ? 'input-error' : ''}`}
                   required
-                />
+                >
+                  <option value="EMPLOYEE">Employé</option>
+                  <option value="SUPERADMIN">Administrateur</option>
+                  <option value="DIRECTOR">Directeur</option>
+                </select>
                 {errors.role && <span className="error-message">{errors.role}</span>}
               </div>
             </div>

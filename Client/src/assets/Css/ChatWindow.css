@@ -365,13 +365,13 @@
 }
 
 /* Image Modal */
-.image-modal {
+.chat-image-modal {
   position: fixed;
-  top: 30px;
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -385,7 +385,7 @@
   to { opacity: 1; }
 }
 
-.modal-content {
+.chat-modal-content {
   position: relative;
   max-width: 60%;
   animation: scaleUp 0.3s ease-out;
@@ -396,7 +396,7 @@
   to { transform: scale(1); }
 }
 
-.modal-content img {
+.chat-modal-content img {
   max-width: 100%;
   max-height: 80vh;
   border-radius: 0.5rem;
