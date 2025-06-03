@@ -326,17 +326,15 @@ namespace ASTREE_PFE.Services
         }
 
         // New method for todo due tomorrow notification
-        public async Task CreateTodoDueTomorrowNotificationAsync(
-            string todoId,
-            string userId
-        )
+        public async Task CreateTodoDueTomorrowNotificationAsync(string todoId, string userId)
         {
             var notification = new Notification
             {
                 RecipientId = userId,
-                Content = $"Votre tâche est prévue pour demain",
+                Title = "Rappel : tâche à faire demain",
+                Content = "Vous avez une tâche prévue pour demain. Pensez à la consulter.",
                 NotificationType = NotificationType.TodoDueReminder,
-                RelatedEntityId = todoId, // Add todo ID as related entity
+                RelatedEntityId = todoId,
             };
 
             await CreateNotificationAsync(notification);

@@ -15,9 +15,10 @@ namespace ASTREE_PFE.Services
         private readonly INotificationRepository _notificationRepository;
 
         public TodoService(
-            ITodoRepository todoRepository, 
+            ITodoRepository todoRepository,
             INotificationService notificationService,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository
+        )
         {
             _todoRepository = todoRepository;
             _notificationService = notificationService;
@@ -71,8 +72,10 @@ namespace ASTREE_PFE.Services
             DateTime tomorrow = DateTime.Today.AddDays(1);
 
             // Get all existing notifications for the user to check for duplicates
-            var existingNotifications = await _notificationRepository.GetNotificationsForUserAsync(userId);
-            
+            var existingNotifications = await _notificationRepository.GetNotificationsForUserAsync(
+                userId
+            );
+
             foreach (var todo in todos)
             {
                 // Only check todos that haven't been completed and have a due date
@@ -82,9 +85,10 @@ namespace ASTREE_PFE.Services
                     if (todo.DueDate.Value.Date == tomorrow.Date)
                     {
                         // Check if a notification already exists for this todo
-                        bool notificationExists = existingNotifications.Any(n => 
-                            n.RelatedEntityId == todo.Id && 
-                            n.NotificationType == NotificationType.TodoDueReminder);
+                        bool notificationExists = existingNotifications.Any(n =>
+                            n.RelatedEntityId == todo.Id
+                            && n.NotificationType == NotificationType.TodoDueReminder
+                        );
 
                         // Send notification only if it doesn't already exist
                         if (!notificationExists && !todo.DueDateNotificationSent)
