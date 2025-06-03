@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { format } from 'date-fns';
+import ModalPortal from '../../ModalPortal';
 
 const Message = ({ message, currentUser, conversation, onEditMessage, onUnsendMessage, onSoftDeleteMessage }) => {
   const isOwn = message.senderId === currentUser.id;
@@ -15,7 +16,7 @@ const Message = ({ message, currentUser, conversation, onEditMessage, onUnsendMe
   };
 
   const closeModal = (e) => {
-    if (e.target.classList.contains('image-modal')) {
+    if (e.target.classList.contains('chat-image-modal')) {
       setShowImageModal(false);
     }
   };
@@ -73,20 +74,22 @@ const Message = ({ message, currentUser, conversation, onEditMessage, onUnsendMe
       </div>
 
       {showImageModal && (
-        <div className="image-modal" onClick={closeModal}>
-          <div className="modal-content">
-            <img src={modalImage} alt="Enlarged content" />
-            <button 
-              className="chat-close-modal"
-              onClick={() => setShowImageModal(false)}
-              aria-label="Close image"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M18 6L6 18M6 6l12 12"></path>
-              </svg>
-            </button>
+        <ModalPortal>
+          <div className="chat-image-modal" onClick={closeModal}>
+            <div className="chat-modal-content">
+              <img src={modalImage} alt="Enlarged content" />
+              <button 
+                className="chat-close-modal"
+                onClick={() => setShowImageModal(false)}
+                aria-label="Close image"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M18 6L6 18M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </>
   );
