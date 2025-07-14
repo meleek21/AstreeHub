@@ -1,0 +1,9 @@
+regex:"DefaultConnection"\s*:\s*"[^"]*"===>#{DefaultConnection}#
+regex:"MongoConnection"\s*:\s*"[^"]*"===>#{MongoConnection}#
+regex:"CloudName"\s*:\s*"[^"]*"===>#{CloudName}#
+regex:"ApiKey"\s*:\s*"[^"]*"===>#{ApiKey}#
+regex:"ApiSecret"\s*:\s*"[^"]*"===>#{ApiSecret}#
+regex:"Secret"\s*:\s*"[^"]*"===>#{Secret}#
+regex:"ClientId"\s*:\s*"[^"]*"===>#{ClientId}#
+regex:"ClientSecret"\s*:\s*"[^"]*"===>#{ClientSecret}#
+regex:"ApiKey"\s*:\s*"[^"]*"===>#{ApiKey}#
