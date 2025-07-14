@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using ASTREE_PFE.Configurations;
 using ASTREE_PFE.Data;
 using ASTREE_PFE.Hubs;
 using ASTREE_PFE.Models;
@@ -14,7 +15,34 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MongoDB.Driver;
 
+EnvLoader.Load();
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Clear default configuration sources and rebuild in correct order
+builder.Configuration.Sources.Clear();
+
+// Add configuration sources in the correct order
+builder
+    .Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile(
+        $"appsettings.{builder.Environment.EnvironmentName}.json",
+        optional: true,
+        reloadOnChange: true
+    )
+    .AddEnvironmentVariables()
+    .AddEnvPlaceholders(); // This should be last to process all placeholders
+
+// Test the configuration loading
+var testMongoConnection = builder.Configuration.GetConnectionString("MongoConnection");
+Console.WriteLine($"MongoDB Connection String: {testMongoConnection}");
+
+if (testMongoConnection != null && testMongoConnection.Contains("#{"))
+{
+    throw new InvalidOperationException(
+        "Environment variables were not properly replaced in configuration. Please check your .env file."
+    );
+}
 
 // Configure AutoMapper
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
