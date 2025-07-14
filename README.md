@@ -1,4 +1,4 @@
-# ASTREE_PFE - Enterprise Social Network Application
+# AstreeHub - Enterprise Social Network Application
 
 ## Overview
 
