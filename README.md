@@ -2,7 +2,7 @@
 
 ## Overview
 
-ASTREE_PFE is a comprehensive enterprise social network application designed to enhance internal communication, collaboration, and productivity within organizations. The platform combines social networking features with productivity tools to create a unified workspace for employees.
+AstreeHub is a comprehensive enterprise social network application designed to enhance internal communication, collaboration, and productivity within organizations. The platform combines social networking features with productivity tools to create a unified workspace for employees.
 
 ## Features
 
