@@ -11,20 +11,16 @@
 *.publishsettings
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
-x64/
-x86/
-build/
-bld/
 [Bb]in/
-**/[Bb]in/
-**/bin/**
 [Oo]bj/
-**/[Oo]bj/
-**/obj/**
+*.x64/
+*.x86/
+*.[Dd]ebug/
+*.[Dd]ebugPublic/
+*.[Rr]elease/
+*.[Rr]eleases/
+*.build/
+*.bld/
 [Oo]ut/
 msbuild.log
 msbuild.err
@@ -35,7 +31,7 @@ msbuild.wrn
 **/project.nuget.cache
 **/project.packagespec.json
 
-# Visual Studio files
+# Visual Studio
 .vs/
 **/.vs/
 .vscode/
@@ -45,40 +41,38 @@ msbuild.wrn
 *.pidb
 *.opendb
 *.VC.db
-*.cache
 *.dll
 *.exe
 *.pdb
 
-# Rider files
+# JetBrains Rider / IntelliJ IDEA
 .idea/
 
-# User-specific files
+# User-specific
 *.rsuser
 
 # NuGet Packages
+packages/
 *.nupkg
 *.snupkg
-packages/
 
 # Environment variables and secrets
 .env
 appsettings.Development.json
 appsettings.Production.json
 appsettings.Staging.json
+credentials.json
 
 # Logs
 *.log
-
-# Local History
 .localhistory/
 
-# Sensitive or high-churn files
+# SQL Server files
 *.mdf
 *.ldf
 *.ndf
 
-# Backup & report files from converting an old project file
+# Backup & reports
 _UpgradeReport_Files/
 Backup*/
 UpgradeLog*.XML
@@ -86,13 +80,5 @@ UpgradeLog*.htm
 ServiceFabricBackup/
 *.rptproj.bak
 
-# SQL Server files
-*.mdf
-*.ldf
-*.ndf
-
-# Node.js Tools for Visual Studio
+# Node.js modules
 node_modules/
-
-# Credentials
-credentials.json
